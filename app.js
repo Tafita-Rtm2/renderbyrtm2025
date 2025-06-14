@@ -34,11 +34,7 @@ app.set('views', path.join(__dirname, 'views'));
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Middleware to pass GitHub Client ID and auth status to templates
-// Client ID is passed to construct auth URL on client if needed, but auth itself is server-side.
 app.use((req, res, next) => {
-    // No longer passing GITHUB_CLIENT_ID directly to all templates by default unless specifically needed.
-    // The auth routes themselves will use the configured GITHUB_CLIENT_ID.
     res.locals.isAuthenticated = !!req.session.githubAccessToken;
     res.locals.user = req.session.user;
     next();
@@ -48,9 +44,8 @@ app.get('/', (req, res) => {
     res.render('index');
 });
 
-// Pass GITHUB_CLIENT_ID to auth routes via app.locals or directly
 app.locals.GITHUB_CLIENT_ID = GITHUB_CLIENT_ID;
-app.locals.GITHUB_CLIENT_SECRET = GITHUB_CLIENT_SECRET; // For auth callback logic
+app.locals.GITHUB_CLIENT_SECRET = GITHUB_CLIENT_SECRET;
 
 app.use('/auth', authRoutes);
 app.use('/api', apiRoutes);
@@ -76,7 +71,7 @@ app.get('/repos', async (req, res) => {
             updated_at: repo.updated_at
         }));
         res.render('repos', { repos: reposData });
-    } catch (error) { // Corrected the try-catch block's syntax error
+    } catch (error) { // This is the corrected line - ensure the opening brace is here
         console.error('Error fetching repositories for /repos page:', error.response ? error.response.data : error.message);
         res.render('repos', { repos: [], error: 'Failed to load repositories.' });
     }

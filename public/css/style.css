@@ -1,0 +1,221 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;700&display=swap');
+
+/*
+    Futuristic Theme: Dark Neon
+    Fonts: Orbitron for headings, Roboto for body
+    Colors:
+        Background: #121220 (Dark Space Blue)
+        Primary Text: #E0E0E0 (Light Gray)
+        Accent: #00FFFF (Cyan)
+        Secondary Accent: #FF00FF (Magenta)
+        Container/Card Background: #1A1A2E (Slightly Lighter Space Blue)
+*/
+
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #121220;
+    color: #E0E0E0;
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    font-size: 16px;
+}
+
+.container {
+    width: 90%;
+    max-width: 1000px;
+    margin: 20px auto;
+    padding: 25px;
+    background-color: #1A1A2E;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.1), 0 0 5px rgba(255, 0, 255, 0.1);
+    border: 1px solid #00FFFF30;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #00FFFF50;
+    margin-bottom: 20px;
+}
+
+header h1 {
+    font-family: 'Orbitron', sans-serif;
+    color: #00FFFF;
+    margin: 0;
+    font-size: 2em;
+    text-shadow: 0 0 5px #00FFFF;
+}
+
+header nav {
+    display: flex;
+    align-items: center;
+}
+
+header nav span {
+    margin-right: 15px;
+    font-size: 0.9em;
+}
+
+header nav img {
+    margin-right: 15px;
+    border: 1px solid #00FFFF;
+}
+
+h1, h2, h3 {
+    font-family: 'Orbitron', sans-serif;
+    color: #00FFFF;
+    text-shadow: 0 0 3px #00FFFF80;
+}
+
+p {
+    margin-bottom: 1em;
+}
+
+a {
+    color: #FF00FF; /* Magenta for links */
+    text-decoration: none;
+    transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+
+a:hover {
+    color: #FF80FF; /* Lighter Magenta */
+    text-shadow: 0 0 5px #FF00FF80;
+}
+
+.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    margin: 5px;
+    background-color: transparent;
+    color: #00FFFF;
+    border: 2px solid #00FFFF;
+    border-radius: 5px;
+    text-decoration: none;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+    text-align: center;
+}
+
+.btn:hover {
+    background-color: #00FFFF;
+    color: #121220;
+    box-shadow: 0 0 15px #00FFFF;
+}
+
+.btn.deploy-btn {
+    border-color: #FF00FF;
+    color: #FF00FF;
+}
+
+.btn.deploy-btn:hover {
+    background-color: #FF00FF;
+    color: #121220;
+    box-shadow: 0 0 15px #FF00FF;
+}
+
+/* Repository List Specifics */
+#repo-list ul {
+    list-style: none;
+    padding: 0;
+}
+
+#repo-list li {
+    background-color: #22223B; /* Darker card background */
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    border-left: 5px solid #00FFFF;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+#repo-list li:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 255, 255, 0.2);
+}
+
+#repo-list .repo-info h3 {
+    margin-top: 0;
+    margin-bottom: 5px;
+    font-size: 1.4em;
+}
+#repo-list .repo-info h3 a {
+    color: #00FFFF; /* Cyan for repo names */
+}
+#repo-list .repo-info h3 a:hover {
+    color: #80FFFF; /* Lighter Cyan */
+    text-shadow: 0 0 5px #00FFFF;
+}
+
+#repo-list .repo-info p {
+    font-size: 0.9em;
+    margin-bottom: 8px;
+    color: #B0B0B0; /* Slightly lighter than main text for descriptions */
+}
+
+#repo-list .repo-info small {
+    font-size: 0.8em;
+    color: #888;
+}
+
+.error-message {
+    color: #FF6B6B; /* A reddish color for errors */
+    background-color: #3B1212;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #FF6B6B;
+}
+
+/* Login Page Specifics */
+.container h1:first-child { /* For the main title on login page */
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 2.5em;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    header nav {
+        margin-top: 10px;
+        width: 100%;
+        justify-content: space-around;
+    }
+    #repo-list li {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    #repo-list li .btn {
+        margin-top: 10px;
+    }
+    .container h1:first-child {
+        font-size: 2em;
+    }
+}
+
+@media (max-width: 480px) {
+    header h1 {
+        font-size: 1.8em;
+    }
+    .btn {
+        padding: 8px 15px;
+        font-size: 0.9em;
+    }
+    #repo-list .repo-info h3 {
+        font-size: 1.2em;
+    }
+  }

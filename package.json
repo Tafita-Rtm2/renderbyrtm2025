@@ -1,17 +1,18 @@
 {
-  "name": "mini-render-rtm",
+  "name": "github-deployer",
   "version": "1.0.0",
-  "main": "server.js",
+  "description": "A service to deploy GitHub repositories",
+  "main": "app.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "dotenv": "^16.0.3",
+    "axios": "^1.6.0",
+    "ejs": "^3.1.9",
     "express": "^4.18.2",
-    "express-session": "^1.17.3",
-    "passport": "^0.6.0",
-    "passport-github2": "^0.1.12",
-    "simple-git": "^3.19.1",
-    "octokit": "^2.0.6"
-  }
+    "express-session": "^1.17.3"
+  },
+  "author": "",
+  "license": "ISC"
 }

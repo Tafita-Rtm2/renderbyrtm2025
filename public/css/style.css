@@ -2,13 +2,15 @@
 
 /*
     Futuristic Theme: Dark Neon
-    Fonts: Orbitron for headings, Roboto for body
+    Fonts: Orbitron for headings/logo, Roboto for body
     Colors:
         Background: #121220 (Dark Space Blue)
         Primary Text: #E0E0E0 (Light Gray)
         Accent: #00FFFF (Cyan)
         Secondary Accent: #FF00FF (Magenta)
         Container/Card Background: #1A1A2E (Slightly Lighter Space Blue)
+        Error: #FF6B6B
+        Success: #50C878 (Emerald Green like)
 */
 
 body {
@@ -18,64 +20,93 @@ body {
     margin: 0;
     padding: 0;
     line-height: 1.6;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-height: 100vh;
     font-size: 16px;
+    display: flex; /* Helps center #app-root if it has margin auto and fixed width */
+    justify-content: center;
 }
 
-.container {
-    width: 90%;
-    max-width: 1000px;
-    margin: 20px auto;
+#app-root {
+    width: 100%;
+    max-width: 1200px; /* Max width for the app content */
+    padding: 0 20px; /* Padding on the sides of the app root */
+    box-sizing: border-box;
+}
+
+/* --- Navigation --- */
+.main-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background-color: #1A1A2E; /* Same as container bg for seamless look */
+    border-bottom: 1px solid #00FFFF50;
+    margin-bottom: 20px;
+    border-radius: 0 0 8px 8px; /* Rounded bottom corners for the nav */
+}
+
+.nav-logo {
+    font-family: 'Orbitron', sans-serif;
+    color: #00FFFF;
+    text-decoration: none;
+    font-size: 1.8em;
+    text-shadow: 0 0 5px #00FFFF;
+}
+.nav-logo:hover {
+    color: #80FFFF;
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+}
+
+.nav-links a, .nav-links span {
+    color: #E0E0E0;
+    text-decoration: none;
+    margin-left: 20px;
+    font-size: 1em;
+    transition: color 0.3s ease;
+}
+.nav-links a:hover {
+    color: #00FFFF;
+}
+.nav-links span {
+    font-style: italic;
+}
+.nav-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid #00FFFF;
+    margin-left: 10px;
+    margin-right: -10px; /* Adjust spacing with logout button */
+}
+
+/* --- General View Styling --- */
+.view-container {
     padding: 25px;
     background-color: #1A1A2E;
     border-radius: 10px;
     box-shadow: 0 0 20px rgba(0, 255, 255, 0.1), 0 0 5px rgba(255, 0, 255, 0.1);
     border: 1px solid #00FFFF30;
+    margin-bottom: 20px; /* Space between views if multiple are somehow shown, or footer */
 }
 
-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-bottom: 20px;
-    border-bottom: 1px solid #00FFFF50;
-    margin-bottom: 20px;
-}
-
-header h1 {
-    font-family: 'Orbitron', sans-serif;
-    color: #00FFFF;
-    margin: 0;
-    font-size: 2em;
-    text-shadow: 0 0 5px #00FFFF;
-}
-
-header nav {
-    display: flex;
-    align-items: center;
-}
-
-header nav span {
-    margin-right: 15px;
-    font-size: 0.9em;
-}
-
-header nav img {
-    margin-right: 15px;
-    border: 1px solid #00FFFF;
-}
-
-h1, h2, h3 {
+.view-container h1, .view-container h2 {
     font-family: 'Orbitron', sans-serif;
     color: #00FFFF;
     text-shadow: 0 0 3px #00FFFF80;
+    margin-top: 0; /* Remove default top margin for headings in views */
+    border-bottom: 1px solid #00FFFF30;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
 }
+.view-container h1 { font-size: 2.2em; }
+.view-container h2 { font-size: 1.8em; }
 
 p {
     margin-bottom: 1em;
+    color: #C0C0C0; /* Slightly lighter than main text for better readability */
 }
 
 a {
@@ -83,7 +114,6 @@ a {
     text-decoration: none;
     transition: color 0.3s ease, text-shadow 0.3s ease;
 }
-
 a:hover {
     color: #FF80FF; /* Lighter Magenta */
     text-shadow: 0 0 5px #FF00FF80;
@@ -104,33 +134,56 @@ a:hover {
     transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
     text-align: center;
 }
-
 .btn:hover {
     background-color: #00FFFF;
     color: #121220;
     box-shadow: 0 0 15px #00FFFF;
 }
+.btn:disabled {
+    border-color: #555;
+    color: #555;
+    cursor: not-allowed;
+    background-color: transparent;
+    box-shadow: none;
+}
 
-.btn.deploy-btn {
+.btn-primary { /* For prominent actions like Login */
     border-color: #FF00FF;
     color: #FF00FF;
 }
-
-.btn.deploy-btn:hover {
+.btn-primary:hover {
     background-color: #FF00FF;
     color: #121220;
     box-shadow: 0 0 15px #FF00FF;
 }
+.btn-secondary { /* For less prominent actions like logout */
+    border-color: #888;
+    color: #888;
+}
+.btn-secondary:hover {
+    background-color: #888;
+    color: #121220;
+    box-shadow: 0 0 10px #888;
+}
 
-/* Repository List Specifics */
-#repo-list ul {
+/* --- Login View Specifics --- */
+.login-view {
+    text-align: center;
+}
+.btn-login {
+    padding: 12px 25px;
+    font-size: 1.2em;
+    margin-top: 20px;
+}
+
+/* --- Repository List Specifics --- */
+.repos-view ul {
     list-style: none;
     padding: 0;
 }
-
-#repo-list li {
+.repos-view li {
     background-color: #22223B; /* Darker card background */
-    padding: 15px;
+    padding: 20px;
     margin-bottom: 15px;
     border-radius: 8px;
     border-left: 5px solid #00FFFF;
@@ -139,83 +192,115 @@ a:hover {
     align-items: center;
     transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
-
-#repo-list li:hover {
+.repos-view li:hover {
     transform: translateY(-3px);
     box-shadow: 0 5px 15px rgba(0, 255, 255, 0.2);
 }
-
-#repo-list .repo-info h3 {
+.repo-info h3 {
     margin-top: 0;
     margin-bottom: 5px;
     font-size: 1.4em;
 }
-#repo-list .repo-info h3 a {
+.repo-info h3 a {
     color: #00FFFF; /* Cyan for repo names */
 }
-#repo-list .repo-info h3 a:hover {
+.repo-info h3 a:hover {
     color: #80FFFF; /* Lighter Cyan */
     text-shadow: 0 0 5px #00FFFF;
 }
-
-#repo-list .repo-info p {
+.repo-info p {
     font-size: 0.9em;
     margin-bottom: 8px;
-    color: #B0B0B0; /* Slightly lighter than main text for descriptions */
+    color: #B0B0B0;
 }
-
-#repo-list .repo-info small {
+.repo-info small {
     font-size: 0.8em;
     color: #888;
 }
+.deploy-btn { /* Specific deploy button styling if needed, inherits .btn */
+    /* Example: add specific icon or slightly different color if desired */
+}
 
-.error-message {
-    color: #FF6B6B; /* A reddish color for errors */
-    background-color: #3B1212;
+/* --- Deployment Status --- */
+.deployment-status {
+    margin: 15px 0;
     padding: 10px;
     border-radius: 5px;
-    border: 1px solid #FF6B6B;
-}
-
-/* Login Page Specifics */
-.container h1:first-child { /* For the main title on login page */
     text-align: center;
-    margin-bottom: 30px;
-    font-size: 2.5em;
+    font-size: 0.9em;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+.deployment-status.status-blue {
+    background-color: rgba(0, 255, 255, 0.1); /* Cyan tint */
+    color: #00FFFF;
+    border: 1px solid rgba(0, 255, 255, 0.3);
+}
+.deployment-status.status-green {
+    background-color: rgba(80, 200, 120, 0.1); /* Green tint */
+    color: #50C878;
+    border: 1px solid rgba(80, 200, 120, 0.3);
 }
 
-/* Responsive adjustments */
+/* --- Loading and Error Specifics --- */
+.loading-container, .error-container {
+    text-align: center;
+    padding: 40px 20px;
+}
+.error-container p {
+    color: #FF6B6B;
+    background-color: rgba(255, 107, 107, 0.1);
+    padding: 15px;
+    border-radius: 5px;
+    border: 1px solid #FF6B6B;
+    display: inline-block;
+}
+.spinner {
+    margin: 20px auto;
+    border: 4px solid rgba(0, 255, 255, 0.2); /* Lighter cyan for track */
+    border-left-color: #00FFFF; /* Spinner color */
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* --- Responsive Adjustments --- */
 @media (max-width: 768px) {
-    header {
+    .main-nav {
         flex-direction: column;
-        align-items: flex-start;
+        align-items: center;
     }
-    header nav {
-        margin-top: 10px;
+    .nav-logo { margin-bottom: 10px; }
+    .nav-links {
+        flex-direction: column;
+        align-items: center;
         width: 100%;
-        justify-content: space-around;
     }
-    #repo-list li {
+    .nav-links a, .nav-links span {
+        margin: 8px 0;
+    }
+    .nav-avatar { margin: 5px 0; }
+    .repos-view li {
         flex-direction: column;
         align-items: flex-start;
     }
-    #repo-list li .btn {
+    .repos-view li .btn {
         margin-top: 10px;
+        align-self: flex-start; /* Ensure button aligns left in column */
     }
-    .container h1:first-child {
-        font-size: 2em;
-    }
+    .view-container h1 { font-size: 1.8em; }
+    .view-container h2 { font-size: 1.5em; }
 }
 
 @media (max-width: 480px) {
-    header h1 {
-        font-size: 1.8em;
-    }
-    .btn {
-        padding: 8px 15px;
-        font-size: 0.9em;
-    }
-    #repo-list .repo-info h3 {
-        font-size: 1.2em;
-    }
+    body { font-size: 14px; } /* Slightly smaller base font for small screens */
+    #app-root { padding: 0 10px; }
+    .main-nav { padding: 10px; }
+    .nav-logo { font-size: 1.5em; }
+    .view-container { padding: 15px; }
+    .btn { padding: 8px 15px; font-size: 0.9em; }
+    .repo-info h3 { font-size: 1.2em; }
 }

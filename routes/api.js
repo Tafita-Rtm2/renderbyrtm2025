@@ -1,16 +1,31 @@
 const express = require('express');
-const axios = require('axios');
+const axios = require('axios'); // Keep for /repos
 const router = express.Router();
 
-// Middleware to check for authentication
+// Middleware to check for authentication (can be used by specific routes)
 const ensureAuthenticated = (req, res, next) => {
-    if (req.session.githubAccessToken) {
+    if (req.session.githubAccessToken && req.session.user) { // Check for user session as well
         return next();
     }
     res.status(401).json({ error: 'User not authenticated' });
 };
 
-// Fetch user repositories
+// GET /api/user - to check current user session
+router.get('/user', (req, res) => {
+    if (req.session.githubAccessToken && req.session.user) {
+        res.json({
+            isAuthenticated: true,
+            user: req.session.user // Contains { login: 'username', avatar_url: '...' }
+        });
+    } else {
+        res.json({
+            isAuthenticated: false,
+            user: null
+        });
+    }
+});
+
+// Fetch user repositories (existing route, ensure it uses ensureAuthenticated)
 router.get('/repos', ensureAuthenticated, async (req, res) => {
     try {
         const reposResponse = await axios.get('https://api.github.com/user/repos?sort=updated&per_page=100', {
@@ -19,7 +34,6 @@ router.get('/repos', ensureAuthenticated, async (req, res) => {
                 'Accept': 'application/vnd.github.v3+json'
             }
         });
-        // Send back a simplified list of repos
         const reposData = reposResponse.data.map(repo => ({
             id: repo.id,
             name: repo.name,

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mini Render</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 Mini Render</h1>
+    <div id="not-auth">
+      <a class="btn" href="/auth/github">Se connecter avec GitHub</a>
+    </div>
+
+    <div id="auth" class="hidden">
+      <p id="welcome"></p>
+      <input type="text" id="repo" placeholder="https://github.com/username/monrepo" />
+      <button onclick="deploy()">Déployer ce repo</button>
+      <p id="result"></p>
+      <button onclick="logout()" class="btn logout">Se déconnecter</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -22,14 +22,44 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     function displayWeather(data) {
         if (!weatherDisplay) { return; }
-        if (data && data.current) {
-            weatherDisplay.innerHTML = `
-                <p><strong>${data.location.name}</strong></p>
-                <p>${data.current.skytext}, ${data.current.temperature}°${data.location.degreetype}</p>
-                <p>Feels like: ${data.current.feelslike}°${data.location.degreetype}</p>
+        if (data && data.current && data.location) { // Ensure location is also present
+            let weatherHTML = `<p class="location-name"><strong>${data.location.name}</strong></p>`;
+
+            const weatherIcon = document.createElement('img');
+            weatherIcon.alt = data.current.skytext; // Alt text for accessibility
+            weatherIcon.className = 'weather-condition-icon';
+
+            if (data.current.imageUrl) {
+                weatherIcon.src = data.current.imageUrl;
+                 // Prepend icon to weatherHTML string or handle layout with flexbox in CSS
+            } else {
+                // Fallback if no imageUrl, maybe just display skytext prominently
+                weatherIcon.style.display = 'none'; // Hide img if no src
+            }
+
+            // Constructing the HTML. Icon will be first, then text.
+            weatherDisplay.innerHTML = ''; // Clear previous content
+
+            const iconContainer = document.createElement('div');
+            iconContainer.className = 'weather-icon-container';
+            iconContainer.appendChild(weatherIcon);
+            weatherDisplay.appendChild(iconContainer);
+
+            const textContainer = document.createElement('div');
+            textContainer.className = 'weather-text-container';
+            textContainer.innerHTML = `
+                <p class="location-name"><strong>${data.location.name}</strong></p>
+                <p class="temperature">${data.current.temperature}°${data.location.degreetype}</p>
+                <p class="skytext">${data.current.skytext}</p>
+                <p class="feelslike">Feels like: ${data.current.feelslike}°${data.location.degreetype}</p>
             `;
-        } else if (data && data.error) { weatherDisplay.innerHTML = `<p>Error: ${data.error}</p>`; }
-        else { weatherDisplay.innerHTML = '<p>Weather data unavailable.</p>'; }
+            weatherDisplay.appendChild(textContainer);
+
+        } else if (data && data.error) {
+            weatherDisplay.innerHTML = `<p>Error: ${data.error}</p>`;
+        } else {
+            weatherDisplay.innerHTML = '<p>Weather data unavailable.</p>';
+        }
     }
     if (adminLoginIcon) {
         adminLoginIcon.addEventListener('click', () => {
@@ -79,6 +109,18 @@ document.addEventListener('DOMContentLoaded', () => {
         // If switching to chat view, load history
         if (viewIdToShow === 'chat-view' && currentViewId !== 'chat-view') {
             loadChatHistory();
+        }
+        // If switching to image generator view, load prompt history
+        if (viewIdToShow === 'image-generator-view' && currentViewId !== 'image-generator-view') {
+            loadPromptHistory();
+        }
+        // If switching to image generator view, load prompt history
+        if (viewIdToShow === 'image-generator-view' && currentViewId !== 'image-generator-view') {
+            if (typeof loadPromptHistory === 'function') loadPromptHistory(); // Ensure function exists
+        }
+        // If switching to history generator view, load story topic history
+        if (viewIdToShow === 'history-generator-view' && currentViewId !== 'history-generator-view') {
+            if (typeof loadStoryTopicHistory === 'function') loadStoryTopicHistory(); // Ensure function exists
         }
         currentViewId = viewIdToShow;
     }
@@ -261,4 +303,237 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initial load of chat history if chat view is default (or becomes visible)
     // This is now handled by showView logic
+
+    // --- Image Generator UI Logic (Update for Phase 3C) ---
+    const imagePromptInput = document.getElementById('image-prompt-input');
+    const generateImageBtn = document.getElementById('generate-image-btn');
+    const generatedImageContainer = document.getElementById('generated-image-container');
+    const downloadImageBtn = document.getElementById('download-image-btn');
+    const imagePromptHistoryList = document.getElementById('image-prompt-history-list');
+
+    let lastGeneratedImageUrl = null; // Object URL for the current image
+    let currentImageBlob = null; // To store the blob for download with correct type
+    let currentImageFilename = 'generated_image.png'; // Default filename
+
+    function addPromptToHistory(prompt) {
+        if (!imagePromptHistoryList || !prompt) return;
+        const listItem = document.createElement('li');
+        listItem.textContent = prompt;
+        // Add to the top of the list
+        imagePromptHistoryList.insertBefore(listItem, imagePromptHistoryList.firstChild);
+        // Limit history size
+        while (imagePromptHistoryList.children.length > 5) { // Keep last 5 prompts
+            imagePromptHistoryList.removeChild(imagePromptHistoryList.lastChild);
+        }
+    }
+
+    function loadPromptHistory() {
+        if (!imagePromptHistoryList) return;
+        imagePromptHistoryList.innerHTML = '';
+        const history = JSON.parse(localStorage.getItem('imagePromptHistory')) || [];
+        history.forEach(prompt => {
+            const listItem = document.createElement('li');
+            listItem.textContent = prompt;
+            imagePromptHistoryList.appendChild(listItem);
+        });
+    }
+    // Ensure showView calls loadPromptHistory for 'image-generator-view'
+    // (Handled by the modification to showView above)
+    // Initial call for safety if image-generator-view is the default or accessed before showView runs for it.
+    if (document.getElementById('image-generator-view') && document.getElementById('image-generator-view').style.display !== 'none') {
+        loadPromptHistory();
+    }
+
+
+    if (generateImageBtn) {
+        generateImageBtn.addEventListener('click', async () => { // Make async
+            if (!imagePromptInput || !generatedImageContainer) return;
+            const prompt = imagePromptInput.value.trim();
+            if (prompt === '') {
+                alert('Please enter a prompt for the image.');
+                return;
+            }
+
+            // Revoke previous object URL if it exists
+            if (lastGeneratedImageUrl) {
+                URL.revokeObjectURL(lastGeneratedImageUrl);
+                lastGeneratedImageUrl = null;
+                currentImageBlob = null;
+            }
+
+            generatedImageContainer.innerHTML = '<p>Generating image, please wait...</p>'; // Real generation now
+            if (downloadImageBtn) downloadImageBtn.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/generate-image', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ prompt: prompt }),
+                });
+
+                if (!response.ok) {
+                    // Try to parse error as JSON, then fallback
+                    let errorMsg = `Error: ${response.status} ${response.statusText}`;
+                    try {
+                        const errorData = await response.json();
+                        errorMsg = errorData.error || errorData.message || errorMsg;
+                    } catch (e) { /* Not a JSON error response */ }
+                    throw new Error(errorMsg);
+                }
+
+                currentImageBlob = await response.blob();
+                lastGeneratedImageUrl = URL.createObjectURL(currentImageBlob);
+
+                const imgElement = document.createElement('img');
+                imgElement.src = lastGeneratedImageUrl;
+                imgElement.alt = prompt;
+
+                generatedImageContainer.innerHTML = ''; // Clear "Generating..."
+                generatedImageContainer.appendChild(imgElement);
+
+                if (downloadImageBtn) downloadImageBtn.style.display = 'inline-flex';
+
+                // Update filename based on content type if possible (though API might not vary it much)
+                const contentType = currentImageBlob.type || 'image/png'; // Default to png
+                const extension = contentType.split('/')[1] || 'png';
+                currentImageFilename = `${prompt.substring(0, 20).replace(/\s+/g, '_') || 'generated'}.${extension}`;
+
+
+                // Add to prompt history (and save to LocalStorage)
+                let history = JSON.parse(localStorage.getItem('imagePromptHistory')) || [];
+                history.unshift(prompt);
+                if (history.length > 5) history = history.slice(0, 5);
+                localStorage.setItem('imagePromptHistory', JSON.stringify(history));
+                addPromptToHistory(prompt);
+
+            } catch (error) {
+                console.error('Error generating image:', error);
+                generatedImageContainer.innerHTML = `<p>Failed to generate image: ${error.message}</p>`;
+                if (downloadImageBtn) downloadImageBtn.style.display = 'none';
+            }
+        });
+    }
+
+    if (downloadImageBtn) {
+        downloadImageBtn.addEventListener('click', () => {
+            if (lastGeneratedImageUrl && currentImageBlob) {
+                const link = document.createElement('a');
+                link.href = lastGeneratedImageUrl; // Object URL
+                link.download = currentImageFilename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                // Note: Object URL will be revoked when a new image is generated or view changes (if implemented)
+            } else {
+                alert('No image available to download or image data is missing.');
+            }
+        });
+    }
+
+    // --- History Generator UI Logic (Phase 3A) ---
+    const historyTopicInput = document.getElementById('history-topic-input');
+    const generateHistoryBtn = document.getElementById('generate-history-btn');
+    const generatedHistoryDisplay = document.getElementById('generated-history-display');
+    const storyTopicHistoryList = document.getElementById('story-topic-history-list');
+    // const chatUID = getOrCreateUID(); // UID should already be available from chat feature
+
+    function addStoryTopicToHistory(topic) {
+        if (!storyTopicHistoryList || !topic) return;
+        const listItem = document.createElement('li');
+        listItem.textContent = topic;
+        storyTopicHistoryList.insertBefore(listItem, storyTopicHistoryList.firstChild);
+        while (storyTopicHistoryList.children.length > 5) { // Keep last 5 topics
+            storyTopicHistoryList.removeChild(storyTopicHistoryList.lastChild);
+        }
+    }
+
+    function loadStoryTopicHistory() {
+        if (!storyTopicHistoryList) return;
+        storyTopicHistoryList.innerHTML = '';
+        const history = JSON.parse(localStorage.getItem('storyTopicHistory')) || [];
+        history.forEach(topic => {
+            const listItem = document.createElement('li');
+            listItem.textContent = topic;
+            storyTopicHistoryList.appendChild(listItem);
+        });
+    }
+    // Ensure showView calls loadStoryTopicHistory for 'history-generator-view'
+    // (Handled by the modification to showView above)
+    // Call once at init if the view might be active or to pre-populate.
+    if (document.getElementById('history-generator-view') && document.getElementById('history-generator-view').style.display !== 'none') {
+        loadStoryTopicHistory();
+    }
+
+
+    if (generateHistoryBtn) {
+        generateHistoryBtn.addEventListener('click', async () => { // Make async
+            if (!historyTopicInput || !generatedHistoryDisplay) return;
+            const topic = historyTopicInput.value.trim();
+            if (topic === '') {
+                alert('Please enter a topic for the history/story.');
+                return;
+            }
+
+            generatedHistoryDisplay.innerHTML = '<p>Generating story, please wait...</p>';
+
+            // Craft a specific prompt for story generation
+            const storyPrompt = `You are a creative storyteller. Please write a short, engaging history or story about the following topic: "${topic}". Ensure it has a clear narrative.`;
+            const currentUID = getOrCreateUID(); // Use existing UID function
+
+            try {
+                const response = await fetch('/api/chat', { // Reusing the chat API endpoint
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        ask: storyPrompt,
+                        uid: currentUID,
+                        webSearch: 'off' // Typically web search is not needed for creative story writing
+                    }),
+                });
+
+                if (!response.ok) {
+                    let errorMsg = `Error: ${response.status} ${response.statusText}`;
+                    try {
+                        const errorData = await response.json();
+                        errorMsg = errorData.error || errorData.message || errorMsg;
+                    } catch (e) { /* Not a JSON error response */ }
+                    throw new Error(errorMsg);
+                }
+
+                const data = await response.json();
+                if (data.response) {
+                    // Sanitize or carefully display HTML if AI might return it. For now, textContent or pre-formatted.
+                    // To display paragraphs, split by newline and wrap in <p> or use CSS white-space: pre-wrap.
+                    generatedHistoryDisplay.innerHTML = ''; // Clear loading message
+                    const storyContent = data.response;
+                    storyContent.split('\n\n').forEach(paragraph => { // Handle double newlines as paragraph breaks
+                        const p = document.createElement('p');
+                        p.textContent = paragraph.replace(/\n/g, ' '); // Replace single newlines with spaces within a paragraph
+                        generatedHistoryDisplay.appendChild(p);
+                    });
+                     if (generatedHistoryDisplay.innerHTML.trim() === '') { // If splitting resulted in nothing
+                        generatedHistoryDisplay.textContent = storyContent; // Fallback to raw text
+                     }
+
+                } else {
+                    generatedHistoryDisplay.textContent = "Sorry, I received an unexpected response for the story.";
+                }
+
+                // Add to story topic history (and save to LocalStorage)
+                let topicHistory = JSON.parse(localStorage.getItem('storyTopicHistory')) || [];
+                topicHistory.unshift(topic);
+                if (topicHistory.length > 5) topicHistory = topicHistory.slice(0, 5);
+                localStorage.setItem('storyTopicHistory', JSON.stringify(topicHistory));
+                addStoryTopicToHistory(topic);
+
+            } catch (error) {
+                console.error('Error generating story:', error);
+                generatedHistoryDisplay.innerHTML = `<p>Failed to generate story: ${error.message}</p>`;
+            }
+        });
+    }
 });

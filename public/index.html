@@ -58,10 +58,10 @@
                         +261385858330
                     </a>
                 </p>
-                <p><strong>Facebook:</strong> <a href="https://www.facebook.com/manarintso.niaina" target="_blank">facebook.com/manarintso.niaina</a></p>
-                <p><strong>Phone:</strong> <a href="tel:0336177772">0336177772</a></p>
-                <p><strong>Email:</strong> <a href="mailto:niainatafita85@gmail.com">niainatafita85@gmail.com</a></p>
-                <p><strong>Website:</strong> <a href="#" id="user-website-link">[Link to be provided]</a></p>
+                <p><strong>Facebook:</strong> <a href="https://www.facebook.com/manarintso.niaina" target="_blank" class="icon-link"><svg class="icon icon-facebook" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.04C6.5 2.04 2 6.53 2 12.06c0 5.52 4.5 10.02 10 10.02s10-4.5 10-10.02c0-5.53-4.5-10.02-10-10.02zm0 18.02c-4.42 0-8-3.58-8-8.02s3.58-8 8-8 8 3.58 8 8-3.58 8.02-8 8.02z"/><path d="M13.54 12.65h-1.4v5.39h-2.37v-5.39H8.4v-2.03h1.37V8.97c0-1.28.65-2.01 2.13-2.01h1.7v2.03h-1.01c-.39 0-.48.19-.48.51v1.12h1.52l-.21 2.03z"/></svg> rtm tafitaniaina</a></p>
+                <p><strong>Phone:</strong> <a href="tel:0336177772" class="icon-link"><svg class="icon icon-phone" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg> 0336177772</a></p>
+                <p><strong>Email:</strong> <a href="mailto:niainatafita85@gmail.com" class="icon-link"><svg class="icon icon-email" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg> niainatafita85@gmail.com</a></p>
+                <p><strong>Website:</strong> <a href="#" id="user-website-link" class="icon-link"><svg class="icon icon-website" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1h-2v-2h2c.55 0 1-.45 1-1V7h3c.55 0 1 .45 1 1v1.79c.92.43 1.94 1.51 1.94 3.21 0 1.93-1.31 3.62-3.04 3.99z"/></svg> [Link to be provided]</a></p>
             </section>
 
             <section id="comments-section">
@@ -84,7 +84,7 @@
 
             <div id="admin-login-icon-container"> <!-- Changed ID for clarity -->
                  <button id="admin-login-icon" class="icon-button">
-                    [Admin Icon]
+                    <svg class="icon icon-admin" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
                  </button>
             </div>
         </div> <!-- End of #home-view -->
@@ -112,11 +112,49 @@
         </div>
 
         <div id="image-generator-view" style="display: none;">
-            <p>Image Generator Placeholder</p>
+            <h3>Image Generator</h3>
+            <div id="image-gen-input-area">
+                <input type="text" id="image-prompt-input" placeholder="Describe the image you want to create...">
+                <button id="generate-image-btn" class="icon-button" title="Generate Image">
+                    <svg class="icon icon-image-generator" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M19 3H5c-1.103 0-2 .897-2 2v14c0 1.103.897 2 2 2h14c1.103 0 2-.897 2-2V5c0-1.103-.897-2-2-2zM5 19V5h14l.002 14H5z"/><path d="m10 14-1-1-3 4h12l-5-7-3 4z"/></svg>
+                </button>
+            </div>
+            <div id="generated-image-container">
+                <p>Image will appear here once generated.</p>
+                <!-- Generated image will be appended here -->
+            </div>
+            <button id="download-image-btn" class="icon-button" title="Download Image" style="display:none;">
+                <!-- Placeholder for Download Icon SVG -->
+                <svg class="icon icon-download" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+            </button>
+            <div id="image-history-display" style="margin-top: 20px;">
+                <h4>Recent Prompts:</h4>
+                <ul id="image-prompt-history-list">
+                    <!-- Prompt history will be listed here -->
+                </ul>
+            </div>
         </div>
 
         <div id="history-generator-view" style="display: none;">
-            <p>History Generator Placeholder</p>
+            <h3>History / Story Generator</h3>
+            <div id="history-gen-input-area">
+                <input type="text" id="history-topic-input" placeholder="Enter a topic, title, or theme...">
+                <button id="generate-history-btn" class="icon-button" title="Generate History/Story">
+                    <svg class="icon icon-history-generator" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M19 2H5C3.346 2 2 3.346 2 5v14c0 1.654 1.346 3 3 3h14c1.654 0 3-1.346 3-3V5C22 3.346 20.654 2 19 2zM5 4h14c.552 0 1 .449 1 1v10.261l-2.294-1.261L19 13.739V5c0-.551-.448-1-1-1H5V4zM5 20V6h14v13c0 .551-.448 1-1 1H5z"/><path d="M7 8h4v2H7zm0 4h10v2H7zm0 4h10v2H7z"/></svg>
+                </button>
+            </div>
+            <div id="generated-history-display-container">
+                <h4>Generated Story:</h4>
+                <div id="generated-history-display">
+                    <p>The generated story will appear here.</p>
+                </div>
+            </div>
+            <div id="story-history-log-display" style="margin-top: 20px;">
+                <h4>Recently Generated Topics:</h4>
+                <ul id="story-topic-history-list">
+                    <!-- Story topic history will be listed here -->
+                </ul>
+            </div>
         </div>
 
         <div id="vip-view" style="display: none;">
@@ -131,14 +169,14 @@
                 <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C13.81 22 15.5 21.5 17 20.65L22 22L20.65 17C21.5 15.5 22 13.81 22 12C22 6.48 17.52 2 12 2ZM12 20C7.58 20 4 16.42 4 12C4 7.58 7.58 4 12 4C16.42 4 20 7.58 20 12C20 14.45 18.83 16.6 17 17.95L17.95 17L19 20L16.05 19.05C14.7 19.68 13.39 20 12 20Z"/>
             </svg>
         </button>
-        <button id="icon-image-generator" class="icon-button bottom-menu-button" data-view="image-generator-view">[ImgGen Icon]</button>
+        <button id="icon-image-generator" class="icon-button bottom-menu-button" data-view="image-generator-view"><svg class="icon icon-image-generator" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M19 3H5c-1.103 0-2 .897-2 2v14c0 1.103.897 2 2 2h14c1.103 0 2-.897 2-2V5c0-1.103-.897-2-2-2zM5 19V5h14l.002 14H5z"/><path d="m10 14-1-1-3 4h12l-5-7-3 4z"/></svg></button>
         <button id="icon-main-menu" class="icon-button bottom-menu-button" data-view="home-view">
              <svg class="icon icon-menu" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                 <path d="M3 18H21V16H3V18ZM3 13H21V11H3V13ZM3 6V8H21V6H3Z"/>
             </svg>
         </button>
-        <button id="icon-history-generator" class="icon-button bottom-menu-button" data-view="history-generator-view">[HistGen Icon]</button>
-        <button id="icon-vip" class="icon-button bottom-menu-button" data-view="vip-view">[VIP Icon]</button>
+        <button id="icon-history-generator" class="icon-button bottom-menu-button" data-view="history-generator-view"><svg class="icon icon-history-generator" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M19 2H5C3.346 2 2 3.346 2 5v14c0 1.654 1.346 3 3 3h14c1.654 0 3-1.346 3-3V5C22 3.346 20.654 2 19 2zM5 4h14c.552 0 1 .449 1 1v10.261l-2.294-1.261L19 13.739V5c0-.551-.448-1-1-1H5V4zM5 20V6h14v13c0 .551-.448 1-1 1H5z"/><path d="M7 8h4v2H7zm0 4h10v2H7zm0 4h10v2H7z"/></svg></button>
+        <button id="icon-vip" class="icon-button bottom-menu-button" data-view="vip-view"><svg class="icon icon-vip" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg></button>
     </nav>
 
     <script src="script.js"></script>

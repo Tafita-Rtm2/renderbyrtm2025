@@ -5,16 +5,18 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// API Keys - In a real app, use environment variables!
+// API Keys
 const WEATHER_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
-const CHAT_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6'; // Same key as per user's info
+const CHAT_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
+const IMAGE_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6'; // Assuming same API key
 
 // Middleware
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.json()); // Middleware to parse JSON request bodies
+app.use(express.json()); // Already present, ensures req.body is parsed
 
-// --- Existing Weather API Route ---
+// --- Weather API Route ---
 app.get('/api/weather', async (req, res) => {
+    // ... (existing weather route code - unchanged) ...
     const location = req.query.location;
     if (!location) {
         return res.status(400).json({ error: 'Location query parameter is required' });
@@ -41,56 +43,76 @@ app.get('/api/weather', async (req, res) => {
     }
 });
 
-// --- New AI Chat API Route (Phase 2B) ---
+// --- AI Chat API Route ---
 app.post('/api/chat', async (req, res) => {
+    // ... (existing chat route code - unchanged) ...
     const { ask, uid, webSearch } = req.body;
-
     if (!ask || !uid) {
         return res.status(400).json({ error: 'Parameters "ask" and "uid" are required.' });
     }
-
-    // Validate webSearch parameter: API expects 'on' or 'off'
     const webSearchParam = (webSearch === true || String(webSearch).toLowerCase() === 'on') ? 'on' : 'off';
-
     const chatApiUrl = `https://kaiz-apis.gleeze.com/api/gpt-4o?ask=${encodeURIComponent(ask)}&uid=${encodeURIComponent(uid)}&webSearch=${webSearchParam}&apikey=${CHAT_API_KEY}`;
-
     try {
         const apiResponse = await fetch(chatApiUrl);
-        const responseText = await apiResponse.text(); // Read as text first for better error diagnosis
-
+        const responseText = await apiResponse.text();
         if (!apiResponse.ok) {
             console.error(`Error fetching from Chat API for user ${uid}: ${apiResponse.status} ${apiResponse.statusText}. Response: ${responseText}`);
-            // Try to parse as JSON for structured error, fallback to text
             let errorJson = { error: `External Chat API Error: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
-            try {
-                errorJson = JSON.parse(responseText);
-                if (!errorJson.error && !errorJson.message) { // Ensure there's a primary error message
-                     errorJson.error = `External Chat API Error: ${apiResponse.status} ${apiResponse.statusText}`;
-                }
-            } catch (e) { /* Not a JSON error response, stick with the text based one */ }
-             return res.status(apiResponse.status).json(errorJson);
+            try { errorJson = JSON.parse(responseText); if (!errorJson.error && !errorJson.message) { errorJson.error = `External Chat API Error: ${apiResponse.status} ${apiResponse.statusText}`; } } catch (e) { /* Not JSON */ }
+            return res.status(apiResponse.status).json(errorJson);
         }
-
-        // Attempt to parse the successful response as JSON
         let data;
-        try {
-            data = JSON.parse(responseText);
-        } catch (e) {
+        try { data = JSON.parse(responseText); } catch (e) {
             console.error('Error parsing JSON response from Chat API:', responseText, e);
             return res.status(500).json({ error: 'Failed to parse response from Chat API.', details: responseText });
         }
-
-
         if (data && data.response) {
             res.json({ author: data.author || "Kaizenji", response: data.response });
         } else {
             console.error('Unexpected response structure from Chat API:', data);
             res.status(500).json({ error: 'Unexpected response structure from Chat API.', details: data });
         }
-
     } catch (error) {
         console.error('Server error while calling Chat API:', error);
         res.status(500).json({ error: 'Server error while processing chat request.' });
+    }
+});
+
+// --- New Image Generation API Route (Phase 3B) ---
+app.post('/api/generate-image', async (req, res) => {
+    const { prompt } = req.body;
+
+    if (!prompt) {
+        return res.status(400).json({ error: 'Parameter "prompt" is required.' });
+    }
+
+    const imageApiUrl = `https://kaiz-apis.gleeze.com/api/flux?prompt=${encodeURIComponent(prompt)}&apikey=${IMAGE_API_KEY}`;
+
+    try {
+        const apiResponse = await fetch(imageApiUrl);
+
+        if (!apiResponse.ok) {
+            // Try to get error message from API if it's text/json
+            const errorText = await apiResponse.text();
+            console.error(`Error fetching from Image API for prompt "${prompt}": ${apiResponse.status} ${apiResponse.statusText}. Details: ${errorText}`);
+            try {
+                const errorJson = JSON.parse(errorText); // If API returns JSON error
+                return res.status(apiResponse.status).json(errorJson);
+            } catch (e) { // If error is not JSON
+                return res.status(apiResponse.status).json({ error: `Image API Error: ${apiResponse.statusText}`, details: errorText });
+            }
+        }
+
+        // Determine content type from API response headers if possible, otherwise assume jpeg/png
+        const contentType = apiResponse.headers.get('content-type') || 'image/jpeg'; // Default to JPEG
+        res.setHeader('Content-Type', contentType);
+
+        const imageBuffer = await apiResponse.buffer(); // node-fetch specific method for Buffer
+        res.send(imageBuffer);
+
+    } catch (error) {
+        console.error('Server error while calling Image API:', error);
+        res.status(500).json({ error: 'Server error while processing image generation request.' });
     }
 });
 

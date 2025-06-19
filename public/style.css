@@ -1,0 +1,1762 @@
+/* --- GLOBAL STYLES & THEME --- */
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;700&display=swap');
+
+* {
+    box-sizing: border-box;
+}
+
+:root {
+    --primary-bg: #0a0f1e; /* Darker space blue */
+    --secondary-bg: #1a1a2e; /* Existing dark blue */
+    --surface-color: #1f1f38; /* For cards, modals */
+    --accent-color: #00ffff; /* Cyan */
+    --primary-accent-color: #00c2cb; /* Teal */
+    --secondary-accent-color: #e94560; /* Magenta/Red */
+    --action-color: #ff9900;  /* Vibrant Orange */
+    --highlight-yellow: #ffd700; /* Gold/Yellow for highlights */
+    --success-green: #39FF14; /* Neon Green for success/positive */
+    --info-blue: #007bff; /* Standard Info Blue */
+    --text-color: #e0e0e0;
+    --text-muted-color: #a0a0a0;
+    --border-color: var(--accent-color); /* Default border, can be overridden */
+    --icon-fill-default: var(--accent-color);
+    --icon-fill-hover: #ffffff;
+    --font-primary: 'Exo 2', sans-serif;
+
+    --top-bar-height: 60px;
+    --bottom-app-bar-height: 70px; /* For home page app icons */
+}
+
+body {
+    font-family: var(--font-primary);
+    background-color: var(--primary-bg);
+    color: var(--text-color);
+    margin: 0;
+    padding-top: var(--top-bar-height); /* Space for fixed top bar */
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    box-sizing: border-box;
+    overflow-x: hidden; /* Prevent horizontal scroll */
+    /* transition: background-color 0.3s ease; /* Example for theme changes if ever implemented */
+}
+
+a {
+    color: var(--accent-color);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+a:hover {
+    color: var(--primary-accent-color);
+}
+
+/* General Webkit Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 10px; /* Slightly wider for general use */
+    height: 10px; /* For horizontal scrollbars */
+}
+::-webkit-scrollbar-track {
+    background: var(--primary-bg); /* Track color */
+    border-radius: 5px;
+}
+::-webkit-scrollbar-thumb {
+    background-color: var(--accent-color); /* Thumb color */
+    border-radius: 5px;
+    border: 2px solid var(--primary-bg); /* Creates padding around thumb */
+}
+::-webkit-scrollbar-thumb:hover {
+    background-color: var(--primary-accent-color); /* Thumb hover color */
+}
+/* Apply to specific scrollable containers if not all body */
+#side-menu::-webkit-scrollbar-thumb { /* Example for side menu */
+     background-color: var(--primary-accent-color);
+}
+#side-menu::-webkit-scrollbar-track { /* Example for side menu */
+     background: var(--secondary-bg);
+}
+.image-history-list::-webkit-scrollbar-thumb,
+.story-history-list::-webkit-scrollbar-thumb { /* Example for history lists */
+    background-color: var(--primary-accent-color);
+}
+.image-history-list::-webkit-scrollbar-track,
+.story-history-list::-webkit-scrollbar-track { /* Example for history lists */
+    background: var(--secondary-bg);
+}
+
+/* Card/Surface Styling Utility */
+.card-style {
+    background-color: var(--surface-color);
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    /* border: 1px solid var(--border-color); /* Optional: if cards need borders by default */
+}
+
+/* General Headings Styling */
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-primary);
+    color: var(--accent-color); /* Default accent color for titles */
+    margin-top: 1em; /* Default margin, can be overridden */
+    margin-bottom: 0.5em; /* Default margin, can be overridden */
+}
+h1 { font-size: 2.2em; letter-spacing: 1px; }
+h2 { font-size: 1.8em; letter-spacing: 0.5px; } /* e.g., View titles */
+h3 { font-size: 1.5em; } /* e.g., Section titles within views */
+h4 { font-size: 1.2em; } /* e.g., Sub-section titles or item titles */
+/* Specific overrides exist in components like chat bubbles, story display etc. */
+
+
+/* --- SVG Icon Policy --- */
+.icon {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    fill: var(--icon-fill-default);
+    vertical-align: middle;
+    transition: fill 0.2s ease-in-out, transform 0.2s ease-in-out;
+}
+
+.icon-button .icon {
+    /* Specific sizing for icons within buttons can be adjusted if needed */
+}
+
+.icon-button:hover .icon {
+    fill: var(--icon-fill-hover);
+    transform: scale(1.1);
+}
+
+/* --- General .icon-button Styling --- */
+.icon-button {
+    background-color: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-color); /* For any text next to icon */
+    padding: 8px; /* Adjust for desired button size */
+    margin: 4px;
+    border-radius: 50%; /* Circular for standalone icon buttons */
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+    outline: none;
+}
+.icon-button:hover {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+    color: var(--primary-bg);
+    transform: translateY(-2px);
+}
+.icon-button:focus {
+    box-shadow: 0 0 0 2px var(--primary-bg), 0 0 0 4px var(--accent-color);
+}
+.icon-button:disabled {
+    background-color: var(--text-muted-color) !important;
+    border-color: var(--text-muted-color) !important;
+    cursor: not-allowed;
+    transform: none !important;
+}
+.icon-button:disabled .icon {
+    fill: var(--surface-color) !important;
+}
+
+
+/* --- Top Bar --- */
+#top-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: var(--top-bar-height);
+    background-color: var(--secondary-bg);
+    padding: 0 15px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1000;
+    box-sizing: border-box;
+}
+#top-left-menu-icon-container .icon-menu-main {
+    cursor: pointer;
+}
+#weather-display-container {
+    min-width: 100px;
+    text-align: right;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    font-size: 0.9em;
+    height: 100%;
+}
+
+/* --- Main Content Area --- */
+#main-content {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- View Management --- */
+.view {
+    display: none;
+    width: 100%;
+    flex-grow: 1;
+    animation: fadeInView 0.5s ease-in-out;
+    background-color: var(--secondary-bg); /* Standardized background */
+    padding: 20px; /* Standardized padding */
+    border-radius: 8px; /* Standardized radius */
+    margin-bottom: 15px; /* Space from bottom or between views if stacked */
+}
+.view.active {
+    display: block;
+}
+
+@keyframes fadeInView {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Specific overrides for certain views */
+#ai-chat-view {
+    padding: 0; /* Chat view manages its own internal padding for messages area */
+    border-radius: 10px; /* Retain previous specific radius if different, or remove if 8px is fine */
+    /* background-color already set by .view, if #ai-chat-view needs specific bg, set it here */
+}
+
+#home-view {
+    background-color: var(--primary-bg); /* Home view uses primary background */
+    padding: 15px; /* Retain specific padding for home */
+    /* margin-bottom might not be needed if it's the main view usually */
+}
+
+
+/* --- Home Page Specific --- */
+#home-bottom-app-icons {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: var(--bottom-app-bar-height);
+    background-color: var(--secondary-bg);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0 10px;
+    z-index: 1000;
+}
+
+.home-app-btn {
+    background-color: var(--surface-color);
+    border: 1px solid var(--primary-accent-color);
+    border-radius: 15px;
+    width: 60px;
+    height: 60px;
+    padding: 5px;
+    color: var(--text-color);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, background-color 0.2s ease;
+    font-size: 0.7em;
+    gap: 4px;
+}
+.home-app-btn .icon {
+    width: 28px;
+    height: 28px;
+    fill: var(--icon-fill-default);
+    margin-bottom: 0;
+}
+.home-app-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0, 255, 255, 0.2);
+    background-color: var(--primary-accent-color);
+    color: var(--primary-bg);
+}
+.home-app-btn:hover .icon {
+    fill: var(--primary-bg);
+}
+
+
+#public-comments-section { /* This is within #home-view */
+    margin-top: 20px;
+    padding: 15px;
+    background-color: var(--surface-color);
+    border-radius: 8px;
+    margin-bottom: calc(var(--bottom-app-bar-height) + 15px); /* Ensure space for fixed bottom bar */
+}
+
+#admin-login-trigger-icon {
+    position: fixed;
+    bottom: 15px; /* Adjust if #home-bottom-app-icons is not used, or relative to it */
+    left: 15px;
+    /* If #home-bottom-app-icons is used, this should be above it or elsewhere */
+    /* For now, assuming #home-bottom-app-icons IS the primary bottom bar for home */
+    /* So, this admin icon might be better placed elsewhere or its 'fixed' nature re-evaluated */
+    /* Or, if it's part of #home-view content, its 'bottom' should be relative to that view's padding */
+    cursor: pointer;
+    z-index: 999;
+}
+#admin-login-trigger-icon .icon-admin-login {
+    width: 30px;
+    height: 30px;
+    fill: var(--text-muted-color);
+    background-color: var(--surface-color); /* Use CSS variable */
+    padding: 5px;
+    border-radius: 50%;
+}
+#admin-login-trigger-icon:hover .icon-admin-login {
+    fill: var(--accent-color);
+}
+
+
+/* --- Sub-View Menu Trigger (Top-Left) --- */
+#sub-view-menu-trigger {
+    position: fixed;
+    top: calc(var(--top-bar-height) / 2 - 22px / 2 - 8px); /* Approx vertical center, considering padding */
+    left: 15px;
+    z-index: 1010;
+    /* .icon-button styling is applied */
+}
+
+
+/* --- Side Menu --- */
+#side-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 280px;
+    height: 100vh;
+    background-color: var(--secondary-bg);
+    padding: var(--top-bar-height) 0 20px 0;
+    overflow-y: auto;
+    border-right: 1px solid var(--border-color);
+    box-shadow: 3px 0 15px rgba(0,0,0,0.2);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
+    z-index: 2000;
+    box-sizing: border-box;
+}
+#side-menu.visible {
+    transform: translateX(0);
+}
+#side-menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+#side-menu li a {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    color: var(--text-color);
+    text-decoration: none;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    border-bottom: 1px solid var(--surface-color);
+}
+#side-menu li a:hover {
+    background-color: var(--accent-color);
+    color: var(--primary-bg);
+}
+#side-menu li a:hover .icon {
+    fill: var(--primary-bg);
+}
+#side-menu li a .icon {
+    margin-right: 15px;
+    width: 20px;
+    height: 20px;
+}
+#side-menu li a span {
+    font-size: 0.95em;
+}
+#side-menu li:last-child a {
+    border-bottom: none;
+}
+
+
+/* --- Private Message Floating Button --- */
+#private-message-trigger-container {
+    position: fixed;
+    bottom: 15px;
+    right: 15px;
+    z-index: 999;
+}
+#private-message-float-btn {
+    background-color: var(--secondary-accent-color);
+    border-color: var(--secondary-accent-color);
+}
+#private-message-float-btn:hover {
+    background-color: #ff6b81;
+    border-color: #ff6b81;
+}
+#private-message-float-btn .icon {
+    fill: var(--text-color);
+}
+#private-message-float-btn:hover .icon {
+    fill: #ffffff;
+}
+
+/* --- EXISTING FEATURE STYLES (MERGED) --- */
+
+/* Weather Display (already partially in #top-bar section) */
+.weather-info { display: flex; align-items: center; gap: 8px; /* Added gap for spacing */ }
+/* .weather-icon class was for old img tag, new class is .weather-condition-svg */
+.weather-condition-svg { /* Styling for the new SVG weather icons */
+    width: 28px; /* Adjusted size for better fit in top bar */
+    height: 28px;
+    fill: var(--accent-color); /* Use theme accent color */
+    flex-shrink: 0; /* Prevent shrinking if space is tight */
+}
+.weather-text p { margin: 0; line-height: 1.3; }
+.weather-location { font-weight: 500; font-size: 0.9em; /* Slightly smaller to fit better */ }
+.weather-temp { font-size: 1.1em; font-weight: bold; color: var(--highlight-yellow); /* Gold/Yellow for temp */ }
+.weather-description { font-size: 0.8em; color: var(--text-muted-color); }
+.weather-loading, .weather-error { font-style: italic; color: var(--text-muted-color); }
+
+/* Comments Section (already partially in #home-view section) */
+#public-comments-section h3 { color: var(--accent-color); margin-top: 0; border-bottom: 1px solid var(--primary-accent-color); padding-bottom: 10px; margin-bottom: 20px; }
+#comment-form .form-group { margin-bottom: 15px; }
+#comment-form label { display: block; margin-bottom: 5px; color: var(--text-muted-color); font-size: 0.9em; }
+#comment-form input[type="text"], #comment-form textarea { width: 100%; padding: 10px; background-color: var(--primary-bg); border: 1px solid var(--border-color); border-radius: 5px; color: var(--text-color); font-family: var(--font-primary); box-sizing: border-box; transition: border-color 0.3s ease, box-shadow 0.3s ease; }
+#comment-form input[type="text"]:focus, #comment-form textarea:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 8px var(--accent-color); }
+#comment-form textarea { resize: vertical; min-height: 80px; }
+.btn-submit-comment { background-color: var(--accent-color); color: var(--primary-bg); border: none; padding: 10px 20px; border-radius: 5px; font-family: var(--font-primary); font-weight: 500; cursor: pointer; transition: background-color 0.3s ease, transform 0.2s ease; text-transform: uppercase; letter-spacing: 1px; }
+.btn-submit-comment:hover { background-color: var(--primary-accent-color); transform: translateY(-2px); }
+#comments-display-area { margin-top: 30px; }
+.comment-item { background-color: var(--secondary-bg); padding: 15px; margin-bottom: 15px; border-radius: 5px; border-left: 3px solid var(--accent-color); box-shadow: 2px 2px 5px rgba(0,0,0,0.2); }
+.comment-item strong { color: var(--accent-color); display: block; margin-bottom: 5px; }
+.comment-item p { margin: 0 0 8px 0; color: var(--text-color); word-wrap: break-word; }
+.comment-item .comment-timestamp { font-size: 0.8em; color: var(--text-muted-color); display: block; text-align: right; }
+
+/* AI CHAT */
+#ai-chat-view {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - var(--top-bar-height) - 30px); /* Adjusted for main-content padding */
+    padding:0;
+    box-sizing: border-box;
+    background-color: var(--secondary-bg); /* Darker, distinct background for the chat view */
+    border-radius: 10px; /* Optional: if views have distinct containers */
+    overflow: hidden; /* If using border-radius on the view itself */
+}
+
+#chat-messages-area {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 20px; /* More spacing */
+    background-color: var(--primary-bg); /* Or keep var(--primary-bg) if preferred over --secondary-bg from #ai-chat-view */
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Increased gap between messages */
+}
+
+/* Custom Scrollbar (Webkit browsers) */
+#chat-messages-area::-webkit-scrollbar { width: 8px; }
+#chat-messages-area::-webkit-scrollbar-track { background: var(--primary-bg); } /* Or var(--secondary-bg) to match view */
+#chat-messages-area::-webkit-scrollbar-thumb { background-color: var(--accent-color); border-radius: 4px; }
+#chat-messages-area::-webkit-scrollbar-thumb:hover { background-color: var(--primary-accent-color); }
+
+.chat-message-wrapper {
+    display: flex;
+    align-items: flex-end;
+    margin-bottom: 0; /* Gap is now on #chat-messages-area */
+    max-width: 85%;
+}
+
+.chat-message-wrapper.user {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+
+.chat-message-wrapper.ai {
+    align-self: flex-start;
+    flex-direction: row;
+}
+
+.chat-avatar-container {
+    width: 36px; /* Avatar size */
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 8px;
+    flex-shrink: 0;
+    border: 1px solid var(--border-color); /* Added border */
+}
+
+.chat-message-wrapper.user .chat-avatar-container {
+    background-color: var(--accent-color);
+}
+.chat-message-wrapper.user .chat-avatar-container .icon {
+    fill: var(--primary-bg);
+}
+.chat-message-wrapper.ai .chat-avatar-container {
+    background-color: var(--surface-color);
+}
+.chat-message-wrapper.ai .chat-avatar-container .icon {
+    fill: var(--accent-color);
+}
+
+.chat-avatar-container .icon {
+    width: 20px;
+    height: 20px;
+    /* fill is set by user/ai specific rules above */
+}
+
+
+.chat-bubble {
+    padding: 12px 18px; /* Slightly more padding */
+    border-radius: 22px; /* More pronounced rounding */
+    max-width: calc(100% - 40px - 16px);
+    line-height: 1.6; /* Improved line height */
+    word-wrap: break-word;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.25); /* Enhanced shadow */
+}
+
+.chat-message-wrapper.user .chat-bubble {
+    background-color: var(--primary-accent-color); /* A different shade for user */
+    color: #ffffff; /* Ensure text is readable */
+    border-bottom-right-radius: 6px; /* Sharper corner for "tail" effect */
+}
+.chat-message-wrapper.user .chat-bubble strong { color: #fff; } /* Ensure bold is visible */
+.chat-message-wrapper.user .chat-bubble h3,
+.chat-message-wrapper.user .chat-bubble h4 { color: #f0f0f0; }
+
+
+.chat-message-wrapper.ai .chat-bubble {
+    background-color: var(--surface-color); /* Keep AI bubbles distinct */
+    color: var(--text-color);
+    border-bottom-left-radius: 6px; /* Sharper corner for "tail" effect */
+}
+
+/* Styling for formatted text within chat bubbles */
+.chat-bubble h3 { /* For ### titles in chat */
+    font-size: 1.2em; /* Adjust as needed for chat context */
+    color: var(--secondary-accent-color); /* Or another distinct color */
+    margin-top: 0.5em;
+    margin-bottom: 0.3em;
+    font-weight: 600;
+}
+.chat-bubble h4 { /* For ## subtitles in chat */
+    font-size: 1.1em;
+    color: var(--primary-accent-color); /* Use a theme color */
+    margin-top: 0.4em;
+    margin-bottom: 0.2em;
+    font-weight: 600;
+}
+/* .chat-bubble strong styling will be inherited or can be specified if needed.
+   For example, if the default strong color isn't contrasting enough in a specific bubble type: */
+/* .chat-message-wrapper.ai .chat-bubble strong { color: var(--accent-color); } */
+
+
+.chat-bubble .typing-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 0;
+}
+
+.typing-indicator span {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin: 0 2px;
+    background-color: var(--text-muted-color); /* Or specific to bubble bg */
+    border-radius: 50%;
+    animation: typing-bounce 1.4s infinite ease-in-out both;
+}
+.chat-message-wrapper.ai .chat-bubble .typing-indicator span {
+     background-color: var(--accent-color); /* Example: make AI typing dots match accent */
+}
+.typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+.typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+
+
+@keyframes typing-bounce {
+    0%, 80%, 100% { transform: scale(0); }
+    40% { transform: scale(1.0); }
+}
+
+#chat-input-bar {
+    display: flex;
+    align-items: center;
+    padding: 15px; /* More padding */
+    background-color: var(--primary-bg); /* Match primary background for contrast with secondary-bg view */
+    border-top: 1px solid var(--surface-color); /* Softer border */
+}
+#chat-input-field {
+    flex-grow: 1;
+    padding: 14px 20px; /* More padding */
+    border: 1px solid var(--border-color);
+    border-radius: 25px; /* More rounded */
+    background-color: var(--surface-color); /* Slightly different from bar for definition */
+    color: var(--text-color);
+    font-family: var(--font-primary);
+    margin-right: 10px;
+    outline: none;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    font-size: 1em;
+}
+#chat-input-field:focus { border-color: var(--accent-color); box-shadow: 0 0 8px var(--accent-color); }
+
+#chat-send-button { /* Assuming it's still an .icon-button */
+    width: 48px; /* Slightly larger */
+    height: 48px;
+    padding:0; /* Reset padding if using fixed size */
+    background-color: var(--accent-color); /* Ensure it stands out */
+    border: none; /* Overrides default .icon-button border if any */
+}
+#chat-send-button .icon {
+     width: 26px; /* Adjust icon size within button */
+     height: 26px;
+     fill: var(--primary-bg); /* Icon color on accent background */
+     margin-right: 0; /* Remove margin if centered in circle */
+}
+#chat-send-button:hover { background-color: var(--primary-accent-color); } /* Darken on hover */
+#chat-send-button:disabled { background-color: var(--text-muted-color) !important; cursor: not-allowed; }
+
+/* Generic Button Styling - .btn-primary */
+.btn-primary,
+#generate-image-button,
+#generate-story-button,
+#chat-send-button { /* Applying --action-color to these primary buttons */
+    background-color: var(--action-color); /* New orange */
+    color: var(--primary-bg); /* Ensure contrast */
+    border: none; /* Common style for these buttons */
+    padding: 10px 20px;
+    border-radius: 25px; /* Pill shape */
+    font-family: var(--font-primary);
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+}
+.btn-primary:hover,
+#generate-image-button:hover,
+#generate-story-button:hover,
+#chat-send-button:hover {
+    background-color: #ffad33; /* Lighter orange for hover */
+    transform: translateY(-2px); /* Keep existing transform */
+    box-shadow: 0 4px 10px rgba(255, 153, 0, 0.3); /* Orange glow for hover */
+}
+.btn-primary:disabled {
+    background-color: var(--text-muted-color) !important; /* Ensure precedence */
+    color: var(--surface-color) !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* General Input and Textarea Styling */
+/* Ensure .icon-button is suitable for icon-only buttons */
+.icon-button { /* Reviewing existing styles for icon-only context */
+    /* padding: 8px; /* Base padding */
+    /* border-radius: 50%; /* Base is circular */
+    /* For non-circular icon buttons (like generate/download), these are overridden by specific ID styles */
+}
+.icon-button .icon {
+    margin: 0; /* Ensure no extra margin if it's truly icon-only */
+}
+
+/* Specific icon color adjustments based on new button backgrounds */
+#generate-image-button .icon,
+#generate-story-button .icon,
+#chat-send-button .icon,
+.btn-primary .icon { /* If .btn-primary can contain icons */
+    fill: var(--primary-bg); /* Icon color for --action-color background */
+}
+
+.btn-admin-reply .icon {
+    fill: var(--primary-bg); /* For --accent-color or --action-color background */
+}
+.btn-admin-delete .icon {
+    fill: #ffffff; /* For --secondary-accent-color background */
+}
+
+#story-listen-button .icon,
+#story-translate-button .icon,
+#story-download-button-text .icon { /* Assuming these use default icon button styles or themed like VIP controls */
+    /* fill: var(--text-color); /* Or specific if their button bg changes */
+}
+
+
+input[type="text"],
+input[type="password"],
+input[type="email"], /* Adding for contact form later */
+textarea {
+    background-color: var(--primary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 5px; /* Default radius, can be overridden */
+    color: var(--text-color);
+    font-family: var(--font-primary);
+    padding: 10px 15px; /* Default padding */
+    width: 100%; /* Default to full width within container */
+    box-sizing: border-box;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus,
+textarea:focus {
+    outline: none;
+    border-color: var(--action-color); /* Orange border on focus */
+    box-shadow: 0 0 8px rgba(255, 153, 0, 0.6); /* Orange glow (using direct RGB for action-color #ff9900) */
+}
+textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+
+.web-search-container { display: flex; align-items: center; margin-right: 15px; font-size: 0.9em; }
+.web-search-label { color: var(--text-muted-color); margin-right: 8px; }
+.switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--surface-color); transition: .4s; border-radius: 20px; border: 1px solid var(--border-color); }
+.slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 2px; bottom: 2px; background-color: var(--text-muted-color); transition: .4s; border-radius: 50%; }
+input:checked + .slider { background-color: var(--accent-color); border-color: var(--accent-color); }
+input:checked + .slider:before { transform: translateX(20px); background-color: var(--primary-bg); }
+
+/* IMAGE GENERATOR */
+#image-generator-view {
+    background-color: var(--secondary-bg); /* Consistent with other views */
+    padding: 25px;
+    border-radius: 10px;
+    box-sizing: border-box;
+    /* Consider a subtle background pattern or gradient if desired */
+}
+
+#image-generator-view h2 {
+    color: var(--accent-color); /* Already there, ensure consistency */
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 30px; /* More space below title */
+}
+
+#image-prompt-area {
+    display: flex;
+    margin-bottom: 30px; /* More space after prompt area */
+    gap: 15px; /* More gap between input and button */
+}
+
+#image-prompt-field {
+    flex-grow: 1;
+    padding: 15px 22px; /* Increase padding */
+    background-color: var(--primary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 30px; /* More rounded */
+    color: var(--text-color);
+    font-family: var(--font-primary);
+    outline: none;
+    font-size: 1.1em; /* Slightly larger font */
+    /* Add a subtle transition for focus */
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+#image-prompt-field:focus {
+    border-color: var(--primary-accent-color); /* Different accent for focus */
+    box-shadow: 0 0 12px var(--primary-accent-color);
+}
+
+/* #generate-image-button, #download-image-button are .icon-button. Specific overrides: */
+#generate-image-button {
+    padding: 15px 25px; /* Increase padding */
+    /* background-color: var(--action-color); /* Handled by shared rule */
+    /* color: var(--primary-bg); /* Handled by shared rule */
+    border-radius: 30px; /* More rounded */
+    border: none;
+    font-weight: 500;
+    font-size: 1em;
+}
+#generate-image-button .icon {
+    fill: var(--primary-bg);
+    margin-right: 8px; /* Space between icon and text if any */
+}
+#generate-image-button:hover { background-color: var(--primary-accent-color); transform: translateY(-2px); }
+#generate-image-button:disabled { background-color: var(--text-muted-color) !important; cursor: not-allowed; }
+
+#image-display-area {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 350px; /* Slightly larger min-height */
+    max-height: 65vh;
+    background-color: var(--primary-bg); /* Darker background for contrast */
+    border: 2px dashed var(--primary-accent-color); /* More prominent border */
+    border-radius: 15px; /* More rounding */
+    margin-bottom: 20px;
+    padding: 20px; /* More padding */
+    text-align: center;
+    color: var(--text-muted-color);
+}
+#image-display-area p { /* Placeholder text styling */
+    font-size: 1.1em;
+    color: var(--text-muted-color);
+}
+#image-display-area img {
+    max-width: 100%;
+    max-height: calc(65vh - 40px); /* Adjusted for padding */
+    border-radius: 10px; /* Rounded corners for the image */
+    object-fit: contain;
+    box-shadow: 0 5px 20px rgba(0, 255, 255, 0.25); /* More pronounced shadow */
+}
+.image-loading, .image-error {
+    font-style: italic;
+    font-size: 1.1em; /* Consistent with placeholder */
+}
+.image-error { color: var(--secondary-accent-color); }
+
+#download-image-button {
+    padding: 15px 25px; /* Increase padding */
+    background-color: var(--accent-color);
+    color: var(--primary-bg);
+    border-radius: 30px; /* More rounded */
+    border: none;
+    font-weight: 500;
+    font-size: 1em;
+    margin: 20px auto; /* Ensure it's centered and has space */
+    display: none; /* Keep initial display:none */
+}
+#download-image-button .icon {
+    fill: var(--primary-bg);
+    margin-right: 8px;
+}
+#download-image-button:hover { background-color: var(--primary-accent-color); transform: translateY(-2px); }
+
+
+#image-history-gallery {
+    margin-top: 35px;
+    padding-top: 25px;
+    border-top: 1px solid var(--surface-color); /* Softer separator */
+}
+#image-history-gallery h4 {
+    color: var(--primary-accent-color);
+    margin-bottom: 20px;
+    text-align: center;
+    font-size: 1.3em; /* Larger history title */
+}
+.image-history-list {
+    list-style-type: none;
+    padding: 0;
+    max-height: 250px; /* More space for history items */
+    overflow-y: auto;
+    border: 1px solid var(--surface-color); /* Softer border */
+    background-color: var(--primary-bg); /* Match input field bg */
+    border-radius: 5px;
+    padding: 10px;
+}
+.image-history-item {
+    background-color: var(--secondary-bg);
+    padding: 10px 15px; /* Adjust padding */
+    margin-bottom: 0; /* Using border as separator */
+    border-bottom: 1px solid var(--surface-color); /* Separator */
+    border-radius: 0; /* Items are flush */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.95em; /* Slightly larger font for history items */
+    color: var(--text-muted-color);
+}
+.image-history-item:last-child { border-bottom: none; }
+.image-history-item span {
+    flex-grow: 1;
+    margin-right: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-color); /* Make prompt text clearer */
+}
+.btn-history-regenerate {
+    background-color: var(--accent-color);
+    color: var(--primary-bg);
+    border: none;
+    padding: 6px 12px; /* Adjust padding */
+    border-radius: 5px; /* More rounded */
+    font-size: 0.85em; /* Slightly larger font */
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    white-space: nowrap;
+}
+.btn-history-regenerate:hover { background-color: var(--primary-accent-color); }
+.history-empty-message {
+    text-align: center;
+    color: var(--text-muted-color);
+    font-style: italic;
+    font-size: 1em; /* Consistent font size */
+    padding: 15px; /* Add some padding */
+}
+
+/* STORY GENERATOR */
+#story-generator-view {
+    padding: 25px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    background-color: var(--secondary-bg); /* Darker background for the view */
+    border-radius: 10px;
+}
+#story-generator-view h2 { color: var(--accent-color); text-align: center; margin-top: 0; margin-bottom: 10px; }
+
+#story-prompt-area {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 25px;
+}
+#story-theme-field {
+    flex-grow: 1;
+    padding: 15px 20px; /* Larger padding */
+    background-color: var(--primary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 30px; /* More rounded */
+    color: var(--text-color);
+    font-family: var(--font-primary);
+    outline: none;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    font-size: 1.1em; /* Slightly larger font */
+}
+#story-theme-field:focus { border-color: var(--accent-color); box-shadow: 0 0 10px var(--accent-color); }
+
+/* #generate-story-button is an .icon-button. Specific overrides: */
+#generate-story-button {
+    padding: 15px 25px; /* Larger padding */
+    /* background-color: var(--action-color); /* Handled by shared rule */
+    /* color: var(--primary-bg); /* Handled by shared rule */
+    border-radius: 30px; /* More rounded */
+    border: none;
+    font-weight: 500;
+    font-size: 1em;
+}
+#generate-story-button .icon { fill: var(--primary-bg); }
+#generate-story-button:hover { background-color: var(--primary-accent-color); transform: translateY(-2px); }
+#generate-story-button:disabled { background-color: var(--text-muted-color) !important; cursor: not-allowed; }
+
+#generated-story-display {
+    min-height: 200px;
+    max-height: 40vh;
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 20px; /* Increased padding */
+    overflow-y: auto;
+    white-space: pre-wrap;
+    color: var(--text-color);
+    font-size: 1.05em; /* Slightly larger font */
+    line-height: 1.7; /* More line spacing */
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.3); /* Softer inset shadow */
+}
+#generated-story-display h3 { /* Styling for ### titles */
+    color: var(--accent-color);
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    border-bottom: 1px solid var(--primary-accent-color);
+    padding-bottom: 0.3em;
+}
+#generated-story-display h4 { /* Styling for ## or *** subtitles */
+    color: var(--primary-accent-color);
+    margin-top: 1.2em;
+    margin-bottom: 0.4em;
+}
+#generated-story-display strong { /* Styling for bold */
+    font-weight: bold; /* browser default is usually bold already, but explicit */
+    color: var(--text-color); /* Ensure it stands out if base color is muted */
+}
+
+.story-loading, .story-error { font-style: italic; color: var(--text-muted-color); text-align: center; padding: 20px; }
+
+#story-vip-controls {
+    display: none;
+    justify-content: center;
+    gap: 10px;
+    padding-top: 15px; /* Adjusted padding */
+    padding-bottom: 15px; /* Adjusted padding */
+    border-top: 1px solid var(--surface-color);
+    border-bottom: 1px solid var(--surface-color);
+    margin-top: 20px; /* Adjusted margin */
+}
+/* #story-vip-controls button are .icon-button. Specific overrides: */
+#story-vip-controls button {
+    padding: 10px 20px; /* Adjust padding */
+    background-color: var(--secondary-accent-color);
+    border: 1px solid var(--secondary-accent-color);
+    border-radius: 8px; /* Slightly more rounded */
+    font-weight: 500;
+    color: var(--text-color);
+    font-size: 0.95em;
+}
+#story-vip-controls button:hover {
+    opacity: 0.85;
+    transform: translateY(-1px);
+    background-color: var(--secondary-accent-color); /* Keep bg on hover for these */
+}
+
+#story-history-area {
+    margin-top: 25px; /* Adjusted margin */
+}
+#story-history-area h4 { color: var(--primary-accent-color); margin-bottom: 10px; text-align: center; }
+#story-history-list {
+    list-style-type: none;
+    padding: 0;
+    max-height: 150px;
+    overflow-y: auto;
+    background-color: var(--primary-bg); /* Match input field bg */
+    border: 1px solid var(--border-color); /* Consistent border */
+    border-radius: 5px;
+    padding: 10px;
+}
+.story-history-item {
+    background-color: var(--secondary-bg);
+    padding: 12px 15px; /* Adjust padding */
+    margin-bottom: 0; /* Remove bottom margin, use border as separator */
+    border-bottom: 1px solid var(--surface-color); /* Separator */
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    font-size: 0.9em;
+    color: var(--text-muted-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.story-history-item:last-child {
+    border-bottom: none;
+}
+.story-history-item:hover {
+    background-color: var(--accent-color);
+    color: var(--primary-bg);
+}
+
+/* VIP AREA & TOOLS */
+#vip-view {
+    /* .view base styles are applied (background, default padding, border-radius for the view itself) */
+    /* Override padding if needed for more "full screen" feel */
+    padding: 15px; /* Or less, e.g., 10px or 5px, depending on desired spacing around iframe */
+    display: flex; /* Use flex to make iframe container fill height */
+    flex-direction: column;
+    /* Ensure vip-view itself tries to take full content height.
+       The main #main-content is already flex-grow: 1.
+       .view.active is display:block, flex-grow:1. This should work. */
+}
+#vip-view h2 {
+    color: var(--highlight-yellow); /* Updated color */
+    text-align: center; /* Center title as access area is gone */
+    margin-top: 0; /* Remove default top margin if view padding handles it */
+    margin-bottom: 10px; /* Space between title and iframe container */
+    flex-shrink: 0; /* Prevent title from shrinking if content grows */
+}
+/* #vip-view > p related styles can be removed as the <p> element was removed from HTML */
+
+/* Remove styles for the old vip-access-area as it's deleted from HTML */
+/*
+#vip-access-area { background-color: var(--surface-color); padding: 30px; border-radius: 10px; max-width: 400px; margin: 0 auto 30px auto; box-shadow: 0 0 20px rgba(0, 255, 255, 0.15); }
+#vip-access-area p { margin-top: 0; margin-bottom: 10px; color: var(--text-color); }
+#vip-code-input { width: calc(100% - 24px); padding: 12px; margin-bottom: 20px; background-color: var(--primary-bg); border: 1px solid var(--border-color); border-radius: 5px; color: var(--text-color); font-family: var(--font-primary); text-align: center; font-size: 1.1em; }
+#vip-code-input:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 8px var(--accent-color); }
+#vip-code-submit { background-color: var(--secondary-accent-color); color: var(--text-color); border: none; padding: 12px 25px; border-radius: 5px; font-family: var(--font-primary); font-weight: bold; cursor: pointer; transition: background-color 0.3s ease, transform 0.2s ease; text-transform: uppercase; letter-spacing: 1px; width: 100%; }
+#vip-code-submit:hover { background-color: #ff6b81; transform: translateY(-2px); }
+#vip-status-message { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: 500; }
+.vip-status-success { background-color: rgba(0, 255, 127, 0.1); color: #00ff7f; border: 1px solid #00ff7f; }
+.vip-status-error { background-color: rgba(255, 0, 0, 0.1); color: #ff4d4d; border: 1px solid #ff4d4d; }
+*/
+
+/* Styles for the iframe container to achieve full-screen feel within the view */
+#vip-iframe-container {
+    width: 100%;
+    flex-grow: 1; /* This will make it take available vertical space */
+    border: 1px solid var(--border-color); /* Optional: keep a border for the iframe area */
+    border-radius: 8px;
+    overflow: hidden; /* To respect border-radius for iframe content */
+    /* margin-top is removed as h2 margin-bottom handles spacing, or can be added if no title */
+}
+
+#vip-iframe-container iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* Commenting out old #vip-tools-container and related styles */
+/*
+#vip-tools-container { text-align: left; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+*/
+
+/* --- DETAILED WEATHER VIEW STYLES --- */
+#weather-view {
+    /* .view base styles are applied: background-color, padding, border-radius */
+    text-align: center;
+}
+.weather-location-title {
+    font-size: 1.8em;
+    color: var(--accent-color);
+    margin-bottom: 20px;
+}
+.current-conditions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 30px;
+    background-color: var(--surface-color);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+.current-temp {
+    font-size: 3.5em;
+    font-weight: bold;
+    color: var(--text-color);
+}
+.current-sky {
+    font-size: 1.3em;
+    color: var(--text-muted-color);
+    margin-bottom: 10px;
+}
+/* Targeting the SVG directly if getWeatherSvgIcon injects it */
+.current-conditions .weather-condition-svg {
+    width: 100px;
+    height: 100px;
+    fill: var(--accent-color);
+    margin-top: 10px;
+}
+
+.weather-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+    margin-bottom: 30px;
+    text-align: left;
+}
+.weather-details-grid > div {
+    background-color: var(--surface-color);
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 0.95em;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+.weather-details-grid > div:nth-child(odd) { /* Optional: slightly different bg for alternating items */
+    /* background-color: #2a2a4e; */ /* Example if var(--surface-color) is too uniform */
+}
+
+
+.weather-forecast h4 {
+    font-size: 1.5em;
+    color: var(--primary-accent-color);
+    margin-bottom: 15px;
+    border-bottom: 1px solid var(--surface-color);
+    padding-bottom: 10px;
+}
+.forecast-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); /* Adjusted minmax for potentially smaller items */
+    gap: 15px;
+}
+.forecast-day {
+    background-color: var(--surface-color);
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 0.9em;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+.forecast-day > div { margin-bottom: 5px; }
+.forecast-day .weather-condition-svg { /* if using SVG directly */
+    width: 50px;
+    height: 50px;
+    fill: var(--accent-color);
+    margin: 5px auto;
+}
+/* Ensure weather-loading and weather-error classes are styled for the detailed view */
+#weather-view .weather-loading,
+#weather-view .weather-error {
+    font-size: 1.2em;
+    color: var(--text-muted-color);
+    padding: 40px 20px;
+    text-align: center;
+}
+#weather-view .weather-error {
+    color: var(--secondary-accent-color);
+}
+/* --- END OF DETAILED WEATHER VIEW STYLES --- */
+*/
+
+/* --- DETAILED WEATHER VIEW STYLES --- */
+#weather-view {
+    /* .view base styles are applied: background-color, padding, border-radius */
+    text-align: center;
+}
+.weather-location-title {
+    font-size: 1.8em;
+    color: var(--accent-color);
+    margin-bottom: 20px;
+}
+.current-conditions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 30px;
+    background-color: var(--surface-color);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+.current-temp {
+    font-size: 3.5em;
+    font-weight: bold;
+    color: var(--text-color);
+}
+.current-sky {
+    font-size: 1.3em;
+    color: var(--text-muted-color);
+    margin-bottom: 10px;
+}
+/* Targeting the SVG directly if getWeatherSvgIcon injects it */
+.current-conditions .weather-condition-svg {
+    width: 100px;
+    height: 100px;
+    fill: var(--accent-color);
+    margin-top: 10px;
+}
+
+.weather-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+    margin-bottom: 30px;
+    text-align: left;
+}
+.weather-details-grid > div {
+    background-color: var(--surface-color);
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 0.95em;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+.weather-details-grid > div:nth-child(odd) { /* Optional: slightly different bg for alternating items */
+    /* background-color: #2a2a4e; */ /* Example if var(--surface-color) is too uniform */
+}
+
+
+.weather-forecast h4 {
+    font-size: 1.5em;
+    color: var(--primary-accent-color);
+    margin-bottom: 15px;
+    border-bottom: 1px solid var(--surface-color);
+    padding-bottom: 10px;
+}
+.forecast-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); /* Adjusted minmax for potentially smaller items */
+    gap: 15px;
+}
+.forecast-day {
+    background-color: var(--surface-color);
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 0.9em;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+.forecast-day > div { margin-bottom: 5px; }
+.forecast-day .weather-condition-svg { /* if using SVG directly */
+    width: 50px;
+    height: 50px;
+    fill: var(--accent-color);
+    margin: 5px auto;
+}
+/* --- END OF DETAILED WEATHER VIEW STYLES --- */
+#vip-tools-container h3 { color: var(--primary-accent-color); margin-top: 20px; margin-bottom: 15px; grid-column: 1 / -1; border-bottom: 1px solid var(--surface-color); padding-bottom: 10px; }
+#vip-tools-container h3:first-of-type { margin-top: 0; }
+.vip-tool { background-color: var(--surface-color); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 2px 10px rgba(0,0,0,0.2); transition: transform 0.3s ease, box-shadow 0.3s ease; display: flex; flex-direction: column; gap: 15px; }
+.vip-tool:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0, 255, 255, 0.2); }
+.vip-tool h4 { color: var(--accent-color); margin-top: 0; margin-bottom: 10px; }
+.vip-tool > p { color: var(--text-muted-color); font-size: 0.9em; line-height: 1.5; }
+.vip-tool p:first-of-type { margin-bottom: 5px; }
+.vip-ai-input { width: 100%; min-height: 100px; padding: 10px; background-color: var(--primary-bg); border: 1px solid var(--border-color); border-radius: 5px; color: var(--text-color); font-family: var(--font-primary); resize: vertical; box-sizing: border-box; }
+.vip-ai-input:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 8px var(--accent-color); }
+.vip-ai-send-btn { padding: 10px 15px; background-color: var(--accent-color); color: var(--primary-bg); border-radius: 5px; border: none; font-weight: 500; align-self: flex-start; }
+.vip-ai-send-btn .icon { fill: var(--primary-bg); margin-right: 6px; width: 18px; height: 18px; }
+.vip-ai-send-btn:hover { background-color: var(--primary-accent-color); transform: translateY(-2px); }
+.vip-ai-send-btn:disabled { background-color: var(--text-muted-color) !important; cursor: not-allowed; transform: none; }
+.vip-ai-response { min-height: 80px; padding: 15px; background-color: var(--primary-bg); border: 1px dashed var(--border-color); border-radius: 5px; overflow-y: auto; white-space: pre-wrap; color: var(--text-color); font-size: 0.95em; line-height: 1.6; }
+.vip-ai-response p:first-child { margin-top: 0; color: var(--text-muted-color); font-style: italic; }
+.vip-ai-loading, .vip-ai-error { font-style: italic; text-align: center; padding: 20px; }
+.vip-ai-loading { color: var(--accent-color); }
+.vip-ai-error { color: var(--secondary-accent-color); }
+
+#file-reader-input { display: block; width: 100%; padding: 10px; margin-bottom: 10px; background-color: var(--primary-bg); border: 1px dashed var(--border-color); color: var(--text-muted-color); border-radius: 5px; box-sizing: border-box; cursor: pointer; transition: background-color 0.3s ease, border-color 0.3s ease; }
+#file-reader-input:hover { background-color: var(--secondary-bg); border-color: var(--accent-color); }
+#file-reader-input::file-selector-button { background-color: var(--accent-color); color: var(--primary-bg); border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; margin-right: 10px; font-family: var(--font-primary); transition: background-color 0.2s ease; }
+#file-reader-input::file-selector-button:hover { background-color: var(--primary-accent-color); }
+#file-reader-process-btn { background-color: var(--primary-accent-color); color: var(--primary-bg); border: none; border-radius: 5px; padding: 10px 15px; margin-bottom: 15px; align-self: flex-start; }
+#file-reader-process-btn .icon { fill: var(--primary-bg); }
+#file-reader-process-btn:hover { background-color: var(--accent-color); transform: translateY(-1px); }
+#file-reader-content-display { border-style: solid; background-color: var(--secondary-bg); font-size: 0.9em; }
+#file-reader-qa-area { border-top: 1px solid var(--surface-color); padding-top: 15px; margin-top: 20px; }
+#file-reader-qa-area #file-reader-question { min-height: 60px; }
+#file-reader-qa-area #file-reader-answer { margin-top: 10px; }
+*/
+
+/* --- ADMIN PANEL TABS AND ANALYTICS STYLES --- */
+.admin-panel-tabs {
+    display: flex;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--surface-color);
+}
+.admin-tab-button {
+    padding: 10px 20px;
+    cursor: pointer;
+    background-color: transparent;
+    border: none;
+    color: var(--text-muted-color);
+    font-size: 1.1em;
+    font-family: var(--font-primary);
+    font-weight: 500;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px; /* Align with parent border for active state */
+    transition: color 0.3s ease, border-bottom-color 0.3s ease;
+}
+.admin-tab-button.active {
+    color: var(--accent-color);
+    border-bottom-color: var(--accent-color);
+}
+.admin-tab-button:hover {
+    color: var(--primary-accent-color);
+}
+.admin-tab-content { display: none; }
+.admin-tab-content.active { display: block; }
+
+#admin-analytics-summary {
+    background-color: var(--surface-color);
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    border: 1px solid var(--border-color);
+}
+#admin-analytics-summary p {
+    margin: 5px 0;
+    font-size: 1.1em;
+    color: var(--text-color);
+}
+#admin-analytics-summary strong {
+    color: var(--action-color);
+    font-weight: 500;
+}
+
+#analytics-admin-tab h3, /* For "Site Analytics" title */
+#comments-admin-tab h3 { /* For "Manage Comments" title */
+    color: var(--primary-accent-color);
+    font-size: 1.4em;
+    margin-top: 0; /* As it's the first element in the tab content */
+    margin-bottom: 15px;
+}
+
+
+#admin-recent-activities {
+    margin-top: 10px;
+}
+#admin-recent-activities h4 { /* "Recent Activities:" title */
+    color: var(--accent-color);
+    font-size: 1.2em;
+    margin-bottom: 10px;
+}
+#admin-recent-activities ul { list-style: none; padding: 0; }
+#admin-recent-activities li {
+    background-color: var(--surface-color);
+    padding: 10px 15px;
+    margin-bottom: 8px;
+    border-radius: 5px;
+    font-size: 0.9em;
+    border-left: 3px solid var(--primary-accent-color);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+#admin-recent-activities li .activity-time {
+    color: var(--text-muted-color);
+    font-size: 0.85em;
+    display: block; /* Ensure it takes its own line or space */
+    margin-top: 4px;
+}
+#admin-recent-activities li .activity-uid {
+    font-weight: bold;
+    color: var(--action-color);
+}
+#admin-recent-activities li .activity-details {
+    font-style: italic;
+    color: var(--text-muted-color);
+    word-break: break-all; /* Prevent long details from breaking layout */
+}
+
+
+/* --- ADMIN PANEL STYLES --- */ /* Existing comment management styles follow */
+#admin-panel-view {
+    /* .view base styles are applied: background-color, padding, border-radius */
+    /* Specific padding for admin view if needed, otherwise defaults to .view padding */
+}
+
+#admin-panel-view h2 {
+    color: var(--secondary-accent-color); /* Distinct color for admin title */
+    text-align: center;
+    margin-bottom: 25px;
+    border-bottom: 1px solid var(--surface-color);
+    padding-bottom: 10px;
+}
+
+#admin-comments-list {
+    max-width: 800px; /* Limit width for readability */
+    margin: 0 auto;
+}
+
+.admin-comment-item {
+    background-color: var(--surface-color);
+    padding: 15px 20px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    border-left: 4px solid var(--secondary-accent-color); /* Admin accent border */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+}
+
+.admin-comment-item .comment-header {
+    font-size: 0.9em;
+    color: var(--text-muted-color);
+    margin-bottom: 8px;
+}
+.admin-comment-item .comment-header strong {
+    color: var(--primary-accent-color); /* User name color */
+    font-weight: 500;
+}
+.admin-comment-item .comment-header .comment-timestamp {
+    font-style: italic;
+}
+
+.comment-text-admin { /* Class for the user's comment text in admin panel */
+    margin-bottom: 15px;
+    padding-left: 10px;
+    border-left: 3px solid var(--border-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    font-style: italic; /* Differentiate user comment */
+}
+
+.admin-reply-display {
+    margin-bottom: 15px;
+}
+.admin-reply-display .admin-reply-text { /* Class for displaying existing admin reply */
+    background-color: var(--primary-bg); /* Slightly different bg for reply */
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 0.95em;
+    color: var(--text-color);
+    border: 1px dashed var(--primary-accent-color);
+}
+.admin-reply-display .admin-reply-text strong { /* "Admin Reply:" part */
+    color: var(--secondary-accent-color);
+}
+.admin-reply-display .admin-reply-text .comment-timestamp { /* Timestamp for reply */
+    font-size: 0.8em;
+    color: var(--text-muted-color);
+    display: block;
+    margin-top: 5px;
+}
+
+
+.admin-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.admin-reply-input { /* Textarea for admin to type reply */
+    width: 100%;
+    min-height: 70px;
+    padding: 10px;
+    background-color: var(--primary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    color: var(--text-color);
+    font-family: var(--font-primary);
+    resize: vertical;
+}
+.admin-reply-input:focus {
+    outline: none;
+    border-color: var(--secondary-accent-color); /* Admin accent on focus */
+    box-shadow: 0 0 8px rgba(var(--secondary-accent-color), 0.5);
+}
+
+.admin-actions button { /* Base for admin action buttons */
+    padding: 8px 15px;
+    border-radius: 5px;
+    font-family: var(--font-primary);
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    border: none;
+}
+
+.btn-admin-reply {
+    background-color: var(--accent-color);
+    color: var(--primary-bg);
+}
+.btn-admin-reply:hover {
+    background-color: var(--primary-accent-color);
+    transform: translateY(-1px);
+}
+
+.btn-admin-delete {
+    background-color: var(--secondary-accent-color); /* Reddish for delete */
+    color: #ffffff;
+}
+.btn-admin-delete:hover {
+    background-color: #d0384f; /* Darker red */
+    transform: translateY(-1px);
+}
+
+#admin-comments-list hr {
+    border: none;
+    height: 1px;
+    background-color: var(--surface-color); /* Use a subtle color from palette */
+    margin-top: 20px; /* Space it out from the last action button */
+    margin-bottom: 20px; /* Ensure it's not too close to the next item */
+}
+/* Ensure the last item doesn't have an <hr> after it if it's the very last child of the list */
+.admin-comment-item:last-child hr {
+    display: none;
+}
+
+/* Styles for displaying admin reply on the public comments section */
+.admin-reply-public {
+    background-color: var(--surface-color); /* Or a slightly different shade like --primary-bg */
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 5px;
+    border-left: 3px solid var(--secondary-accent-color); /* Admin accent */
+    font-size: 0.9em;
+}
+.admin-reply-public strong { /* "Admin Reply:" text */
+    color: var(--secondary-accent-color);
+    font-weight: bold;
+}
+.admin-reply-public .comment-timestamp { /* Timestamp for admin reply */
+    font-size: 0.85em;
+    color: var(--text-muted-color);
+    display: block;
+    margin-top: 4px;
+}
+
+/* General error message styling for forms (e.g., comment submission) */
+.error-message {
+    color: var(--secondary-accent-color);
+    font-size: 0.9em;
+    margin-top: 5px;
+    padding: 8px;
+    background-color: rgba(233, 69, 96, 0.1); /* Light red background */
+    border: 1px dashed var(--secondary-accent-color);
+    border-radius: 4px;
+    display: block; /* Or inline-block depending on context */
+}
+
+/* --- CONTACT VIEW STYLES --- */
+#contact-view { /* Uses .view base styles */
+    padding: 25px;
+    text-align: center; /* Center the content like title and map placeholder */
+}
+#contact-view h2 {
+    color: var(--primary-accent-color);
+    margin-bottom: 30px;
+}
+.contact-details {
+    max-width: 600px;
+    margin: 0 auto 30px auto; /* Center details block and add margin */
+    text-align: left; /* Align text within the block to the left */
+    background-color: var(--surface-color);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+.contact-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 10px;
+    border-bottom: 1px solid var(--primary-bg); /* Separator line */
+}
+.contact-item:last-child {
+    margin-bottom: 0;
+    border-bottom: none;
+}
+.contact-label {
+    font-weight: bold;
+    color: var(--accent-color);
+    margin-right: 15px;
+    display: inline-flex; /* Align icon and text */
+    align-items: center;
+    min-width: 120px; /* Give labels some consistent width */
+}
+.contact-icon {
+    margin-right: 8px;
+    fill: var(--accent-color); /* Ensure icon color */
+    width: 20px; /* Standardize icon size */
+    height: 20px;
+}
+.contact-value {
+    color: var(--text-color);
+    font-size: 1.05em;
+}
+.contact-value:hover {
+    color: var(--primary-accent-color);
+    text-decoration: underline;
+}
+.contact-map { /* Placeholder for map/image */
+    margin-top: 30px;
+    padding: 15px;
+    background-color: var(--surface-color);
+    border-radius: 8px;
+    color: var(--text-muted-color);
+}
+.contact-map iframe {
+    border-radius: 6px;
+    margin-top: 15px;
+    width: 100%; /* Ensure iframe is responsive if its parent is */
+    max-width: 600px; /* Optional: set a max-width for very large screens */
+}
+
+/* --- HOME PAGE WELCOME/DESCRIPTION SECTION --- */
+#welcome-description-section {
+    text-align: center;
+    padding: 20px 10px; /* Add some padding */
+    margin-bottom: 30px; /* Space before comments section */
+    background-color: var(--surface-color); /* Optional: a slightly different bg for this section */
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+#welcome-description-section h2 {
+    color: var(--highlight-yellow); /* Use a highlight color */
+    font-size: 1.8em; /* Adjust as needed */
+    margin-bottom: 10px;
+}
+
+#welcome-description-section .site-tagline {
+    font-size: 1.1em;
+    color: var(--text-color);
+    margin-bottom: 30px;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.feature-highlights-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Responsive grid */
+    gap: 20px;
+    text-align: left; /* Align text left within each item */
+}
+
+.feature-highlight-item {
+    background-color: var(--secondary-bg); /* Background for each feature card */
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.feature-highlight-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 255, 255, 0.2); /* Using --accent-color (Cyan) with transparency */
+}
+
+.feature-highlight-item .feature-icon {
+    margin-bottom: 15px;
+    text-align: center; /* Center the icon within this div */
+}
+
+.feature-highlight-item .feature-icon .icon {
+    width: 40px; /* Larger icons for feature highlights */
+    height: 40px;
+    fill: var(--action-color); /* Use a vibrant color for these icons */
+}
+
+.feature-highlight-item h3 {
+    color: var(--accent-color);
+    font-size: 1.3em;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.feature-highlight-item p {
+    font-size: 0.95em;
+    color: var(--text-muted-color);
+    line-height: 1.6;
+}
+/* --- END OF HOME PAGE WELCOME/DESCRIPTION SECTION --- */
+
+/* --- USER ACTIVITY HISTORY VIEW STYLES --- */
+#user-history-view { /* Uses .view base styles */
+    padding: 20px;
+}
+
+#user-history-view h2 {
+    text-align: center;
+    color: var(--primary-accent-color);
+    margin-bottom: 25px;
+}
+
+#user-activity-list-container ul {
+    list-style: none;
+    padding: 0;
+}
+
+#user-activity-list-container li {
+    background-color: var(--surface-color);
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    border-left: 4px solid var(--action-color); /* Use a distinct accent color */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+#user-activity-list-container .user-activity-type {
+    display: block;
+    font-weight: bold;
+    color: var(--text-color);
+    font-size: 1.1em;
+    margin-bottom: 5px;
+    text-transform: capitalize; /* Nicer display for activity types */
+}
+
+#user-activity-list-container .user-activity-details {
+    display: block;
+    font-size: 0.9em;
+    color: var(--text-muted-color);
+    margin-bottom: 8px;
+    word-break: break-all; /* Prevent long details from breaking layout */
+}
+
+#user-activity-list-container .user-activity-meta {
+    font-size: 0.8em;
+    color: var(--text-muted-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap; /* Allow meta items to wrap on small screens */
+}
+
+#user-activity-list-container .user-activity-url {
+    font-style: italic;
+    margin-left: 5px; /* Give a little space if it wraps under time */
+}
+
+#user-activity-list-container p { /* For loading/empty messages */
+    text-align: center;
+    font-size: 1.1em;
+    color: var(--text-muted-color);
+    padding: 20px;
+}
+/* --- END OF USER ACTIVITY HISTORY VIEW STYLES --- */

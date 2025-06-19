@@ -7,124 +7,140 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Floating Menu Button -->
-    <div id="floating-menu-btn" style="display:none; position:fixed; top:20px; left:20px; z-index:1005; background-color: #007bff; color:white; padding:10px 15px; border-radius:50%; cursor:pointer; box-shadow: 0px 2px 10px rgba(0,0,0,0.2);">Menu</div>
-
-    <!-- Vertical Scroll Menu -->
-    <div id="vertical-scroll-menu" style="display:none; position:fixed; top:70px; left:20px; z-index:1004; background:white; border:1px solid #ccc; border-radius:5px; padding:10px; box-shadow: 0px 4px 12px rgba(0,0,0,0.15); width: 200px;">
-        <div class="vertical-menu-item" data-view-id="portfolio-view">Main Portfolio</div>
-        <div class="vertical-menu-item" data-view-id="chat-view">AI Chat</div>
-        <div class="vertical-menu-item" data-view-id="image-gen-view">Image Generator</div>
-        <div class="vertical-menu-item" data-view-id="history-gen-view">History Generator</div>
-        <div class="vertical-menu-item" data-view-id="vip-view">VIP Area</div>
-    </div>
-
     <header id="top-menu">
-        <nav>
-            <a href="#" id="nav-home" title="Home">[H]</a>
-            <a href="#" id="nav-projects" title="Projects">[P]</a>
-            <a href="#" id="nav-about" title="About">[A]</a>
-            <a href="#" id="nav-weather" title="Weather">[W]</a>
-        </nav>
+        <!-- Sample Menu Icon (could be a logo/site icon later) -->
+        <div class="icon-container" id="top-menu-main-icon">
+            <svg class="icon icon-menu" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 18H21V16H3V18ZM3 13H21V11H3V13ZM3 6V8H21V6H3Z"/>
+            </svg>
+        </div>
+        <!-- Other top menu items can go here -->
     </header>
 
-    <div id="default-page-container">
-        <section id="weather-display">
-            <p>Weather Loading...</p>
-        </section>
+    <!-- This button will be styled to float top-left, initially hidden -->
+    <button id="floating-menu-btn" class="icon-button" style="display: none;">
+        <!-- Placeholder for floating menu icon -->
+        <svg class="icon icon-menu" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 18H21V16H3V18ZM3 13H21V11H3V13ZM3 6V8H21V6H3Z"/>
+        </svg>
+    </button>
 
-        <main id="main-content-area">
-            <div id="portfolio-view" class="view">
-                <section id="about-placeholder">
-                    <h2>About Me/This Site</h2>
-                    <p>This is a placeholder for the 'About' section. Content to be added later.</p>
-                </section>
-                <section id="contact-info">
-                    <h3>Contact Me</h3>
-                    <p><span class="contact-icon">[User]</span> Rakotoarimalala Tafitaniaina Manarintsoa</p>
-                    <p><span class="contact-icon">[WA]</span> <a href="https://wa.me/261385858330" target="_blank">+261385858330</a></p>
-                    <p><span class="contact-icon">[FB]</span> <a href="https://www.facebook.com/manarintso.niaina" target="_blank">facebook.com/manarintso.niaina</a></p>
-                    <p><span class="contact-icon">[Ph]</span> <a href="tel:0336177772">0336177772</a></p>
-                    <p><span class="contact-icon">[Mail]</span> <a href="mailto:niainatafita85@gmail.com">niainatafita85@gmail.com</a></p>
-                    <p><span class="contact-icon">[Web]</span> <a href="#" id="user-website-link">[Link to be provided]</a></p>
-                </section>
-                <section id="comments-section">
-                    <h3>Comments</h3>
-                    <form id="comment-form">
-                        <div>
-                            <label for="comment-name">Name:</label>
-                            <input type="text" id="comment-name" name="comment-name" required>
-                        </div>
-                        <div>
-                            <label for="comment-text">Comment:</label>
-                            <textarea id="comment-text" name="comment-text" rows="4" required></textarea>
-                        </div>
-                        <button type="submit">Submit Comment</button>
-                    </form>
-                    <div id="comments-display">
-                        <p>No comments yet.</p>
-                    </div>
-                </section>
-            </div>
-            <div id="chat-view" class="view" style="display:none;">
-                <h2>AI Chat</h2>
-                <div id="chat-messages-container">
-                    <div id="chat-messages">
-                    </div>
-                </div>
-                <div id="chat-input-area">
-                    <input type="text" id="chat-input" placeholder="Type your message...">
-                    <button id="chat-send">Send</button>
-                </div>
-                <div id="chat-options">
-                    <input type="checkbox" id="chat-web-search">
-                    <label for="chat-web-search">Enable Web Search</label>
-                </div>
-            </div>
-            <div id="image-gen-view" class="view" style="display:none;">
-                <h2>Image Generator</h2>
-                <p>Image Generator interface will be here.</p>
-            </div>
-            <div id="history-gen-view" class="view" style="display:none;">
-                <h2>History Generator</h2>
-                <p>History Generator interface will be here.</p>
-            </div>
-            <div id="vip-view" class="view" style="display:none;">
-                <h2>VIP Area</h2>
-                <p>VIP features will be here.</p>
-            </div>
-        </main>
-
-        <div id="admin-login-icon">
-            <p>Admin Icon</p>
-        </div>
-    </div>
-
-    <nav id="bottom-menu">
-        <button id="btn-ai-chat" title="AI Chat">[Chat]</button>
-        <button id="btn-image-gen" title="Image Generator">[Image]</button>
-        <button id="btn-main-menu" title="Menu">[Menu]</button>
-        <button id="btn-history-gen" title="History Generator">[History]</button>
-        <button id="btn-vip" title="VIP">[VIP]</button>
+    <!-- This menu will be styled as a vertical scrollable list, initially hidden -->
+    <nav id="vertical-scroll-menu" style="display: none;">
+        <p>Vertical Menu Placeholder</p>
+        <ul>
+            <li><a href="#" data-view="home-view">Home</a></li>
+            <li><a href="#" data-view="chat-view">AI Chat</a></li>
+            <li><a href="#" data-view="image-generator-view">Image Generator</a></li>
+            <li><a href="#" data-view="history-generator-view">History Generator</a></li>
+            <li><a href="#" data-view="vip-view">VIP</a></li>
+        </ul>
     </nav>
 
-    <div id="chat-interface" class="feature-view" style="display:none;">
-        <div id="chat-header">
-            <h2>AI Chat</h2>
-            <button id="floating-menu-btn" title="Menu">[F_Menu]</button>
-        </div>
-        <div id="chat-messages-container">
-            <div id="chat-messages">
-                <p class="chat-message system-message">Welcome to AI Chat! Type your message below.</p>
+    <main id="main-content-area">
+        <div id="home-view">
+            <section id="weather-display">
+                <p>Weather Loading...</p>
+            </section>
+
+            <section id="about-site-placeholder">
+                 <p>About the site text will go here...</p>
+            </section>
+
+            <section id="contact-info">
+                <h3>Contact Me</h3>
+                <p><strong>Name:</strong> Rakotoarimalala Tafitaniaina Manarintsoa</p>
+                <p><strong>WhatsApp:</strong>
+                    <a href="https://wa.me/261385858330" target="_blank" class="icon-link" id="sample-whatsapp-icon-container">
+                        <svg class="icon icon-whatsapp" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.35 3.43 16.84L2.05 22L7.31 20.62C8.75 21.38 10.36 21.81 12.04 21.81C17.5 21.81 21.95 17.36 21.95 11.91C21.95 6.45 17.5 2 12.04 2ZM12.04 20.06C10.56 20.06 9.11 19.67 7.85 18.95L7.49 18.73L4.83 19.37L5.49 16.8L5.26 16.44C4.47 15.12 4.03 13.57 4.03 11.91C4.03 7.44 7.61 3.86 12.04 3.86C16.47 3.86 20.05 7.44 20.05 11.91C20.05 16.38 16.47 20.06 12.04 20.06ZM17.41 14.47C17.15 14.34 16.13 13.85 15.9 13.77C15.68 13.68 15.52 13.64 15.37 13.86C15.21 14.08 14.71 14.64 14.57 14.8C14.42 14.95 14.28 14.97 14.03 14.84C13.78 14.72 12.98 14.46 12.03 13.6C11.25 12.88 10.73 12.03 10.59 11.78C10.44 11.53 10.56 11.41 10.68 11.29C10.79 11.19 10.93 11.01 11.06 10.86C11.19 10.71 11.24 10.61 11.32 10.44C11.41 10.26 11.36 10.11 11.3 10C11.24 9.89 10.76 8.68 10.56 8.18C10.37 7.69 10.17 7.75 10.03 7.74C9.89 7.73 9.75 7.73 9.6 7.73C9.45 7.73 9.22 7.79 9.02 8.01C8.82 8.23 8.31 8.7 8.31 9.89C8.31 11.08 9.05 12.22 9.17 12.37C9.3 12.53 10.76 14.82 13.01 15.75C13.57 15.99 14.01 16.13 14.36 16.24C14.93 16.42 15.42 16.38 15.8 16.31C16.23 16.22 17.15 15.68 17.36 15.1C17.57 14.52 17.57 14.01 17.52 13.86C17.47 13.72 17.36 13.64 17.15 13.52V14.47Z"/>
+                        </svg>
+                        +261385858330
+                    </a>
+                </p>
+                <p><strong>Facebook:</strong> <a href="https://www.facebook.com/manarintso.niaina" target="_blank">facebook.com/manarintso.niaina</a></p>
+                <p><strong>Phone:</strong> <a href="tel:0336177772">0336177772</a></p>
+                <p><strong>Email:</strong> <a href="mailto:niainatafita85@gmail.com">niainatafita85@gmail.com</a></p>
+                <p><strong>Website:</strong> <a href="#" id="user-website-link">[Link to be provided]</a></p>
+            </section>
+
+            <section id="comments-section">
+                <h3>Comments</h3>
+                <form id="comment-form">
+                    <div>
+                        <label for="comment-name">Name:</label>
+                        <input type="text" id="comment-name" name="comment-name" required>
+                    </div>
+                    <div>
+                        <label for="comment-text">Comment:</label>
+                        <textarea id="comment-text" name="comment-text" rows="4" required></textarea>
+                    </div>
+                    <button type="submit">Submit Comment</button>
+                </form>
+                <div id="comments-display">
+                    <p>No comments yet.</p>
+                </div>
+            </section>
+
+            <div id="admin-login-icon-container"> <!-- Changed ID for clarity -->
+                 <button id="admin-login-icon" class="icon-button">
+                    [Admin Icon]
+                 </button>
+            </div>
+        </div> <!-- End of #home-view -->
+
+        <div id="chat-view" style="display: none;">
+            <div id="chat-messages-container"> <!-- For scrolling -->
+                <div id="chat-messages">
+                    <!-- Messages will appear here -->
+                </div>
+            </div>
+            <div id="chat-input-area">
+                <input type="text" id="chat-input-text" placeholder="Type your message...">
+                <button id="chat-send-btn" class="icon-button" title="Send">
+                    <!-- Placeholder for Send Icon SVG -->
+                    <svg class="icon icon-send" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                </button>
+                <div id="web-search-controls">
+                    <label for="web-search-toggle" class="toggle-label">Web Search:</label>
+                    <label class="switch">
+                        <input type="checkbox" id="web-search-toggle">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
             </div>
         </div>
-        <div id="chat-input-area">
-            <input type="text" id="chat-input" placeholder="Type your message...">
-            <button id="chat-web-search-toggle" title="Toggle Web Search">[Web On]</button>
-            <button id="chat-send-btn" title="Send Message">[Send]</button>
+
+        <div id="image-generator-view" style="display: none;">
+            <p>Image Generator Placeholder</p>
         </div>
-    </div>
+
+        <div id="history-generator-view" style="display: none;">
+            <p>History Generator Placeholder</p>
+        </div>
+
+        <div id="vip-view" style="display: none;">
+            <p>VIP Features Placeholder</p>
+        </div>
+    </main>
+
+    <nav id="bottom-menu">
+        <button id="icon-ai-chat" class="icon-button bottom-menu-button" data-view="chat-view">
+            <!-- Sample Chat Icon -->
+            <svg class="icon icon-chat" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C13.81 22 15.5 21.5 17 20.65L22 22L20.65 17C21.5 15.5 22 13.81 22 12C22 6.48 17.52 2 12 2ZM12 20C7.58 20 4 16.42 4 12C4 7.58 7.58 4 12 4C16.42 4 20 7.58 20 12C20 14.45 18.83 16.6 17 17.95L17.95 17L19 20L16.05 19.05C14.7 19.68 13.39 20 12 20Z"/>
+            </svg>
+        </button>
+        <button id="icon-image-generator" class="icon-button bottom-menu-button" data-view="image-generator-view">[ImgGen Icon]</button>
+        <button id="icon-main-menu" class="icon-button bottom-menu-button" data-view="home-view">
+             <svg class="icon icon-menu" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 18H21V16H3V18ZM3 13H21V11H3V13ZM3 6V8H21V6H3Z"/>
+            </svg>
+        </button>
+        <button id="icon-history-generator" class="icon-button bottom-menu-button" data-view="history-generator-view">[HistGen Icon]</button>
+        <button id="icon-vip" class="icon-button bottom-menu-button" data-view="vip-view">[VIP Icon]</button>
+    </nav>
 
     <script src="script.js"></script>
 </body>
-</html>
+                            </html>

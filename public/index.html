@@ -137,66 +137,64 @@
             </div>
             <div id="story-history-area"><h4>My Stories</h4><div id="story-history-list"></div></div>
         </div>
-        <div id="vip-view" class="view" style="display: none;">
-            <h2>VIP Lounge</h2>
-            <p>Access exclusive premium tools and features.</p>
-            <div id="vip-access-area">
-                <p>Enter VIP Access Code:</p>
-                <input type="password" id="vip-code-input" placeholder="VIP Code">
-                <button id="vip-code-submit">Enter VIP Lounge</button>
-                <p id="vip-status-message" style="display:none;"></p>
+    <div id="vip-view" class="view" style="display: none;">
+        <h2>VIP Lounge</h2>
+        <p>Access exclusive premium tools and features.</p> <!-- This can be changed to better reflect the iframe content -->
+        <div id="vip-access-area">
+            <p>Enter VIP Access Code:</p>
+            <input type="password" id="vip-code-input" placeholder="VIP Code">
+            <button id="vip-code-submit">Enter VIP Lounge</button>
+            <p id="vip-status-message" style="display:none;"></p>
+        </div>
+        <div id="vip-iframe-container" style="display: none; width: 100%; height: calc(100vh - 150px); border: none;">
+            <!-- Iframe will be added here by script.js -->
+        </div>
+    </div>
+    <div id="admin-panel-view" class="view" style="display: none;">
+        <h2>Admin Panel - Manage Comments</h2>
+        <div id="admin-comments-list">
+            <!-- Comments will be loaded here by script.js -->
+            <p>Loading comments...</p>
+        </div>
+    </div>
+        <div id="about-view" class="view" style="display: none;"><p>About Page - Content TBD</p></div>
+    <div id="contact-view" class="view" style="display: none;">
+        <h2>Contact Me</h2>
+        <div class="contact-details">
+            <div class="contact-item">
+                <span class="contact-label">
+                    <svg viewBox="0 0 24 24" class="icon contact-icon"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg> <!-- Basic Phone Icon -->
+                    Phone:
+                </span>
+                <a href="tel:0336177772" class="contact-value">033 61 777 72</a>
             </div>
-            <div id="vip-tools-container" style="display:none;">
-                <h3>Premium AI Suite</h3>
-                <div id="gemini-tool-ui" class="vip-tool">
-                    <h4>Gemini AI</h4> <p>Access Google's advanced Gemini model...</p>
-                    <textarea id="gemini-input" class="vip-ai-input" placeholder="Your prompt for Gemini..."></textarea>
-                    <button id="gemini-send-btn" class="vip-ai-send-btn icon-button"><svg viewBox="0 0 24 24" class="icon"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg> Send</button>
-                    <div id="gemini-response" class="vip-ai-response"><p>AI response will appear here.</p></div>
-                </div>
-                <div id="claude-haiku-tool-ui" class="vip-tool">
-                    <h4>Claude Haiku AI</h4> <p>Engage with Anthropic's Claude Haiku model...</p>
-                    <textarea id="claude-haiku-input" class="vip-ai-input" placeholder="Your prompt for Claude Haiku..."></textarea>
-                    <button id="claude-haiku-send-btn" class="vip-ai-send-btn icon-button"><svg viewBox="0 0 24 24" class="icon"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg> Send</button>
-                    <div id="claude-haiku-response" class="vip-ai-response"><p>AI response will appear here.</p></div>
-                </div>
-                <div id="deepseek-tool-ui" class="vip-tool">
-                     <h4>Deepseek AI</h4> <p>Utilize Deepseek Coder models...</p>
-                    <textarea id="deepseek-input" class="vip-ai-input" placeholder="Your prompt for Deepseek..."></textarea>
-                    <button id="deepseek-send-btn" class="vip-ai-send-btn icon-button"><svg viewBox="0 0 24 24" class="icon"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg> Send</button>
-                    <div id="deepseek-response" class="vip-ai-response"><p>AI response will appear here.</p></div>
-                </div>
-                <div id="rtm-ai-tool-ui" class="vip-tool">
-                    <h4>RTM AI</h4> <p>Interact with a custom-tuned RTM model...</p>
-                    <textarea id="rtm-ai-input" class="vip-ai-input" placeholder="Your prompt for RTM AI..."></textarea>
-                    <button id="rtm-ai-send-btn" class="vip-ai-send-btn icon-button"><svg viewBox="0 0 24 24" class="icon"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg> Send</button>
-                    <div id="rtm-ai-response" class="vip-ai-response"><p>AI response will appear here.</p></div>
-                </div>
-                <h3>File Reader (PDF/TXT)</h3>
-                <div id="file-reader-tool-ui" class="vip-tool">
-                    <h4>Document Q&A</h4> <p>Upload a .txt or .pdf file...</p>
-                    <input type="file" id="file-reader-input" accept=".txt,.pdf">
-                    <button id="file-reader-process-btn" class="icon-button"><svg viewBox="0 0 24 24" class="icon"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm-1 13h-2v-2h2v2zm0-4h-2V6h2v5z"></path></svg> Process File</button>
-                    <div id="file-reader-content-display" class="vip-ai-response"><p>File content will appear here.</p></div>
-                    <div id="file-reader-qa-area">
-                        <textarea id="file-reader-question" class="vip-ai-input" placeholder="Ask a question about the document..."></textarea>
-                        <button id="file-reader-ask-btn" class="vip-ai-send-btn icon-button"><svg viewBox="0 0 24 24" class="icon"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg> Ask</button>
-                        <div id="file-reader-answer" class="vip-ai-response"><p>Answer will appear here.</p></div>
-                    </div>
-                </div>
-                <h3>Image to Ghibli Style</h3>
-                <div id="image-ghibli-tool-ui" class="vip-tool"><p>Transform your images into Ghibli-esque art. (Placeholder for UI elements)</p></div>
-                <h3>Intelligent Image Generation</h3>
-                <div id="smart-image-gen-tool-ui" class="vip-tool"><p>Advanced image generation with fine-tuned controls. (Placeholder)</p></div>
-                <h3>Web Scraper</h3>
-                <div id="scraping-tool-ui" class="vip-tool"><p>Extract data from websites. (Placeholder)</p></div>
-                <h3>VIP Gallery</h3>
-                <div id="vip-gallery-tool-ui" class="vip-tool"><p>Exclusive content gallery. (Placeholder for horizontal scroller)</p></div>
+            <div class="contact-item">
+                <span class="contact-label">
+                    <svg viewBox="0 0 24 24" class="icon contact-icon"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.79.45 3.49 1.28 4.99L2.06 22l5.26-1.35c1.44.74 3.06 1.15 4.72 1.15h.01c5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2zm.01 1.63c4.51 0 8.18 3.68 8.18 8.18s-3.68 8.18-8.18 8.18h-.01c-1.55 0-3.04-.42-4.33-1.18l-.31-.19-3.21.82.84-3.12-.21-.33c-.83-1.32-1.32-2.85-1.32-4.48 0-4.51 3.68-8.18 8.18-8.18zm-1.02 2.62c-.28-.14-.59-.14-.88-.14h-.29c-.29 0-.73.1-.88.44-.14.29-.59.73-.59 1.78s.59 2.07.73 2.22c.14.14 1.2.92 2.88 1.61s1.41.48 1.78.44c.59-.07 1.03-.48 1.18-.73s.14-.44.1-.73c-.07-.14-.29-.29-.44-.44s-1.03-.52-1.18-.59c-.14-.07-.44-.07-.59.22s-.59.73-.73.88c-.14.14-.29.14-.44.07s-1.03-.36-1.92-.99c-.7-.48-1.18-1.07-1.32-1.25s-.14-.29 0-.44l.22-.29c.14-.14.22-.29.36-.44s.07-.22 0-.29c-.07-.14-.59-1.41-.73-1.92z"/></svg> <!-- WhatsApp Icon -->
+                    WhatsApp:
+                </span>
+                <a href="https://wa.me/261385858330" target="_blank" class="contact-value">+261 38 58 583 30</a>
+            </div>
+            <div class="contact-item">
+                <span class="contact-label">
+                    <svg viewBox="0 0 24 24" class="icon contact-icon"><path d="M22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6zm-2 0l-8 5-8-5h16zm0 12H4V8l8 5 8-5v10z"/></svg> <!-- Email Icon -->
+                    Email:
+                </span>
+                <a href="mailto:niainatafita85@gmail.com" class="contact-value">niainatafita85@gmail.com</a>
+            </div>
+            <div class="contact-item">
+                <span class="contact-label">
+                    <svg viewBox="0 0 24 24" class="icon contact-icon"><path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2m13 2h-2.5a3.5 3.5 0 0 0-3.5 3.5V10H9v3h2.5v7h3v-7H17v-3h-2.5V7a.5.5 0 0 1 .5-.5H18V5z"/></svg> <!-- Facebook Icon -->
+                    Facebook:
+                </span>
+                <a href="https://www.facebook.com/manarintso.niaina" target="_blank" class="contact-value">RTM Tafitaniaina</a>
             </div>
         </div>
-        <div id="admin-panel-view" class="view" style="display: none;"><p>Admin Panel - Content TBD</p></div>
-        <div id="about-view" class="view" style="display: none;"><p>About Page - Content TBD</p></div>
-        <div id="contact-view" class="view" style="display: none;"><p>Contact Page - Content TBD</p></div>
+        <div class="contact-map">
+            <p>Find me in Antananarivo, Madagascar!</p>
+             <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d120077.70880567693!2d47.46434084863282!3d-18.89750799999999!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x21f07e0034298787%3A0x4a71d53e0abbc919!2sAntananarivo%2C%20Madagascar!5e0!3m2!1sen!2sus!4v1700000000000!5m2!1sen!2sus" width="100%" height="300" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+    </div>
         <div id="comments-view" class="view" style="display: none;"><p>Full Comments Page - Content TBD (or link to home's section)</p></div>
         <div id="user-history-view" class="view" style="display: none;"><p>User History - Content TBD</p></div>
         <div id="gallery-view-main" class="view" style="display: none;"><p>Main Image Gallery - Content TBD</p></div>

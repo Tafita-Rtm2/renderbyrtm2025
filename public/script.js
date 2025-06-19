@@ -1,347 +1,264 @@
-// Contents of public/script.js should be structured like this:
 document.addEventListener('DOMContentLoaded', () => {
-    // ===== START OF EXISTING CODE (Weather, Admin Icon) =====
+    // --- Existing Weather and Admin Logic ---
     const weatherDisplay = document.getElementById('weather-display');
     const adminLoginIcon = document.getElementById('admin-login-icon');
 
     async function fetchWeather(location) {
-        if (!weatherDisplay) {
-            // console.error('Weather display element not found'); // Already logged by worker if issue
-            return;
-        }
-        weatherDisplay.textContent = 'Fetching weather...';
+        if (!weatherDisplay) { return; }
+        weatherDisplay.innerHTML = '<p>Fetching weather...</p>';
         try {
             const response = await fetch(`/api/weather?location=${encodeURIComponent(location)}`);
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                let errorMsg = `HTTP error! status: ${response.status}`;
+                try { const errData = await response.json(); errorMsg = errData.error || errData.message || errorMsg; } catch (e) { /* ignore */ }
+                throw new Error(errorMsg);
             }
             const data = await response.json();
             displayWeather(data);
         } catch (error) {
-            // console.error('Error fetching weather:', error); // Already logged by worker if issue
-            weatherDisplay.textContent = 'Could not load weather data.';
+            console.error('Error fetching weather:', error);
+            weatherDisplay.innerHTML = `<p>Could not load weather: ${error.message}</p>`;
         }
     }
-
     function displayWeather(data) {
-        if (!weatherDisplay) {
-            // console.error('Weather display element not found for displaying data');
-            return;
-        }
+        if (!weatherDisplay) { return; }
         if (data && data.current) {
             weatherDisplay.innerHTML = `
                 <p><strong>${data.location.name}</strong></p>
                 <p>${data.current.skytext}, ${data.current.temperature}°${data.location.degreetype}</p>
                 <p>Feels like: ${data.current.feelslike}°${data.location.degreetype}</p>
             `;
-        } else if (data && data.error) {
-            weatherDisplay.textContent = `Error: ${data.error}`;
-        } 
-        else {
-            weatherDisplay.textContent = 'Weather data unavailable.';
-        }
+        } else if (data && data.error) { weatherDisplay.innerHTML = `<p>Error: ${data.error}</p>`; }
+        else { weatherDisplay.innerHTML = '<p>Weather data unavailable.</p>'; }
     }
-
     if (adminLoginIcon) {
         adminLoginIcon.addEventListener('click', () => {
             const code = prompt('Enter admin code:');
-            if (code === '121206') {
-                alert('Admin access granted (simulation)');
-            } else if (code !== null) { 
-                alert('Incorrect code.');
-            }
+            if (code === '121206') { alert('Admin access granted (simulation)'); }
+            else if (code !== null) { alert('Incorrect code.'); }
         });
-    } else {
-        // console.error('Admin login icon not found'); // Already logged by worker if issue
     }
+    fetchWeather('Antananarivo');
 
-    fetchWeather('Antananarivo'); // Initial weather call
-    // ===== END OF EXISTING CODE =====
-
-
-    // ===== START OF NEW AI CHAT CODE =====
-    const chatInterface = document.getElementById('chat-interface');
-    const btnChat = document.getElementById('btn-ai-chat'); // Bottom menu button for the new full-screen chat
-    
-    // Ensure the new chat interface specific elements are selected correctly
-    const chatMessagesContainer = document.querySelector('#chat-interface #chat-messages-container');
-    const chatMessagesDiv = document.querySelector('#chat-interface #chat-messages');
-    const chatInput = document.querySelector('#chat-interface #chat-input'); // Specific to new chat interface
-    const chatSendBtn = document.getElementById('chat-send-btn'); // Specific to new chat interface
-    const chatWebSearchToggle = document.getElementById('chat-web-search-toggle'); // Specific to new chat interface
-    const chatInterfaceFloatingMenuBtn = document.querySelector('#chat-interface #floating-menu-btn'); //The one inside chat header
-
-
-    const topMenu = document.getElementById('top-menu');
+    // --- Navigation Logic ---
     const bottomMenu = document.getElementById('bottom-menu');
-    const defaultPageContainer = document.getElementById('default-page-container'); 
+    const bottomMenuButtons = document.querySelectorAll('.bottom-menu-button');
+    const floatingMenuBtn = document.getElementById('floating-menu-btn');
+    const verticalScrollMenu = document.getElementById('vertical-scroll-menu');
+    const verticalMenuLinks = document.querySelectorAll('#vertical-scroll-menu ul li a');
+    const views = {
+        home: document.getElementById('home-view'),
+        chat: document.getElementById('chat-view'),
+        imageGenerator: document.getElementById('image-generator-view'),
+        historyGenerator: document.getElementById('history-generator-view'),
+        vip: document.getElementById('vip-view')
+    };
 
-    let userID = localStorage.getItem('userID');
-    if (!userID) {
-        userID = `user-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
-        localStorage.setItem('userID', userID);
+    function getViewKey(viewId) {
+        if (viewId) { return viewId.replace('-view', ''); } return null;
     }
 
-    let webSearchActive = localStorage.getItem('chatWebSearchPreference') === 'false' ? false : true;
+    // Store current view to manage chat history loading
+    let currentViewId = 'home-view';
 
-    function updateWebSearchToggleVisual() {
-        if(chatWebSearchToggle) { 
-            if (webSearchActive) {
-                chatWebSearchToggle.textContent = '[Web On]'; 
-                chatWebSearchToggle.classList.add('active');
-            } else {
-                chatWebSearchToggle.textContent = '[Web Off]'; 
-                chatWebSearchToggle.classList.remove('active');
+    function showView(viewIdToShow) {
+        const viewKeyToShow = getViewKey(viewIdToShow);
+        for (const key in views) {
+            if (views[key]) {
+                views[key].style.display = (key === viewKeyToShow) ? 'block' : 'none';
             }
         }
-    }
-    if(chatInterface) updateWebSearchToggleVisual();
+        if (viewKeyToShow === 'home') {
+            if (bottomMenu) bottomMenu.style.display = 'flex';
+            if (floatingMenuBtn) floatingMenuBtn.style.display = 'none';
+        } else if (viewKeyToShow !== null) {
+            if (bottomMenu) bottomMenu.style.display = 'none';
+            if (floatingMenuBtn) floatingMenuBtn.style.display = 'block';
+        }
 
-    function loadConversationHistory() {
+        // If switching to chat view, load history
+        if (viewIdToShow === 'chat-view' && currentViewId !== 'chat-view') {
+            loadChatHistory();
+        }
+        currentViewId = viewIdToShow;
+    }
+    showView('home-view');
+    bottomMenuButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const viewId = button.getAttribute('data-view');
+            if (viewId) {
+                showView(viewId);
+                if (bottomMenu) bottomMenu.style.display = 'none';
+                if (floatingMenuBtn) floatingMenuBtn.style.display = 'block';
+                if (verticalScrollMenu) verticalScrollMenu.classList.remove('visible');
+            }
+        });
+    });
+    if (floatingMenuBtn) {
+        floatingMenuBtn.addEventListener('click', () => {
+            if (verticalScrollMenu) verticalScrollMenu.classList.toggle('visible');
+        });
+    }
+    verticalMenuLinks.forEach(link => {
+        link.addEventListener('click', (event) => {
+            event.preventDefault();
+            const viewId = link.getAttribute('data-view');
+            if (viewId) {
+                showView(viewId);
+                if (verticalScrollMenu) verticalScrollMenu.classList.remove('visible');
+            }
+        });
+    });
+    document.addEventListener('click', (event) => {
+        if (verticalScrollMenu && verticalScrollMenu.classList.contains('visible')) {
+            if (!verticalScrollMenu.contains(event.target) && !floatingMenuBtn.contains(event.target)) {
+                verticalScrollMenu.classList.remove('visible');
+            }
+        }
+    });
+
+    // --- AI Chat Logic (Phase 2A, 2C) ---
+    const chatMessagesDiv = document.getElementById('chat-messages');
+    const chatInputText = document.getElementById('chat-input-text');
+    const chatSendBtn = document.getElementById('chat-send-btn');
+    const webSearchToggle = document.getElementById('web-search-toggle');
+    const userIconSVG = `<svg class="icon icon-user" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`;
+    const aiIconSVG = `<svg class="icon icon-ai" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M19.965 8.521C19.988 8.354 20 8.175 20 8c0-2.209-1.791-4-4-4s-4 1.791-4 4c0 .175.012.354.035.521C11.437 8.191 11 7.456 11 6.5 11 4.57 9.43 3 7.5 3S4 4.57 4 6.5C4 7.456 4.563 8.191 5.168 8.521A3.993 3.993 0 004 11.5C4 13.43 5.57 15 7.5 15s3.5-1.57 3.5-3.5a3.993 3.993 0 00-.602-2.004c.65-.34 1.155-.895 1.423-1.539.268.644.773 1.199 1.423 1.539A3.993 3.993 0 0012.5 11.5c0 .754.211 1.453.579 2.061.002.004.005.007.007.011L12 15.348V17h9v-2c0-1.93-1.57-3.5-3.5-3.5-.614 0-1.191.157-1.686.428.11-.415.186-.849.186-1.299 0-.175-.012-.354-.035-.521zm-1.465.995C18.823 9.242 19 8.646 19 8c0-1.654-1.346-3-3-3s-3 1.346-3 3c0 .646.177 1.242.499 1.726.01.016.027.026.034.044.496.838 1.358 1.407 2.307 1.551.105.016.211.023.317.023.303 0 .598-.057.873-.165a3.488 3.488 0 00.435-.21zM7.5 13C6.673 13 6 12.327 6 11.5S6.673 10 7.5 10s1.5.673 1.5 1.5S8.327 13 7.5 13zm0-5C6.673 8 6 7.327 6 6.5S6.673 5 7.5 5s1.5.673 1.5 1.5S8.327 8 7.5 8z"/></svg>`;
+
+    function getOrCreateUID() {
+        let uid = localStorage.getItem('chatUID');
+        if (!uid) {
+            uid = Date.now().toString(36) + Math.random().toString(36).substring(2);
+            localStorage.setItem('chatUID', uid);
+        }
+        return uid;
+    }
+    const chatUID = getOrCreateUID();
+
+    function saveMessageToHistory(text, sender) {
+        if (!chatMessagesDiv) return; // No place to display, probably no need to save
+        let history = JSON.parse(localStorage.getItem('chatHistory')) || [];
+        // Limit history size to prevent LocalStorage from filling up too much
+        const maxHistoryItems = 50;
+        history.push({ text, sender, timestamp: new Date().toISOString() });
+        if (history.length > maxHistoryItems) {
+            history = history.slice(history.length - maxHistoryItems);
+        }
+        localStorage.setItem('chatHistory', JSON.stringify(history));
+    }
+
+    function appendMessage(text, sender, saveToHistoryFlag = true) {
         if (!chatMessagesDiv) return;
-        const history = JSON.parse(localStorage.getItem(`chatHistory_${userID}`)) || [];
-        chatMessagesDiv.innerHTML = ''; 
-        history.forEach(msg => appendMessage(msg.text, msg.type, false)); 
-        // Add initial welcome message only if history is empty or as desired
-        if (history.length === 0) {
-            appendMessage("Welcome to AI Chat! How can I help you today?", "system", false); 
+        const messageWrapper = document.createElement('div');
+        messageWrapper.classList.add('message-wrapper', `${sender}-wrapper`);
+        const iconDiv = document.createElement('div');
+        iconDiv.classList.add('message-icon');
+        iconDiv.innerHTML = sender === 'user' ? userIconSVG : aiIconSVG;
+        const messageBubble = document.createElement('div');
+        messageBubble.classList.add('message-bubble', `${sender}-bubble`);
+        messageBubble.textContent = text; // Using textContent for security
+
+        messageWrapper.appendChild(sender === 'user' ? messageBubble : iconDiv);
+        messageWrapper.appendChild(sender === 'user' ? iconDiv : messageBubble);
+        chatMessagesDiv.appendChild(messageWrapper);
+        if (chatMessagesDiv.parentElement && chatMessagesDiv.parentElement.id === 'chat-messages-container') {
+             chatMessagesDiv.parentElement.scrollTop = chatMessagesDiv.parentElement.scrollHeight;
+        } else {
+            chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+        }
+
+
+        if (saveToHistoryFlag) {
+            saveMessageToHistory(text, sender);
         }
     }
 
-    function saveMessageToHistory(text, type) {
-        if (type !== 'user' && type !== 'ai') { // Only save user and AI messages to history
-            return;
-        }
-        const currentHistory = JSON.parse(localStorage.getItem(`chatHistory_${userID}`)) || [];
-        currentHistory.push({ text, type, timestamp: new Date().toISOString() });
-        localStorage.setItem(`chatHistory_${userID}`, JSON.stringify(currentHistory));
-    }
-    
-    function appendMessage(text, type, saveToHist = true) {
-        if (!chatMessagesDiv || !chatMessagesContainer) return;
-
-        const messageElement = document.createElement('p');
-        messageElement.classList.add('chat-message', `${type}-message`);
-        messageElement.textContent = text;
-        chatMessagesDiv.appendChild(messageElement);
-        // Ensure scroll happens after message is added and DOM might have updated
-        setTimeout(() => {
-             chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
-        }, 0);
-
-
-        if (saveToHist) {
-            saveMessageToHistory(text, type);
-        }
+    function loadChatHistory() {
+        if (!chatMessagesDiv) return;
+        chatMessagesDiv.innerHTML = ''; // Clear existing messages
+        const history = JSON.parse(localStorage.getItem('chatHistory')) || [];
+        history.forEach(msg => appendMessage(msg.text, msg.sender, false)); // Don't re-save when loading
     }
 
-    // Listener for the main AI Chat button in the bottom menu
-    if (btnChat && chatInterface && defaultPageContainer && topMenu && bottomMenu) {
-        btnChat.addEventListener('click', () => {
-            defaultPageContainer.style.display = 'none';
-            chatInterface.style.display = 'flex'; 
-            topMenu.style.display = 'none'; 
-            bottomMenu.style.display = 'none'; 
-            if(chatInterfaceFloatingMenuBtn) chatInterfaceFloatingMenuBtn.style.display = 'block'; 
-            loadConversationHistory();
-            if(chatInput) chatInput.focus();
-        });
-    }
-    
-    // Listener for the floating menu button INSIDE the chat interface
-    if (chatInterfaceFloatingMenuBtn) {
-        chatInterfaceFloatingMenuBtn.addEventListener('click', () => {
-            if (chatInterface) chatInterface.style.display = 'none';
-            if (defaultPageContainer) defaultPageContainer.style.display = 'block'; 
-            if (topMenu) topMenu.style.display = 'flex'; 
-            if (bottomMenu) bottomMenu.style.display = 'flex'; 
-            // chatInterfaceFloatingMenuBtn itself is part of chatInterface, so it will be hidden.
-        });
-    }
-
-    if (chatWebSearchToggle) {
-        chatWebSearchToggle.addEventListener('click', () => {
-            webSearchActive = !webSearchActive;
-            localStorage.setItem('chatWebSearchPreference', webSearchActive);
-            updateWebSearchToggleVisual();
-            appendMessage(`Web search ${webSearchActive ? 'enabled' : 'disabled'}.`, 'system', false); 
-        });
-    }
 
     async function handleSendMessage() {
-        if (!chatInput || !chatSendBtn) return;
-        const messageText = chatInput.value.trim();
-        if (!messageText) return;
+        if (!chatInputText || !chatMessagesDiv) return;
+        const messageText = chatInputText.value.trim();
+        if (messageText === '') return;
 
-        appendMessage(messageText, 'user'); 
-        chatInput.value = '';
-        chatInput.disabled = true;
-        chatSendBtn.disabled = true;
-        if (chatWebSearchToggle) chatWebSearchToggle.disabled = true;
-        
-        const thinkingMsg = document.createElement('p');
-        thinkingMsg.classList.add('chat-message', 'ai-message', 'thinking');
-        thinkingMsg.textContent = 'AI is thinking...';
-        if (chatMessagesDiv) chatMessagesDiv.appendChild(thinkingMsg);
-        if (chatMessagesContainer) chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+        appendMessage(messageText, 'user');
+        chatInputText.value = '';
+
+        const currentWebSearchState = webSearchToggle ? webSearchToggle.checked : false;
+
+        // Temporary AI thinking message
+        const thinkingMsgDiv = document.createElement('div');
+        thinkingMsgDiv.classList.add('message-wrapper', `ai-wrapper`, 'thinking');
+        const thinkingIconDiv = document.createElement('div');
+        thinkingIconDiv.classList.add('message-icon');
+        thinkingIconDiv.innerHTML = aiIconSVG;
+        const thinkingBubble = document.createElement('div');
+        thinkingBubble.classList.add('message-bubble', `ai-bubble`);
+        thinkingBubble.textContent = "Thinking...";
+        thinkingMsgDiv.appendChild(thinkingIconDiv);
+        thinkingMsgDiv.appendChild(thinkingBubble);
+        chatMessagesDiv.appendChild(thinkingMsgDiv);
+        if (chatMessagesDiv.parentElement && chatMessagesDiv.parentElement.id === 'chat-messages-container') {
+             chatMessagesDiv.parentElement.scrollTop = chatMessagesDiv.parentElement.scrollHeight;
+        } else {
+            chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+        }
+
 
         try {
             const response = await fetch('/api/chat', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', },
-                body: JSON.stringify({ ask: messageText, uid: userID, webSearch: webSearchActive }),
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    ask: messageText,
+                    uid: chatUID,
+                    webSearch: currentWebSearchState
+                }),
             });
 
-            if (chatMessagesDiv && chatMessagesDiv.contains(thinkingMsg)) chatMessagesDiv.removeChild(thinkingMsg);
+            // Remove thinking message
+            const thinkingDiv = chatMessagesDiv.querySelector('.message-wrapper.thinking');
+            if(thinkingDiv) thinkingDiv.remove();
 
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ error: "Server error", details: "Response not in JSON format." }));
-                const errorMsg = `Error: ${errorData.error || response.statusText}. ${errorData.details ? (typeof errorData.details === 'string' ? errorData.details : JSON.stringify(errorData.details)) : '' }`;
-                appendMessage(errorMsg, 'system', false); 
-                return;
+                const errorData = await response.json().catch(() => ({ response: "Error: Could not parse error response from server."}));
+                throw new Error(errorData.response || errorData.error || `Request failed with status ${response.status}`);
             }
 
             const data = await response.json();
             if (data.response) {
-                appendMessage(data.response, 'ai'); 
+                appendMessage(data.response, 'ai');
             } else {
-                appendMessage('Received an empty or unexpected response from AI.', 'system', false); 
+                appendMessage("Sorry, I received an unexpected response.", 'ai');
             }
 
         } catch (error) {
-            if (chatMessagesDiv && chatMessagesDiv.contains(thinkingMsg)) chatMessagesDiv.removeChild(thinkingMsg);
-            appendMessage('Error sending message. Please check your connection or console for details.', 'system', false); 
-        } finally {
-            if(chatInput) chatInput.disabled = false;
-            if(chatSendBtn) chatSendBtn.disabled = false;
-            if (chatWebSearchToggle) chatWebSearchToggle.disabled = false;
-            if(chatInput) chatInput.focus();
+             // Remove thinking message if it's still there on error
+            const thinkingDiv = chatMessagesDiv.querySelector('.message-wrapper.thinking');
+            if(thinkingDiv) thinkingDiv.remove();
+            console.error('Error calling chat API:', error);
+            appendMessage(`Error: ${error.message || "Could not connect to AI. Please try again."}`, 'ai');
         }
     }
 
     if (chatSendBtn) chatSendBtn.addEventListener('click', handleSendMessage);
-    if (chatInput) {
-        chatInput.addEventListener('keypress', (event) => {
-            if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault(); 
-                handleSendMessage();
-            }
-        });
-    }
-    // ===== END OF NEW AI CHAT CODE =====
+    if (chatInputText) chatInputText.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSendMessage(); });
 
-    // Keep any other existing JS code below if it was outside the "NEW AI CHAT CODE" block
-    // For example, the old navigation logic and chat-view logic if it was separate.
-    // Based on the read_files output, the old navigation and chat-view logic was:
-
-    const views = document.querySelectorAll('.view'); // These are inside #main-content-area
-    const bottomNavItems = document.querySelectorAll('#bottom-menu button:not(#btn-ai-chat)'); // Exclude the new chat button
-    
-    // This is the general floating menu button at the top-left of the page, not the one in chat-interface
-    const generalFloatingMenuBtn = document.getElementById('floating-menu-btn'); 
-    const verticalScrollMenu = document.getElementById('vertical-scroll-menu');
-    const verticalMenuItems = document.querySelectorAll('#vertical-scroll-menu .vertical-menu-item');
-
-    function handleGeneralNavigation(targetViewId) {
-        views.forEach(view => {
-            view.style.display = 'none';
-        });
-
-        const targetView = document.getElementById(targetViewId);
-        if (targetView) {
-            targetView.style.display = 'block'; // Or 'flex' if needed
-        } else {
-            // console.error(`View with ID ${targetViewId} not found.`);
-            const portfolioView = document.getElementById('portfolio-view');
-            if (portfolioView) portfolioView.style.display = 'block';
-        }
-        
-        // This logic is for the general floating menu button vs the old bottom menu items
-        // The new full-screen chat has its own show/hide logic triggered by btn-ai-chat
-        if (targetViewId === 'portfolio-view' || targetViewId === 'chat-view' || targetViewId === 'image-gen-view' || targetViewId === 'history-gen-view' || targetViewId === 'vip-view' ) {
-             if(generalFloatingMenuBtn) generalFloatingMenuBtn.style.display = 'block'; // Show general menu for main views
-        } else {
-             if(generalFloatingMenuBtn) generalFloatingMenuBtn.style.display = 'none';
-        }
-        if (verticalScrollMenu) verticalScrollMenu.style.display = 'none'; // Always hide vertical menu on nav
-    }
-    
-    // Attach listeners to old bottom menu buttons (excluding the new chat button)
-    bottomNavItems.forEach(item => {
-        item.addEventListener('click', () => {
-            const viewId = item.id.replace('btn-', '').replace('-gen', '-gen-view').replace('-menu', '-view'); // e.g. btn-main-menu -> portfolio-view
-            let targetViewId = viewId;
-            if(item.id === "btn-main-menu") targetViewId = "portfolio-view";
-            else if(item.id === "btn-image-gen") targetViewId = "image-gen-view";
-            else if(item.id === "btn-history-gen") targetViewId = "history-gen-view";
-            else if(item.id === "btn-vip") targetViewId = "vip-view";
-            // btn-ai-chat is handled by the new logic above.
-            
-            if (targetViewId) {
-                 // Ensure the main page container is visible for these views
-                if(defaultPageContainer) defaultPageContainer.style.display = 'block';
-                if(chatInterface) chatInterface.style.display = 'none';
-                if(topMenu) topMenu.style.display = 'flex';
-                if(bottomMenu) bottomMenu.style.display = 'flex';
-
-                handleGeneralNavigation(targetViewId);
-            }
-        });
-    });
-
-    if (generalFloatingMenuBtn) {
-        generalFloatingMenuBtn.addEventListener('click', () => {
-            if (verticalScrollMenu) {
-                verticalScrollMenu.style.display = verticalScrollMenu.style.display === 'none' ? 'block' : 'none';
-            }
+    if (webSearchToggle) {
+        const savedWebSearch = localStorage.getItem('webSearchEnabled');
+        if (savedWebSearch !== null) webSearchToggle.checked = savedWebSearch === 'true';
+        webSearchToggle.addEventListener('change', () => {
+            localStorage.setItem('webSearchEnabled', webSearchToggle.checked);
         });
     }
 
-    verticalMenuItems.forEach(item => {
-        item.addEventListener('click', () => {
-            const viewId = item.getAttribute('data-view-id');
-            if (viewId) {
-                if(defaultPageContainer) defaultPageContainer.style.display = 'block';
-                if(chatInterface) chatInterface.style.display = 'none';
-                if(topMenu) topMenu.style.display = 'flex';
-                if(bottomMenu) bottomMenu.style.display = 'flex';
-                handleGeneralNavigation(viewId);
-            }
-        });
-    });
-    
-    // Old chat view logic (inside #main-content-area)
-    const oldChatView = document.getElementById('chat-view');
-    const oldChatMessagesContainer = document.querySelector('#chat-view #chat-messages-container');
-    const oldChatMessagesDiv = document.querySelector('#chat-view #chat-messages');
-    const oldChatInput = document.querySelector('#chat-view #chat-input');
-    const oldChatSendButton = document.querySelector('#chat-view #chat-send');
-    const oldChatWebSearchCheckbox = document.querySelector('#chat-view #chat-web-search');
-
-    if (oldChatSendButton && oldChatInput) {
-        oldChatSendButton.addEventListener('click', async () => { /* ... old send logic ... */ });
-        oldChatInput.addEventListener('keypress', (event) => { /* ... old keypress logic ... */ });
-    }
-    
-    if (oldChatView) { // Observer for the old chat view
-        const oldChatObserver = new MutationObserver((mutationsList) => {
-            for (let mutation of mutationsList) {
-                if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
-                    if (oldChatView.style.display === 'block' || oldChatView.style.display === 'flex') {
-                        // Load history for old chat view if needed
-                        // loadChatHistory(); // This would need to be adapted for old chat's specific elements
-                        // loadWebSearchPreference(); // Same here
-                    }
-                }
-            }
-        });
-        oldChatObserver.observe(oldChatView, { attributes: true });
-    }
-    
-    // Initial page setup
-    if(defaultPageContainer) defaultPageContainer.style.display = 'block';
-    if(chatInterface) chatInterface.style.display = 'none';
-    if(topMenu) topMenu.style.display = 'flex';
-    if(bottomMenu) bottomMenu.style.display = 'flex';
-    handleGeneralNavigation('portfolio-view'); // Default view
+    // Initial load of chat history if chat view is default (or becomes visible)
+    // This is now handled by showView logic
 });

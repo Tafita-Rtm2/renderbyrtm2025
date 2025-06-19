@@ -64,7 +64,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (adminLoginIcon) {
         adminLoginIcon.addEventListener('click', () => {
             const code = prompt('Enter admin code:');
-            if (code === '121206') { alert('Admin access granted (simulation)'); }
+            if (code === '121206') {
+                // alert('Admin access granted (simulation)'); // Original
+                showView('admin-view'); // Show admin view on successful login
+            }
             else if (code !== null) { alert('Incorrect code.'); }
         });
     }
@@ -81,8 +84,12 @@ document.addEventListener('DOMContentLoaded', () => {
         chat: document.getElementById('chat-view'),
         imageGenerator: document.getElementById('image-generator-view'),
         historyGenerator: document.getElementById('history-generator-view'),
-        vip: document.getElementById('vip-view')
+        vip: document.getElementById('vip-view'),
+        admin: document.getElementById('admin-view') // Added admin view
     };
+
+    let initialAdminCommentsLoaded = false; // Flag for admin comments
+    let initialCommentsLoaded = false; // Renaming for clarity for public comments
 
     function getViewKey(viewId) {
         if (viewId) { return viewId.replace('-view', ''); } return null;
@@ -120,7 +127,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         // If switching to history generator view, load story topic history
         if (viewIdToShow === 'history-generator-view' && currentViewId !== 'history-generator-view') {
-            if (typeof loadStoryTopicHistory === 'function') loadStoryTopicHistory(); // Ensure function exists
+            if (typeof loadStoryTopicHistory === 'function') loadStoryTopicHistory();
+        }
+        // If switching to admin view, load admin comments
+        if (viewIdToShow === 'admin-view' && (currentViewId !== 'admin-view' || !initialAdminCommentsLoaded)) {
+            if (typeof fetchAdminComments === 'function') {
+                fetchAdminComments();
+                initialAdminCommentsLoaded = true; // Set flag after first load
+            }
+        }
+        // If switching to home view, load public comments
+        if (viewIdToShow === 'home-view' && (currentViewId !== 'home-view' || !initialCommentsLoaded)) {
+            if (typeof fetchAndDisplayComments === 'function') { // Check if function exists
+                fetchAndDisplayComments();
+                initialCommentsLoaded = true; // Set flag after first load
+            }
         }
         currentViewId = viewIdToShow;
     }
@@ -462,6 +483,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Ensure showView calls loadStoryTopicHistory for 'history-generator-view'
     // (Handled by the modification to showView above)
     // Call once at init if the view might be active or to pre-populate.
+    // Ensure showView calls loadStoryTopicHistory for 'history-generator-view'
+    // (Handled by the modification to showView above)
+    // Call once at init if the view might be active or to pre-populate.
     if (document.getElementById('history-generator-view') && document.getElementById('history-generator-view').style.display !== 'none') {
         loadStoryTopicHistory();
     }
@@ -535,5 +559,201 @@ document.addEventListener('DOMContentLoaded', () => {
                 generatedHistoryDisplay.innerHTML = `<p>Failed to generate story: ${error.message}</p>`;
             }
         });
+    }
+
+    // --- Public Comment System (Phase 4C) ---
+    const commentForm = document.getElementById('comment-form');
+    const commentNameInput = document.getElementById('comment-name');
+    const commentTextInput = document.getElementById('comment-text');
+    const commentsDisplay = document.getElementById('comments-display');
+
+    async function fetchAndDisplayComments() {
+        if (!commentsDisplay) return;
+        commentsDisplay.innerHTML = '<p>Loading comments...</p>'; // Loading state
+
+        try {
+            const response = await fetch('/api/comments');
+            if (!response.ok) {
+                let errorMsg = `Failed to fetch comments. Status: ${response.status}`;
+                try {
+                    const errData = await response.json();
+                    errorMsg = errData.error || errData.message || errorMsg;
+                } catch(e) { /* ignore if error response not json */ }
+                throw new Error(errorMsg);
+            }
+            const comments = await response.json();
+
+            commentsDisplay.innerHTML = ''; // Clear loading/previous comments
+
+            if (comments.length === 0) {
+                commentsDisplay.innerHTML = '<p>No comments yet. Be the first to comment!</p>';
+                return;
+            }
+
+            comments.forEach(comment => {
+                const commentDiv = document.createElement('div');
+                commentDiv.classList.add('comment-item');
+
+                const nameEl = document.createElement('strong');
+                nameEl.classList.add('comment-name');
+                nameEl.textContent = comment.name;
+
+                const dateEl = document.createElement('span');
+                dateEl.classList.add('comment-date');
+                dateEl.textContent = new Date(comment.createdAt).toLocaleString();
+
+                const textEl = document.createElement('p');
+                textEl.classList.add('comment-text');
+                textEl.textContent = comment.text; // Use textContent for security
+
+                const headerEl = document.createElement('div');
+                headerEl.classList.add('comment-header');
+                headerEl.appendChild(nameEl);
+                headerEl.appendChild(dateEl);
+
+                commentDiv.appendChild(headerEl);
+                commentDiv.appendChild(textEl);
+                commentsDisplay.appendChild(commentDiv);
+            });
+
+        } catch (error) {
+            console.error('Error fetching comments:', error);
+            if (commentsDisplay) commentsDisplay.innerHTML = `<p style="color: red;">Error loading comments: ${error.message}</p>`;
+        }
+    }
+
+    if (commentForm) {
+        commentForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            if (!commentNameInput || !commentTextInput) return;
+
+            const name = commentNameInput.value.trim();
+            const text = commentTextInput.value.trim();
+
+            if (!name || !text) {
+                alert('Please enter both your name and a comment.');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/comments', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ name, text }),
+                });
+
+                if (!response.ok) {
+                    let errorMsg = `Failed to post comment. Status: ${response.status}`;
+                    try {
+                        const errData = await response.json();
+                        errorMsg = errData.error || errData.message || errorMsg;
+                    } catch(e) { /* ignore if error response not json */ }
+                    throw new Error(errorMsg);
+                }
+
+                // Clear form and refresh comments
+                commentNameInput.value = '';
+                commentTextInput.value = '';
+                fetchAndDisplayComments(); // Refresh the list
+
+            } catch (error) {
+                console.error('Error posting comment:', error);
+                alert(`Error posting comment: ${error.message}`);
+            }
+        });
+    }
+
+    // --- Admin Comment Management Logic (Phase 4D) ---
+    const adminCommentsListDiv = document.getElementById('admin-comments-list');
+    // initialAdminCommentsLoaded is defined with other view flags
+
+    async function fetchAdminComments() {
+        if (!adminCommentsListDiv) return;
+        adminCommentsListDiv.innerHTML = '<p>Loading comments for admin...</p>';
+
+        try {
+            const response = await fetch('/api/comments'); // Same endpoint as public comments
+            if (!response.ok) {
+                let errorMsg = `Failed to fetch comments. Status: ${response.status}`;
+                try { const errData = await response.json(); errorMsg = errData.error || errData.message || errorMsg; } catch(e) { /* ignore */ }
+                throw new Error(errorMsg);
+            }
+            const comments = await response.json();
+            adminCommentsListDiv.innerHTML = ''; // Clear loading message
+
+            if (comments.length === 0) {
+                adminCommentsListDiv.innerHTML = '<p>No comments to display.</p>';
+                return;
+            }
+
+            const ul = document.createElement('ul');
+            ul.className = 'admin-comments-ul';
+            comments.forEach(comment => {
+                const li = document.createElement('li');
+                li.className = 'admin-comment-item';
+                li.innerHTML = `
+                    <div class="admin-comment-header">
+                        <strong class="admin-comment-name">${comment.name}</strong>
+                        <span class="admin-comment-date">${new Date(comment.createdAt).toLocaleString()}</span>
+                    </div>
+                    <p class="admin-comment-text">${comment.text}</p>
+                    <button class="admin-delete-comment-btn icon-button" data-comment-id="${comment._id}" title="Delete Comment">
+                        <svg class="icon icon-delete" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                    </button>
+                `;
+                ul.appendChild(li);
+            });
+            adminCommentsListDiv.appendChild(ul);
+
+        } catch (error) {
+            console.error('Error fetching admin comments:', error);
+            if (adminCommentsListDiv) adminCommentsListDiv.innerHTML = `<p style="color: red;">Error loading comments: ${error.message}</p>`;
+        }
+    }
+
+    // Event delegation for delete buttons
+    if (adminCommentsListDiv) {
+        adminCommentsListDiv.addEventListener('click', async (event) => {
+            if (event.target.closest('.admin-delete-comment-btn')) {
+                const button = event.target.closest('.admin-delete-comment-btn');
+                const commentId = button.dataset.commentId;
+
+                if (!commentId) return;
+
+                if (confirm('Are you sure you want to delete this comment?')) {
+                    try {
+                        const response = await fetch(`/api/comments/${commentId}`, {
+                            method: 'DELETE',
+                        });
+
+                        if (!response.ok) {
+                            let errorMsg = `Failed to delete comment. Status: ${response.status}`;
+                            try { const errData = await response.json(); errorMsg = errData.error || errData.message || errorMsg; } catch(e) { /* ignore */ }
+                            throw new Error(errorMsg);
+                        }
+                        // Refresh the comments list in admin view
+                        fetchAdminComments();
+                        alert('Comment deleted successfully.');
+
+                    } catch (error) {
+                        console.error('Error deleting comment:', error);
+                        alert(`Error deleting comment: ${error.message}`);
+                    }
+                }
+            }
+        });
+    }
+
+    // Initial load of comments if home view is active by default
+    if (document.getElementById('home-view') && document.getElementById('home-view').style.display !== 'none' && commentsDisplay) {
+        fetchAndDisplayComments();
+        initialCommentsLoaded = true;
+    }
+    // Initial load for admin view if it's somehow default (less likely)
+    if (document.getElementById('admin-view') && document.getElementById('admin-view').style.display !== 'none' && adminCommentsListDiv) {
+       fetchAdminComments();
+       initialAdminCommentsLoaded = true;
     }
 });

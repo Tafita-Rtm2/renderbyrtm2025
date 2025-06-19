@@ -3,143 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Futuristic Portfolio</title>
+    <title>Futuristic Portfolio - Rakotoarimalala T. M.</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header id="top-bar">
-        <div id="top-left-menu-icon-container">
-            <!-- Placeholder SVG for Main Menu Icon (visible on Home, or if side menu is primary nav) -->
-            <svg viewBox="0 0 24 24" class="icon icon-menu-main" id="home-menu-trigger-icon">
-                <path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"></path>
-            </svg>
-        </div>
-        <div id="weather-display-container">
-            <!-- Weather data will be injected here by script.js -->
-        </div>
-    </header>
-
-    <button id="sub-view-menu-trigger" class="icon-button" style="display:none;">
-        <!-- Placeholder SVG for Sub-View Menu Trigger (e.g., back arrow or different menu icon) -->
-        <svg viewBox="0 0 24 24" class="icon icon-menu-sub">
-            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"></path>
-        </svg>
+    <!-- Top-Left Floating Menu Trigger -->
+    <button id="floating-menu-trigger" class="icon-button" style="position: fixed; top: 20px; left: 20px; z-index: 1001;">
+        MENU <!-- Placeholder for SVG Icon -->
     </button>
 
-    <nav id="side-menu">
+    <!-- Top-Left Floating Menu (Initially Hidden) -->
+    <nav id="floating-menu" class="floating-menu-container" style="display: none;">
+        <div id="weather-section-menu">
+            <!-- Weather data will be injected here by script.js -->
+            <p>Weather loading...</p>
+        </div>
         <ul>
-            <li><a href="#" data-view="home-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"></path></svg> <span>Accueil</span></a></li>
-            <li><a href="#" data-view="ai-chat-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"></path></svg> <span>Chat IA</span></a></li>
-            <li><a href="#" data-view="image-generator-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"></path></svg> <span>Générateur d'Images</span></a></li>
-            <li><a href="#" data-view="story-generator-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"></path></svg> <span>Générateur d'Histoires</span></a></li>
-            <li><a href="#" data-view="vip-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path></svg> <span>Zone VIP</span></a></li>
-            <li><a href="#" data-view="weather-view"> <svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"></path></svg> <span>Météo</span></a></li>
-            <li><a href="#" data-view="about-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"></path></svg> <span>À Propos</span></a></li>
-            <li><a href="#" data-view="contact-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"></path></svg> <span>Contact</span></a></li>
-            <li><a href="#" data-view="comments-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18zM18 14H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"></path></svg> <span>Commentaires</span></a></li>
-            <li><a href="#" data-view="user-history-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7v-3l-4.89-4.89-.07-.14L2 15h3c0 4.97 4.03 9 9 9s9-4.03 9-9-4.03-9-9-9z"></path></svg> <span>Historique Utilisateur</span></a></li>
-            <li><a href="#" data-view="gallery-view-main"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M22 16V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2zm-11-4l2.03 2.71L16 11l4 5H8l3-4zM2 6v14c0 1.1.9 2 2 2h14v-2H4V6H2z"></path></svg> <span>Galerie d'Images</span></a></li>
-            <li><a href="#" data-view="ads-partners-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M16.5 12c1.38 0 2.5-1.12 2.5-2.5S17.88 7 16.5 7C15.12 7 14 8.12 14 9.5s1.12 2.5 2.5 2.5zM9 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm7.5 3c-1.83 0-5.5.92-5.5 2.75V18h11v-1.25c0-1.83-3.67-2.75-5.5-2.75zM9 13c-2.33 0-7 1.17-7 3.5V18h7v-1.5c0-.83.24-1.58.62-2.26-.44-.07-.9-.14-1.37-.14z"></path></svg> <span>🎯 Publicités & Partenaires</span></a></li>
-            <li><a href="#" data-view="admin-panel-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.34 8.42c-.11.2-.06.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54c.59-.24 1.13-.57 1.62-.94l2.39.96c.22.08.47 0 .59.22l1.92-3.32c.12-.22.06-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"></path></svg> <span>Panneau Admin</span></a></li>
+            <li><a href="#" data-view="home-view">Home</a></li>
+            <li><a href="#" data-view="ai-chat-view">AI Chat</a></li>
+            <li><a href="#" data-view="image-generator-view">Image Generator</a></li>
+            <li><a href="#" data-view="story-generator-view">Story Generator</a></li>
+            <li><a href="#" data-view="vip-view">VIP Zone</a></li>
+            <li><a href="#" data-view="gallery-main-view">Galleries</a></li>
+            <li><a href="#" data-view="contact-view">Contact & About</a></li>
+            <!-- Admin link might be here or triggered differently -->
+            <li><a href="#" id="admin-zone-link">Admin Zone</a></li>
         </ul>
+        <div id="contact-info-menu">
+            <h4>Contact Admin</h4>
+            <p>Rakotoarimalala Tafitaniaina Manarintsoa</p>
+            <p>WhatsApp: +261385858330</p>
+            <p>Facebook: <a href="https://www.facebook.com/manarintso.niaina" target="_blank">manarintso.niaina</a></p>
+            <p>Tel: 0336177772</p>
+            <p>Email: niainatafita85@gmail.com</p>
+            <p>Website: <a href="#" id="user-website-link" target="_blank">(User's website here)</a></p>
+        </div>
     </nav>
 
-    <main id="main-content">
+    <!-- Main Content Area -->
+    <main id="main-content-area">
+        <!-- Views will be injected/shown here -->
         <div id="home-view" class="view active">
-            <!-- Home Page App Icons -->
-            <nav id="home-bottom-app-icons">
-                <button class="home-app-btn" data-view="ai-chat-view">
-                    <svg viewBox="0 0 24 24" class="icon"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"></path></svg>
-                    <span>AI Chat</span>
-                </button>
-                <button class="home-app-btn" data-view="image-generator-view">
-                    <svg viewBox="0 0 24 24" class="icon"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"></path></svg>
-                    <span>Image Gen</span>
-                </button>
-                <button class="home-app-btn" data-view="story-generator-view">
-                    <svg viewBox="0 0 24 24" class="icon"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"></path></svg>
-                    <span>Story Gen</span>
-                </button>
-                <button class="home-app-btn" data-view="vip-view">
-                    <svg viewBox="0 0 24 24" class="icon"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path></svg>
-                    <span>VIP Zone</span>
-                </button>
-            </nav>
-            <section id="public-comments-section">
-                <!-- Content from existing comments section -->
-                 <h3>Leave a Comment</h3>
+            <h2>Welcome to the Future</h2>
+            <p>This is the main home view. Select an option from the navigation.</p>
+
+            <!-- Public Comments Section - To be styled and positioned at bottom of home view -->
+            <section id="public-comments-section" style="margin-top: 30px; border-top: 1px solid #ccc; padding-top: 15px;">
+                <h3>Leave a Public Comment</h3>
                 <form id="comment-form">
-                    <div class="form-group">
-                        <label for="comment-name">Name:</label>
-                        <input type="text" id="comment-name" name="comment-name" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="comment-text">Comment:</label>
-                        <textarea id="comment-text" name="comment-text" rows="4" required></textarea>
-                    </div>
-                    <button type="submit" class="btn-submit-comment">Submit Comment</button>
+                    <div><label for="comment-name">Name:</label><input type="text" id="comment-name" required></div>
+                    <div><label for="comment-text">Comment:</label><textarea id="comment-text" rows="3" required></textarea></div>
+                    <button type="submit">Submit Comment</button>
                 </form>
-                <div id="comments-display-area">
-                    <p>Loading comments...</p>
-                </div>
+                <div id="comments-display-area"><p>Loading comments...</p></div>
             </section>
-            <div id="admin-login-trigger-icon">
-                <svg viewBox="0 0 24 24" class="icon icon-admin-login"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path></svg>
-            </div>
         </div>
 
         <div id="ai-chat-view" class="view" style="display: none;">
-             <div id="chat-messages-area"></div>
-            <div id="chat-input-bar">
-                <div class="web-search-container">
-                    <label for="web-search-toggle" class="web-search-label">Web Search:</label>
-                    <label class="switch">
-                        <input type="checkbox" id="web-search-toggle" name="web-search-toggle">
-                        <span class="slider round"></span>
-                    </label>
-                </div>
-                <input type="text" id="chat-input-field" placeholder="Type your message...">
-                <button id="chat-send-button" class="icon-button">
-                    <svg viewBox="0 0 24 24" class="icon"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
-                </button>
+            <h2>AI Chat</h2>
+            <!-- AI Chat UI elements will go here -->
+            <div id="chat-messages-area" style="height: 300px; border: 1px solid #ccc; overflow-y: scroll; padding: 10px; margin-bottom: 10px;"></div>
+            <div id="chat-input-bar" style="display: flex;">
+                <input type="text" id="chat-input-field" placeholder="Type your message..." style="flex-grow: 1; margin-right: 5px;">
+                <button id="chat-send-button">SEND</button> <!-- Placeholder for SVG -->
+            </div>
+            <div>
+                <label><input type="checkbox" id="web-search-toggle"> WebSearch ON/OFF</label>
             </div>
         </div>
+
         <div id="image-generator-view" class="view" style="display: none;">
             <h2>Image Generator</h2>
-            <div id="image-prompt-area">
-                <input type="text" id="image-prompt-field" placeholder="Enter image description...">
-                <button id="generate-image-button" class="icon-button">
-                    <svg viewBox="0 0 24 24" class="icon"><path d="M9.5 15.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0-5c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zm-7-8.5c1.84 0 3.5.71 4.75 1.86l-2.09 2.09C15.92 13.71 15.01 13 14 13c-1.93 0-3.5 1.57-3.5 3.5S12.07 20 14 20s3.5-1.57 3.5-3.5V15c0-2.01-1.11-3.75-2.75-4.64.9-.87 1.5-2.03 1.5-3.36 0-2.48-2.02-4.5-4.5-4.5S7.25 4.52 7.25 7c0 1.33.6 2.46 1.5 3.36C6.97 11.29 5.5 13.29 5.5 15.5c0 1.38.47 2.65 1.26 3.64l1.41-1.41C7.69 17.21 7.5 16.39 7.5 15.5c0-1.45.62-2.75 1.61-3.66.08-.08.16-.15.25-.21.2-.15.4-.27.6-.39.9-.55 1.92-.84 3.04-.84z"/></svg>
-                    <span>Generate</span>
-                </button>
-            </div>
-            <div id="image-display-area"><p>Generated image will appear here.</p></div>
-            <button id="download-image-button" class="icon-button" style="display: none;">
-                 <svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>
-                <span>Download</span>
-            </button>
-            <div id="image-history-gallery"><h4>History</h4></div>
+            <!-- Image Generator UI elements will go here -->
+            <input type="text" id="image-prompt-field" placeholder="Enter image description...">
+            <button id="generate-image-button">GENERATE</button> <!-- Placeholder for SVG -->
+            <div id="image-display-area" style="margin-top:10px; min-height: 100px; border: 1px solid #ccc;">Image will appear here.</div>
+            <button id="download-image-button" style="display:none;">DOWNLOAD</button>
         </div>
+
         <div id="story-generator-view" class="view" style="display: none;">
-            <h2>Story Generator</h2>
-            <div id="story-prompt-area">
-                <input type="text" id="story-theme-field" placeholder="Enter story title or theme...">
-                <button id="generate-story-button" class="icon-button">
-                    <svg viewBox="0 0 24 24" class="icon"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
-                    <span>Generate Story</span>
-                </button>
-            </div>
-            <div id="generated-story-display"><p>Your generated story will appear here.</p></div>
-            <div id="story-vip-controls" style="display:none;">
-                <button id="story-listen-button" class="icon-button">Listen</button>
-                <button id="story-translate-button" class="icon-button">Translate</button>
-                <button id="story-download-button-text" class="icon-button">Download Text</button>
-            </div>
-            <div id="story-history-area"><h4>My Stories</h4><div id="story-history-list"></div></div>
+            <h2>Story Generator ("Historique Generator")</h2>
+            <!-- Story Generator UI elements will go here -->
+            <input type="text" id="story-theme-field" placeholder="Enter story title or theme...">
+            <button id="generate-story-button">TELL ME A STORY</button> <!-- Placeholder for SVG -->
+            <div id="generated-story-display" style="margin-top:10px; min-height: 100px; border: 1px solid #ccc;">Story will appear here.</div>
         </div>
+
         <div id="vip-view" class="view" style="display: none;">
-            <h2>VIP Lounge</h2>
-            <p>Access exclusive premium tools and features.</p>
+            <h2>VIP Zone</h2>
             <div id="vip-access-area">
                 <p>Enter VIP Access Code:</p>
                 <input type="password" id="vip-code-input" placeholder="VIP Code">
@@ -147,69 +98,57 @@
                 <p id="vip-status-message" style="display:none;"></p>
             </div>
             <div id="vip-tools-container" style="display:none;">
-                <h3>Premium AI Suite</h3>
-                <div id="gemini-tool-ui" class="vip-tool">
-                    <h4>Gemini AI</h4> <p>Access Google's advanced Gemini model...</p>
-                    <textarea id="gemini-input" class="vip-ai-input" placeholder="Your prompt for Gemini..."></textarea>
-                    <button id="gemini-send-btn" class="vip-ai-send-btn icon-button"><svg viewBox="0 0 24 24" class="icon"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg> Send</button>
-                    <div id="gemini-response" class="vip-ai-response"><p>AI response will appear here.</p></div>
-                </div>
-                <div id="claude-haiku-tool-ui" class="vip-tool">
-                    <h4>Claude Haiku AI</h4> <p>Engage with Anthropic's Claude Haiku model...</p>
-                    <textarea id="claude-haiku-input" class="vip-ai-input" placeholder="Your prompt for Claude Haiku..."></textarea>
-                    <button id="claude-haiku-send-btn" class="vip-ai-send-btn icon-button"><svg viewBox="0 0 24 24" class="icon"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg> Send</button>
-                    <div id="claude-haiku-response" class="vip-ai-response"><p>AI response will appear here.</p></div>
-                </div>
-                <div id="deepseek-tool-ui" class="vip-tool">
-                     <h4>Deepseek AI</h4> <p>Utilize Deepseek Coder models...</p>
-                    <textarea id="deepseek-input" class="vip-ai-input" placeholder="Your prompt for Deepseek..."></textarea>
-                    <button id="deepseek-send-btn" class="vip-ai-send-btn icon-button"><svg viewBox="0 0 24 24" class="icon"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg> Send</button>
-                    <div id="deepseek-response" class="vip-ai-response"><p>AI response will appear here.</p></div>
-                </div>
-                <div id="rtm-ai-tool-ui" class="vip-tool">
-                    <h4>RTM AI</h4> <p>Interact with a custom-tuned RTM model...</p>
-                    <textarea id="rtm-ai-input" class="vip-ai-input" placeholder="Your prompt for RTM AI..."></textarea>
-                    <button id="rtm-ai-send-btn" class="vip-ai-send-btn icon-button"><svg viewBox="0 0 24 24" class="icon"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg> Send</button>
-                    <div id="rtm-ai-response" class="vip-ai-response"><p>AI response will appear here.</p></div>
-                </div>
-                <h3>File Reader (PDF/TXT)</h3>
-                <div id="file-reader-tool-ui" class="vip-tool">
-                    <h4>Document Q&A</h4> <p>Upload a .txt or .pdf file...</p>
-                    <input type="file" id="file-reader-input" accept=".txt,.pdf">
-                    <button id="file-reader-process-btn" class="icon-button"><svg viewBox="0 0 24 24" class="icon"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm-1 13h-2v-2h2v2zm0-4h-2V6h2v5z"></path></svg> Process File</button>
-                    <div id="file-reader-content-display" class="vip-ai-response"><p>File content will appear here.</p></div>
-                    <div id="file-reader-qa-area">
-                        <textarea id="file-reader-question" class="vip-ai-input" placeholder="Ask a question about the document..."></textarea>
-                        <button id="file-reader-ask-btn" class="vip-ai-send-btn icon-button"><svg viewBox="0 0 24 24" class="icon"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg> Ask</button>
-                        <div id="file-reader-answer" class="vip-ai-response"><p>Answer will appear here.</p></div>
+                <!-- VIP tools content will go here, including the iframe trigger from previous work -->
+                 <div id="vip-iframe-tool-ui" class="vip-tool">
+                    <h4>External VIP Site</h4>
+                    <p>Access an external partner site securely within this panel.</p>
+                    <button id="vip-iframe-trigger-btn">Open VIP Site</button> <!-- Placeholder for SVG -->
+                    <div id="vip-iframe-container" style="display: none; width: 100%; height: 600px; margin-top: 15px;">
+                        <iframe id="vip-site-iframe" style="width: 100%; height: 100%; border: none;"></iframe>
                     </div>
                 </div>
-                <h3>Image to Ghibli Style</h3>
-                <div id="image-ghibli-tool-ui" class="vip-tool"><p>Transform your images into Ghibli-esque art. (Placeholder for UI elements)</p></div>
-                <h3>Intelligent Image Generation</h3>
-                <div id="smart-image-gen-tool-ui" class="vip-tool"><p>Advanced image generation with fine-tuned controls. (Placeholder)</p></div>
-                <h3>Web Scraper</h3>
-                <div id="scraping-tool-ui" class="vip-tool"><p>Extract data from websites. (Placeholder)</p></div>
-                <h3>VIP Gallery</h3>
-                <div id="vip-gallery-tool-ui" class="vip-tool"><p>Exclusive content gallery. (Placeholder for horizontal scroller)</p></div>
+                <p>More VIP tools (Advanced AI Chat, Galleries, etc.) will appear here.</p>
             </div>
         </div>
-        <div id="admin-panel-view" class="view" style="display: none;"><p>Admin Panel - Content TBD</p></div>
-        <div id="about-view" class="view" style="display: none;"><p>About Page - Content TBD</p></div>
-        <div id="contact-view" class="view" style="display: none;"><p>Contact Page - Content TBD</p></div>
-        <div id="comments-view" class="view" style="display: none;"><p>Full Comments Page - Content TBD (or link to home's section)</p></div>
-        <div id="user-history-view" class="view" style="display: none;"><p>User History - Content TBD</p></div>
-        <div id="gallery-view-main" class="view" style="display: none;"><p>Main Image Gallery - Content TBD</p></div>
-        <div id="ads-partners-view" class="view" style="display: none;"><p>Ads & Partners - Content TBD</p></div>
-         <div id="weather-view" class="view" style="display: none;"><p>Detailed Weather View - Content TBD</p></div>
+
+        <div id="gallery-main-view" class="view" style="display: none;">
+             <h2>Image Galleries</h2>
+             <!-- Gallery content here -->
+        </div>
+
+        <div id="contact-view" class="view" style="display: none;">
+             <h2>Contact & About</h2>
+             <!-- Static contact and about info here, possibly duplicating floating menu info -->
+        </div>
+
+        <div id="admin-zone-view" class="view" style="display:none;">
+            <h2>Admin Zone</h2>
+            <p>Loading admin tools...</p>
+        </div>
+
     </main>
 
-    <div id="private-message-trigger-container">
-        <button id="private-message-float-btn" class="icon-button">
-            <svg viewBox="0 0 24 24" class="icon icon-private-message"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8l8 5 8-5v10zm-8-7L4 6h16l-8 5z"></path></svg>
-        </button>
+    <!-- Bottom Navigation Bar -->
+    <nav id="bottom-navigation-bar" style="position: fixed; bottom: 0; width: 100%; background-color: #333; color: white; display: flex; justify-content: space-around; padding: 10px; z-index: 1000;">
+        <button class="bottom-nav-btn" data-view="ai-chat-view">AI CHAT</button> <!-- Placeholder for SVG -->
+        <button class="bottom-nav-btn" data-view="image-generator-view">IMG GEN</button> <!-- Placeholder for SVG -->
+        <button class="bottom-nav-btn" data-view="story-generator-view">STORY GEN</button> <!-- Placeholder for SVG -->
+        <button class="bottom-nav-btn" data-view="vip-view">VIP</button> <!-- Placeholder for SVG -->
+    </nav>
+
+    <!-- Floating Action Button for User-Admin Messages (Placeholder) -->
+    <button id="floating-message-admin-trigger" class="icon-button" style="position: fixed; bottom: 80px; right: 20px; z-index: 1001; display:none;">
+        MSG ADMIN <!-- Placeholder for SVG, initially hidden, shown on home-view only? -->
+    </button>
+    <div id="private-message-popup" style="display:none; position:fixed; bottom:120px; right:20px; width:300px; background:white; border:1px solid black; z-index:1002; padding:10px;">
+        <h4>Message Admin</h4>
+        <input type="text" id="private-msg-name" placeholder="Your Name" required><br>
+        <textarea id="private-msg-text" placeholder="Your Message" rows="3" required></textarea><br>
+        <button id="send-private-msg-btn">Send</button>
+        <button id="close-private-msg-btn">Close</button>
     </div>
+
 
     <script src="script.js"></script>
 </body>
-                                                                                                                                                                                                                                                                                                                </html>
+</html>

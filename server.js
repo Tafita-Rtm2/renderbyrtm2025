@@ -1,201 +1,169 @@
 const express = require('express');
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+const fetch = require('node-fetch'); // For making HTTP requests
 const path = require('path');
-const { MongoClient, ObjectId } = require('mongodb');
+const { MongoClient, ServerApiVersion } = require('mongodb');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// API Keys
-const WEATHER_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
-const CHAT_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
-const IMAGE_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
-
-// MongoDB Connection
-const mongoUri = "mongodb+srv://rtmtafita:tafitaniaina1206@rtmchat.pzebpqh.mongodb.net/?retryWrites=true&w=majority&appName=rtmchat";
-const client = new MongoClient(mongoUri);
-
-let portfolioDb;
-let commentsCollection;
+// --- MongoDB Configuration ---
+const MONGO_URI = "mongodb+srv://rtmtafita:tafitaniaina1206@rtmchat.pzebpqh.mongodb.net/?retryWrites=true&w=majority&appName=rtmchat";
+const mongoClient = new MongoClient(MONGO_URI, {
+    serverApi: {
+        version: ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true,
+    }
+});
 
 async function connectDB() {
     try {
-        await client.connect();
-        portfolioDb = client.db("portfolioDb");
-        commentsCollection = portfolioDb.collection("comments");
-        console.log("Successfully connected to MongoDB Atlas!");
-        await commentsCollection.createIndex({ createdAt: -1 });
-        console.log("Indexes ensured for comments collection.");
+        await mongoClient.connect();
+        await mongoClient.db("admin").command({ ping: 1 }); // "admin" db is typical for ping
+        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+        // Example: Assign db instance to a variable for use in routes
+        // app.locals.db = mongoClient.db("yourDbName");
     } catch (err) {
-        console.error("Failed to connect to MongoDB Atlas or ensure indexes", err);
-        process.exit(1);
+        console.error("Failed to connect to MongoDB", err);
+        // process.exit(1); // Optionally exit if DB connection is critical
     }
 }
+connectDB();
 
-// Middleware
-app.use(express.static(path.join(__dirname, 'public')));
+// --- API Configuration ---
+const WEATHER_API_URL = 'https://kaiz-apis.gleeze.com/api/weather'; // Base URL for weather
+const WEATHER_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6'; // Specific key for Weather API
+const GPT4O_API_URL_BASE = 'https://kaiz-apis.gleeze.com/api/gpt-4o'; // Base URL for GPT-4o
+const FLUX_API_URL_BASE = 'https://kaiz-apis.gleeze.com/api/flux'; // Base URL for Flux
+const KAIZ_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6'; // Common key for Kaiz APIs (GPT-4o, Flux, VIP)
+
+// Middleware to parse JSON bodies
 app.use(express.json());
 
+// Serve static files from the 'public' directory
+app.use(express.static(path.join(__dirname, 'public')));
 
-// --- Weather API Route ---
-app.get('/api/weather', async (req, res) => { /* ... existing unchanged code ... */
-    const location = req.query.location;
-    if (!location) { return res.status(400).json({ error: 'Location query parameter is required' }); }
-    const weatherApiUrl = `https://kaiz-apis.gleeze.com/api/weather?q=${encodeURIComponent(location)}&apikey=${WEATHER_API_KEY}`;
+// --- API Proxy Endpoints ---
+
+// 1. Weather API Proxy
+app.get('/api/weather', async (req, res) => {
+    const location = req.query.q || req.query.location || 'antananarivo';
+    if (!location) {
+        return res.status(400).json({ error: 'Location query parameter is required.' });
+    }
     try {
-        const apiResponse = await fetch(weatherApiUrl);
-        if (!apiResponse.ok) {
-            let errorText = `External API Error: ${apiResponse.status} ${apiResponse.statusText}`;
-            try { const errorBody = await apiResponse.json(); if (errorBody && errorBody.message) errorText = `External API Error: ${errorBody.message}`; else if (typeof errorBody === 'string' && errorBody.length > 0) errorText = `External API Error: ${errorBody}`; } catch (e) { /* ignore */ }
-            return res.status(apiResponse.status).json({ error: errorText, details: `Failed to fetch weather for ${location}` });
+        const apiRes = await fetch(`${WEATHER_API_URL}?q=${encodeURIComponent(location)}&apikey=${WEATHER_API_KEY}`);
+        const data = await apiRes.json();
+        if (!apiRes.ok) {
+            console.error('Weather API Error:', data);
+            return res.status(apiRes.status).json(data);
         }
-        const data = await apiResponse.json();
-        if (data && data["0"]) { res.json(data["0"]); }
-        else { return res.status(500).json({ error: 'Unexpected response structure from weather API.' }); }
+        res.json(data);
     } catch (error) {
-        console.error('Server error while fetching weather:', error);
-        return res.status(500).json({ error: 'Failed to fetch weather data due to server error.' });
+        console.error('Error proxying to Weather API:', error);
+        res.status(500).json({ error: 'Failed to fetch weather data.', details: error.message });
     }
 });
 
-// --- AI Chat API Route ---
-app.post('/api/chat', async (req, res) => { /* ... existing unchanged code ... */
+// 2. GPT-4o (AI Chat, Story Generator) Proxy
+app.post('/api/chat', async (req, res) => {
     const { ask, uid, webSearch } = req.body;
-    if (!ask || !uid) { return res.status(400).json({ error: 'Parameters "ask" and "uid" are required.' }); }
-    const webSearchParam = (webSearch === true || String(webSearch).toLowerCase() === 'on') ? 'on' : 'off';
-    const chatApiUrl = `https://kaiz-apis.gleeze.com/api/gpt-4o?ask=${encodeURIComponent(ask)}&uid=${encodeURIComponent(uid)}&webSearch=${webSearchParam}&apikey=${CHAT_API_KEY}`;
+    if (!ask) {
+        return res.status(400).json({ error: 'The "ask" field is required.' });
+    }
     try {
-        const apiResponse = await fetch(chatApiUrl);
-        const responseText = await apiResponse.text();
-        if (!apiResponse.ok) {
-            let errorJson = { error: `External Chat API Error: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
-            try { errorJson = JSON.parse(responseText); if (!errorJson.error && !errorJson.message) { errorJson.error = `External Chat API Error: ${apiResponse.status} ${apiResponse.statusText}`; } } catch (e) { /* Not JSON */ }
-            return res.status(apiResponse.status).json(errorJson);
+        const params = new URLSearchParams({
+            ask: ask,
+            uid: uid || 'default-chat-uid', // Ensure UID is present
+            webSearch: webSearch ? 'on' : 'off',
+            apikey: KAIZ_API_KEY
+        });
+        const apiRes = await fetch(`${GPT4O_API_URL_BASE}?${params.toString()}`, {
+            method: 'POST' // API docs imply POST, query params for args
+        });
+
+        const data = await apiRes.json();
+        if (!apiRes.ok) {
+            console.error('GPT-4o API Error:', data);
+            return res.status(apiRes.status).json(data);
         }
-        let data;
-        try { data = JSON.parse(responseText); } catch (e) { return res.status(500).json({ error: 'Failed to parse response from Chat API.', details: responseText }); }
-        if (data && data.response) { res.json({ author: data.author || "Kaizenji", response: data.response }); }
-        else { return res.status(500).json({ error: 'Unexpected response structure from Chat API.', details: data }); }
+        res.json(data);
     } catch (error) {
-        console.error('Server error while calling Chat API:', error);
-        return res.status(500).json({ error: 'Server error while processing chat request.' });
+        console.error('Error proxying to GPT-4o API:', error);
+        res.status(500).json({ error: 'Failed to communicate with AI service.', details: error.message });
     }
 });
 
-// --- Image Generation API Route ---
-app.post('/api/generate-image', async (req, res) => { /* ... existing unchanged code ... */
+// 3. Flux (Image Generator) Proxy
+app.post('/api/generate-image', async (req, res) => {
     const { prompt } = req.body;
-    if (!prompt) { return res.status(400).json({ error: 'Parameter "prompt" is required.' }); }
-    const imageApiUrl = `https://kaiz-apis.gleeze.com/api/flux?prompt=${encodeURIComponent(prompt)}&apikey=${IMAGE_API_KEY}`;
+    if (!prompt) {
+        return res.status(400).json({ error: 'The "prompt" field is required.' });
+    }
     try {
-        const apiResponse = await fetch(imageApiUrl);
-        if (!apiResponse.ok) {
-            const errorText = await apiResponse.text();
-            try { const errorJson = JSON.parse(errorText); return res.status(apiResponse.status).json(errorJson); }
-            catch (e) { return res.status(apiResponse.status).json({ error: `Image API Error: ${apiResponse.statusText}`, details: errorText }); }
+        const params = new URLSearchParams({
+            prompt: prompt,
+            apikey: KAIZ_API_KEY
+        });
+        const apiRes = await fetch(`${FLUX_API_URL_BASE}?${params.toString()}`, {
+            method: 'POST' // API docs imply POST for this action
+        });
+
+        if (!apiRes.ok) {
+            let errorData;
+            try { errorData = await apiRes.json(); } catch (e) { errorData = { error: apiRes.statusText }; }
+            console.error('Flux API Error:', errorData);
+            return res.status(apiRes.status).json(errorData);
         }
-        const contentType = apiResponse.headers.get('content-type') || 'image/jpeg';
-        res.setHeader('Content-Type', contentType);
-        const imageBuffer = await apiResponse.buffer();
-        res.send(imageBuffer);
+        const imageBlob = await apiRes.blob();
+        res.type(imageBlob.type);
+        imageBlob.arrayBuffer().then(buffer => {
+            res.send(Buffer.from(buffer));
+        }).catch(err => {
+            console.error('Error sending image blob:', err);
+            res.status(500).json({ error: 'Failed to process image response.' });
+        });
     } catch (error) {
-        console.error('Server error while calling Image API:', error);
-        return res.status(500).json({ error: 'Server error while processing image generation request.' });
+        console.error('Error proxying to Flux API:', error);
+        res.status(500).json({ error: 'Failed to generate image.', details: error.message });
     }
 });
 
-// DELETE /api/comments/:commentId - Delete a comment
-app.delete('/api/comments/:commentId', async (req, res) => {
-    if (!commentsCollection) {
-        return res.status(503).json({ error: "Database not connected. Please try again later." });
+// 4. VIP Chat Proxy
+app.post('/api/vip-chat', async (req, res) => {
+    const { model, prompt, uid } = req.body;
+    if (!prompt || !model) {
+        return res.status(400).json({ error: 'The "model" and "prompt" fields are required.' });
     }
     try {
-        const { commentId } = req.params;
-        if (!ObjectId.isValid(commentId)) {
-            return res.status(400).json({ error: "Invalid comment ID format." });
+        const params = new URLSearchParams({
+            ask: prompt,
+            uid: uid || 'default-vip-uid',
+            model: model, // Assuming the API uses 'model' for VIP model selection
+            apikey: KAIZ_API_KEY
+        });
+        // Using GPT4O_API_URL_BASE as the placeholder for VIP models, per previous structure
+        const apiRes = await fetch(`${GPT4O_API_URL_BASE}?${params.toString()}`, {
+            method: 'POST' // Assuming VIP chat also follows POST with query params
+        });
+        const data = await apiRes.json();
+        if (!apiRes.ok) {
+            console.error(`VIP Chat API Error (model: ${model}):`, data);
+            return res.status(apiRes.status).json(data);
         }
-        const mongoDbCommentId = new ObjectId(commentId);
-
-        const result = await commentsCollection.deleteOne({ _id: mongoDbCommentId });
-
-        if (result.deletedCount === 0) {
-            return res.status(404).json({ error: "Comment not found." });
-        }
-
-        res.status(200).json({ message: "Comment deleted successfully.", deletedCount: result.deletedCount });
-
+        res.json(data);
     } catch (error) {
-        console.error("Error deleting comment:", error);
-        res.status(500).json({ error: "Failed to delete comment due to server error." });
+        console.error(`Error proxying to VIP Chat API (model: ${model}):`, error);
+        res.status(500).json({ error: `Failed to communicate with ${model} AI service.`, details: error.message });
     }
 });
 
-
-// --- New Comment Routes (Phase 4B) ---
-
-// POST /api/comments - Add a new comment
-app.post('/api/comments', async (req, res) => {
-    if (!commentsCollection) {
-        return res.status(503).json({ error: "Database not connected. Please try again later." });
-    }
-    try {
-        const { name, text } = req.body;
-
-        if (!name || typeof name !== 'string' || name.trim() === '') {
-            return res.status(400).json({ error: 'Name is required and must be a non-empty string.' });
-        }
-        if (!text || typeof text !== 'string' || text.trim() === '') {
-            return res.status(400).json({ error: 'Text is required and must be a non-empty string.' });
-        }
-
-        const newComment = {
-            name: name.trim(),
-            text: text.trim(),
-            createdAt: new Date()
-        };
-
-        const result = await commentsCollection.insertOne(newComment);
-        // result.ops is deprecated, result.insertedId is preferred for single insert
-        // To return the full document, you might need to fetch it or construct it if insertOne doesn't return it directly in your driver version.
-        // However, newComment already has all fields except _id, which is in result.insertedId
-        const createdComment = { _id: result.insertedId, ...newComment };
-
-        res.status(201).json(createdComment);
-
-    } catch (error) {
-        console.error("Error posting comment:", error);
-        res.status(500).json({ error: "Failed to post comment due to server error." });
-    }
-});
-
-// GET /api/comments - Fetch all comments
-app.get('/api/comments', async (req, res) => {
-    if (!commentsCollection) {
-        return res.status(503).json({ error: "Database not connected. Please try again later." });
-    }
-    try {
-        const comments = await commentsCollection.find({})
-                                             .sort({ createdAt: -1 }) // Sort by newest first
-                                             .toArray();
-        res.status(200).json(comments);
-    } catch (error) {
-        console.error("Error fetching comments:", error);
-        res.status(500).json({ error: "Failed to fetch comments due to server error." });
-    }
-});
-
-
-// Fallback to index.html
+// Fallback for any other request: send index.html
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Start server after DB connection
-async function startServer() {
-    await connectDB();
-    app.listen(PORT, () => {
-        console.log(`Server is running on http://localhost:${PORT}`);
-    });
-}
-
-startServer();
+// Start the server
+app.listen(PORT, () => {
+    console.log(\`Server running on http://localhost:\${PORT}\`);
+});

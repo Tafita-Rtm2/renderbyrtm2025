@@ -1,1 +1,130 @@
-r
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Futuristic Portfolio</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Floating Menu Button -->
+    <div id="floating-menu-btn" style="display:none; position:fixed; top:20px; left:20px; z-index:1005; background-color: #007bff; color:white; padding:10px 15px; border-radius:50%; cursor:pointer; box-shadow: 0px 2px 10px rgba(0,0,0,0.2);">Menu</div>
+
+    <!-- Vertical Scroll Menu -->
+    <div id="vertical-scroll-menu" style="display:none; position:fixed; top:70px; left:20px; z-index:1004; background:white; border:1px solid #ccc; border-radius:5px; padding:10px; box-shadow: 0px 4px 12px rgba(0,0,0,0.15); width: 200px;">
+        <div class="vertical-menu-item" data-view-id="portfolio-view">Main Portfolio</div>
+        <div class="vertical-menu-item" data-view-id="chat-view">AI Chat</div>
+        <div class="vertical-menu-item" data-view-id="image-gen-view">Image Generator</div>
+        <div class="vertical-menu-item" data-view-id="history-gen-view">History Generator</div>
+        <div class="vertical-menu-item" data-view-id="vip-view">VIP Area</div>
+    </div>
+
+    <header id="top-menu">
+        <nav>
+            <a href="#" id="nav-home" title="Home">[H]</a>
+            <a href="#" id="nav-projects" title="Projects">[P]</a>
+            <a href="#" id="nav-about" title="About">[A]</a>
+            <a href="#" id="nav-weather" title="Weather">[W]</a>
+        </nav>
+    </header>
+
+    <div id="default-page-container">
+        <section id="weather-display">
+            <p>Weather Loading...</p>
+        </section>
+
+        <main id="main-content-area">
+            <div id="portfolio-view" class="view">
+                <section id="about-placeholder">
+                    <h2>About Me/This Site</h2>
+                    <p>This is a placeholder for the 'About' section. Content to be added later.</p>
+                </section>
+                <section id="contact-info">
+                    <h3>Contact Me</h3>
+                    <p><span class="contact-icon">[User]</span> Rakotoarimalala Tafitaniaina Manarintsoa</p>
+                    <p><span class="contact-icon">[WA]</span> <a href="https://wa.me/261385858330" target="_blank">+261385858330</a></p>
+                    <p><span class="contact-icon">[FB]</span> <a href="https://www.facebook.com/manarintso.niaina" target="_blank">facebook.com/manarintso.niaina</a></p>
+                    <p><span class="contact-icon">[Ph]</span> <a href="tel:0336177772">0336177772</a></p>
+                    <p><span class="contact-icon">[Mail]</span> <a href="mailto:niainatafita85@gmail.com">niainatafita85@gmail.com</a></p>
+                    <p><span class="contact-icon">[Web]</span> <a href="#" id="user-website-link">[Link to be provided]</a></p>
+                </section>
+                <section id="comments-section">
+                    <h3>Comments</h3>
+                    <form id="comment-form">
+                        <div>
+                            <label for="comment-name">Name:</label>
+                            <input type="text" id="comment-name" name="comment-name" required>
+                        </div>
+                        <div>
+                            <label for="comment-text">Comment:</label>
+                            <textarea id="comment-text" name="comment-text" rows="4" required></textarea>
+                        </div>
+                        <button type="submit">Submit Comment</button>
+                    </form>
+                    <div id="comments-display">
+                        <p>No comments yet.</p>
+                    </div>
+                </section>
+            </div>
+            <div id="chat-view" class="view" style="display:none;">
+                <h2>AI Chat</h2>
+                <div id="chat-messages-container">
+                    <div id="chat-messages">
+                    </div>
+                </div>
+                <div id="chat-input-area">
+                    <input type="text" id="chat-input" placeholder="Type your message...">
+                    <button id="chat-send">Send</button>
+                </div>
+                <div id="chat-options">
+                    <input type="checkbox" id="chat-web-search">
+                    <label for="chat-web-search">Enable Web Search</label>
+                </div>
+            </div>
+            <div id="image-gen-view" class="view" style="display:none;">
+                <h2>Image Generator</h2>
+                <p>Image Generator interface will be here.</p>
+            </div>
+            <div id="history-gen-view" class="view" style="display:none;">
+                <h2>History Generator</h2>
+                <p>History Generator interface will be here.</p>
+            </div>
+            <div id="vip-view" class="view" style="display:none;">
+                <h2>VIP Area</h2>
+                <p>VIP features will be here.</p>
+            </div>
+        </main>
+
+        <div id="admin-login-icon">
+            <p>Admin Icon</p>
+        </div>
+    </div>
+
+    <nav id="bottom-menu">
+        <button id="btn-ai-chat" title="AI Chat">[Chat]</button>
+        <button id="btn-image-gen" title="Image Generator">[Image]</button>
+        <button id="btn-main-menu" title="Menu">[Menu]</button>
+        <button id="btn-history-gen" title="History Generator">[History]</button>
+        <button id="btn-vip" title="VIP">[VIP]</button>
+    </nav>
+
+    <div id="chat-interface" class="feature-view" style="display:none;">
+        <div id="chat-header">
+            <h2>AI Chat</h2>
+            <button id="floating-menu-btn" title="Menu">[F_Menu]</button>
+        </div>
+        <div id="chat-messages-container">
+            <div id="chat-messages">
+                <p class="chat-message system-message">Welcome to AI Chat! Type your message below.</p>
+            </div>
+        </div>
+        <div id="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Type your message...">
+            <button id="chat-web-search-toggle" title="Toggle Web Search">[Web On]</button>
+            <button id="chat-send-btn" title="Send Message">[Send]</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -17,15 +17,23 @@ const client = new MongoClient(mongoUri);
 
 let portfolioDb;
 let commentsCollection;
+let userActivitiesCollection; // Added for user activity tracking
 
 async function connectDB() {
     try {
         await client.connect();
         portfolioDb = client.db("portfolioDb");
         commentsCollection = portfolioDb.collection("comments");
+        userActivitiesCollection = portfolioDb.collection("userActivities"); // Initialize collection
         console.log("Successfully connected to MongoDB Atlas!");
+
         await commentsCollection.createIndex({ createdAt: -1 });
         console.log("Indexes ensured for comments collection.");
+
+        await userActivitiesCollection.createIndex({ uid: 1 });
+        await userActivitiesCollection.createIndex({ timestamp: -1 });
+        await userActivitiesCollection.createIndex({ activityType: 1 });
+        console.log("Indexes ensured for userActivities collection.");
     } catch (err) {
         console.error("Failed to connect to MongoDB Atlas or ensure indexes", err);
         process.exit(1);
@@ -55,6 +63,46 @@ app.get('/api/weather', async (req, res) => { /* ... existing unchanged code ...
     } catch (error) {
         console.error('Server error while fetching weather:', error);
         return res.status(500).json({ error: 'Failed to fetch weather data due to server error.' });
+    }
+});
+
+// GET /api/activities - Fetch user activities (for admin panel)
+app.get('/api/activities', async (req, res) => {
+    if (!userActivitiesCollection) {
+        return res.status(503).json({ error: "Database service not available." });
+    }
+    try {
+        const { uid, limit = 50, page = 1 } = req.query;
+        const query = uid ? { uid } : {};
+        const nLimit = parseInt(limit);
+        const nPage = parseInt(page);
+
+        const options = {
+            sort: { timestamp: -1 },
+            limit: nLimit,
+            skip: (nPage - 1) * nLimit
+        };
+
+        const activities = await userActivitiesCollection.find(query, options).toArray();
+        const totalActivities = await userActivitiesCollection.countDocuments(query);
+
+        let uniqueVisitors = undefined; // Only calculate if no specific UID is queried
+        if (!uid) {
+            const distinctUIDs = await userActivitiesCollection.distinct('uid', {}); // Query all documents for distinct UIDs
+            uniqueVisitors = distinctUIDs.length;
+        }
+
+        res.status(200).json({
+            activities,
+            totalActivities, // This is total for the current query (all activities if no UID)
+            currentPage: nPage,
+            totalPages: Math.ceil(totalActivities / nLimit),
+            uniqueVisitors // This will be undefined if a UID was specified in query
+        });
+
+    } catch (error) {
+        console.error("Error fetching activities:", error);
+        res.status(500).json({ error: "Failed to fetch activities due to server error." });
     }
 });
 
@@ -245,6 +293,35 @@ app.post('/api/comments', async (req, res) => {
         res.status(500).json({ error: "Failed to post comment due to server error." });
     }
 });
+
+// POST /api/activity - Track user activity
+app.post('/api/activity', async (req, res) => {
+    if (!userActivitiesCollection) {
+        return res.status(503).json({ error: "Database service not available." });
+    }
+    try {
+        const { uid, activityType, details, timestamp, url } = req.body;
+        if (!uid || !activityType || !timestamp) {
+            return res.status(400).json({ error: 'UID, activityType, and timestamp are required.' });
+        }
+
+        const newActivity = {
+            uid,
+            activityType,
+            details: details || {},
+            timestamp: new Date(timestamp), // Ensure it's a Date object
+            url: url || ''
+        };
+
+        await userActivitiesCollection.insertOne(newActivity);
+        res.status(201).json({ message: 'Activity tracked successfully.' });
+
+    } catch (error) {
+        console.error("Error tracking activity:", error);
+        res.status(500).json({ error: "Failed to track activity due to server error." });
+    }
+});
+
 
 // GET /api/comments - Fetch all comments
 app.get('/api/comments', async (req, res) => {

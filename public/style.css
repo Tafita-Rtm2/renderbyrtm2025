@@ -12,9 +12,13 @@
     --accent-color: #00ffff; /* Cyan */
     --primary-accent-color: #00c2cb; /* Teal */
     --secondary-accent-color: #e94560; /* Magenta/Red */
+    --action-color: #ff9900;  /* Vibrant Orange */
+    --highlight-yellow: #ffd700; /* Gold/Yellow for highlights */
+    --success-green: #39FF14; /* Neon Green for success/positive */
+    --info-blue: #007bff; /* Standard Info Blue */
     --text-color: #e0e0e0;
     --text-muted-color: #a0a0a0;
-    --border-color: var(--accent-color);
+    --border-color: var(--accent-color); /* Default border, can be overridden */
     --icon-fill-default: var(--accent-color);
     --icon-fill-hover: #ffffff;
     --font-primary: 'Exo 2', sans-serif;
@@ -410,7 +414,7 @@ h4 { font-size: 1.2em; } /* e.g., Sub-section titles or item titles */
 }
 .weather-text p { margin: 0; line-height: 1.3; }
 .weather-location { font-weight: 500; font-size: 0.9em; /* Slightly smaller to fit better */ }
-.weather-temp { font-size: 1.1em; font-weight: bold; color: var(--accent-color); }
+.weather-temp { font-size: 1.1em; font-weight: bold; color: var(--highlight-yellow); /* Gold/Yellow for temp */ }
 .weather-description { font-size: 0.8em; color: var(--text-muted-color); }
 .weather-loading, .weather-error { font-style: italic; color: var(--text-muted-color); }
 
@@ -619,10 +623,13 @@ h4 { font-size: 1.2em; } /* e.g., Sub-section titles or item titles */
 #chat-send-button:disabled { background-color: var(--text-muted-color) !important; cursor: not-allowed; }
 
 /* Generic Button Styling - .btn-primary */
-.btn-primary {
-    background-color: var(--accent-color);
-    color: var(--primary-bg);
-    border: none;
+.btn-primary,
+#generate-image-button,
+#generate-story-button,
+#chat-send-button { /* Applying --action-color to these primary buttons */
+    background-color: var(--action-color); /* New orange */
+    color: var(--primary-bg); /* Ensure contrast */
+    border: none; /* Common style for these buttons */
     padding: 10px 20px;
     border-radius: 25px; /* Pill shape */
     font-family: var(--font-primary);
@@ -633,10 +640,13 @@ h4 { font-size: 1.2em; } /* e.g., Sub-section titles or item titles */
     letter-spacing: 1px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.15);
 }
-.btn-primary:hover {
-    background-color: var(--primary-accent-color);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0, 255, 255, 0.2); /* Using Cyan with 0.2 opacity directly */
+.btn-primary:hover,
+#generate-image-button:hover,
+#generate-story-button:hover,
+#chat-send-button:hover {
+    background-color: #ffad33; /* Lighter orange for hover */
+    transform: translateY(-2px); /* Keep existing transform */
+    box-shadow: 0 4px 10px rgba(255, 153, 0, 0.3); /* Orange glow for hover */
 }
 .btn-primary:disabled {
     background-color: var(--text-muted-color) !important; /* Ensure precedence */
@@ -647,6 +657,38 @@ h4 { font-size: 1.2em; } /* e.g., Sub-section titles or item titles */
 }
 
 /* General Input and Textarea Styling */
+/* Ensure .icon-button is suitable for icon-only buttons */
+.icon-button { /* Reviewing existing styles for icon-only context */
+    /* padding: 8px; /* Base padding */
+    /* border-radius: 50%; /* Base is circular */
+    /* For non-circular icon buttons (like generate/download), these are overridden by specific ID styles */
+}
+.icon-button .icon {
+    margin: 0; /* Ensure no extra margin if it's truly icon-only */
+}
+
+/* Specific icon color adjustments based on new button backgrounds */
+#generate-image-button .icon,
+#generate-story-button .icon,
+#chat-send-button .icon,
+.btn-primary .icon { /* If .btn-primary can contain icons */
+    fill: var(--primary-bg); /* Icon color for --action-color background */
+}
+
+.btn-admin-reply .icon {
+    fill: var(--primary-bg); /* For --accent-color or --action-color background */
+}
+.btn-admin-delete .icon {
+    fill: #ffffff; /* For --secondary-accent-color background */
+}
+
+#story-listen-button .icon,
+#story-translate-button .icon,
+#story-download-button-text .icon { /* Assuming these use default icon button styles or themed like VIP controls */
+    /* fill: var(--text-color); /* Or specific if their button bg changes */
+}
+
+
 input[type="text"],
 input[type="password"],
 input[type="email"], /* Adding for contact form later */
@@ -666,8 +708,8 @@ input[type="password"]:focus,
 input[type="email"]:focus,
 textarea:focus {
     outline: none;
-    border-color: var(--accent-color); /* Use main accent for focus */
-    box-shadow: 0 0 8px rgba(0, 255, 255, 0.5); /* Cyan glow */
+    border-color: var(--action-color); /* Orange border on focus */
+    box-shadow: 0 0 8px rgba(255, 153, 0, 0.6); /* Orange glow (using direct RGB for action-color #ff9900) */
 }
 textarea {
     resize: vertical;
@@ -727,8 +769,8 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 /* #generate-image-button, #download-image-button are .icon-button. Specific overrides: */
 #generate-image-button {
     padding: 15px 25px; /* Increase padding */
-    background-color: var(--accent-color);
-    color: var(--primary-bg);
+    /* background-color: var(--action-color); /* Handled by shared rule */
+    /* color: var(--primary-bg); /* Handled by shared rule */
     border-radius: 30px; /* More rounded */
     border: none;
     font-weight: 500;
@@ -886,8 +928,8 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 /* #generate-story-button is an .icon-button. Specific overrides: */
 #generate-story-button {
     padding: 15px 25px; /* Larger padding */
-    background-color: var(--accent-color);
-    color: var(--primary-bg);
+    /* background-color: var(--action-color); /* Handled by shared rule */
+    /* color: var(--primary-bg); /* Handled by shared rule */
     border-radius: 30px; /* More rounded */
     border: none;
     font-weight: 500;
@@ -992,9 +1034,27 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 }
 
 /* VIP AREA & TOOLS */
-#vip-view { padding: 20px; box-sizing: border-box; text-align: center; }
-#vip-view h2 { color: var(--accent-color); margin-top: 0; margin-bottom: 10px; }
-#vip-view > p { color: var(--text-muted-color); margin-bottom: 30px; font-size: 1.1em; }
+#vip-view {
+    /* .view base styles are applied (background, default padding, border-radius for the view itself) */
+    /* Override padding if needed for more "full screen" feel */
+    padding: 15px; /* Or less, e.g., 10px or 5px, depending on desired spacing around iframe */
+    display: flex; /* Use flex to make iframe container fill height */
+    flex-direction: column;
+    /* Ensure vip-view itself tries to take full content height.
+       The main #main-content is already flex-grow: 1.
+       .view.active is display:block, flex-grow:1. This should work. */
+}
+#vip-view h2 {
+    color: var(--highlight-yellow); /* Updated color */
+    text-align: center; /* Center title as access area is gone */
+    margin-top: 0; /* Remove default top margin if view padding handles it */
+    margin-bottom: 10px; /* Space between title and iframe container */
+    flex-shrink: 0; /* Prevent title from shrinking if content grows */
+}
+/* #vip-view > p related styles can be removed as the <p> element was removed from HTML */
+
+/* Remove styles for the old vip-access-area as it's deleted from HTML */
+/*
 #vip-access-area { background-color: var(--surface-color); padding: 30px; border-radius: 10px; max-width: 400px; margin: 0 auto 30px auto; box-shadow: 0 0 20px rgba(0, 255, 255, 0.15); }
 #vip-access-area p { margin-top: 0; margin-bottom: 10px; color: var(--text-color); }
 #vip-code-input { width: calc(100% - 24px); padding: 12px; margin-bottom: 20px; background-color: var(--primary-bg); border: 1px solid var(--border-color); border-radius: 5px; color: var(--text-color); font-family: var(--font-primary); text-align: center; font-size: 1.1em; }
@@ -1004,18 +1064,16 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 #vip-status-message { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: 500; }
 .vip-status-success { background-color: rgba(0, 255, 127, 0.1); color: #00ff7f; border: 1px solid #00ff7f; }
 .vip-status-error { background-color: rgba(255, 0, 0, 0.1); color: #ff4d4d; border: 1px solid #ff4d4d; }
+*/
 
-/* Styles for the new iframe container */
+/* Styles for the iframe container to achieve full-screen feel within the view */
 #vip-iframe-container {
     width: 100%;
-    /* Adjust height as needed, perhaps relative to viewport or parent */
-    /* Example: height: 70vh; or height: calc(100% - 50px); if parent has fixed height */
-    /* The inline style height: calc(100vh - 150px) on the element will take precedence if not overridden here with !important */
-    height: calc(100vh - 200px); /* Adjust this value based on surrounding elements like header, padding etc. */
-    border: 1px solid var(--border-color); /* Optional border */
+    flex-grow: 1; /* This will make it take available vertical space */
+    border: 1px solid var(--border-color); /* Optional: keep a border for the iframe area */
     border-radius: 8px;
-    overflow: hidden; /* Ensures iframe corners are rounded if container has border-radius */
-    margin-top: 20px; /* Add some space above the iframe container */
+    overflow: hidden; /* To respect border-radius for iframe content */
+    /* margin-top is removed as h2 margin-bottom handles spacing, or can be added if no title */
 }
 
 #vip-iframe-container iframe {
@@ -1244,7 +1302,100 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 #file-reader-qa-area #file-reader-answer { margin-top: 10px; }
 */
 
-/* --- ADMIN PANEL STYLES --- */
+/* --- ADMIN PANEL TABS AND ANALYTICS STYLES --- */
+.admin-panel-tabs {
+    display: flex;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--surface-color);
+}
+.admin-tab-button {
+    padding: 10px 20px;
+    cursor: pointer;
+    background-color: transparent;
+    border: none;
+    color: var(--text-muted-color);
+    font-size: 1.1em;
+    font-family: var(--font-primary);
+    font-weight: 500;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px; /* Align with parent border for active state */
+    transition: color 0.3s ease, border-bottom-color 0.3s ease;
+}
+.admin-tab-button.active {
+    color: var(--accent-color);
+    border-bottom-color: var(--accent-color);
+}
+.admin-tab-button:hover {
+    color: var(--primary-accent-color);
+}
+.admin-tab-content { display: none; }
+.admin-tab-content.active { display: block; }
+
+#admin-analytics-summary {
+    background-color: var(--surface-color);
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    border: 1px solid var(--border-color);
+}
+#admin-analytics-summary p {
+    margin: 5px 0;
+    font-size: 1.1em;
+    color: var(--text-color);
+}
+#admin-analytics-summary strong {
+    color: var(--action-color);
+    font-weight: 500;
+}
+
+#analytics-admin-tab h3, /* For "Site Analytics" title */
+#comments-admin-tab h3 { /* For "Manage Comments" title */
+    color: var(--primary-accent-color);
+    font-size: 1.4em;
+    margin-top: 0; /* As it's the first element in the tab content */
+    margin-bottom: 15px;
+}
+
+
+#admin-recent-activities {
+    margin-top: 10px;
+}
+#admin-recent-activities h4 { /* "Recent Activities:" title */
+    color: var(--accent-color);
+    font-size: 1.2em;
+    margin-bottom: 10px;
+}
+#admin-recent-activities ul { list-style: none; padding: 0; }
+#admin-recent-activities li {
+    background-color: var(--surface-color);
+    padding: 10px 15px;
+    margin-bottom: 8px;
+    border-radius: 5px;
+    font-size: 0.9em;
+    border-left: 3px solid var(--primary-accent-color);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+#admin-recent-activities li .activity-time {
+    color: var(--text-muted-color);
+    font-size: 0.85em;
+    display: block; /* Ensure it takes its own line or space */
+    margin-top: 4px;
+}
+#admin-recent-activities li .activity-uid {
+    font-weight: bold;
+    color: var(--action-color);
+}
+#admin-recent-activities li .activity-details {
+    font-style: italic;
+    color: var(--text-muted-color);
+    word-break: break-all; /* Prevent long details from breaking layout */
+}
+
+
+/* --- ADMIN PANEL STYLES --- */ /* Existing comment management styles follow */
 #admin-panel-view {
     /* .view base styles are applied: background-color, padding, border-radius */
     /* Specific padding for admin view if needed, otherwise defaults to .view padding */
@@ -1476,3 +1627,136 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
     width: 100%; /* Ensure iframe is responsive if its parent is */
     max-width: 600px; /* Optional: set a max-width for very large screens */
 }
+
+/* --- HOME PAGE WELCOME/DESCRIPTION SECTION --- */
+#welcome-description-section {
+    text-align: center;
+    padding: 20px 10px; /* Add some padding */
+    margin-bottom: 30px; /* Space before comments section */
+    background-color: var(--surface-color); /* Optional: a slightly different bg for this section */
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+#welcome-description-section h2 {
+    color: var(--highlight-yellow); /* Use a highlight color */
+    font-size: 1.8em; /* Adjust as needed */
+    margin-bottom: 10px;
+}
+
+#welcome-description-section .site-tagline {
+    font-size: 1.1em;
+    color: var(--text-color);
+    margin-bottom: 30px;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.feature-highlights-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Responsive grid */
+    gap: 20px;
+    text-align: left; /* Align text left within each item */
+}
+
+.feature-highlight-item {
+    background-color: var(--secondary-bg); /* Background for each feature card */
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.feature-highlight-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 255, 255, 0.2); /* Using --accent-color (Cyan) with transparency */
+}
+
+.feature-highlight-item .feature-icon {
+    margin-bottom: 15px;
+    text-align: center; /* Center the icon within this div */
+}
+
+.feature-highlight-item .feature-icon .icon {
+    width: 40px; /* Larger icons for feature highlights */
+    height: 40px;
+    fill: var(--action-color); /* Use a vibrant color for these icons */
+}
+
+.feature-highlight-item h3 {
+    color: var(--accent-color);
+    font-size: 1.3em;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.feature-highlight-item p {
+    font-size: 0.95em;
+    color: var(--text-muted-color);
+    line-height: 1.6;
+}
+/* --- END OF HOME PAGE WELCOME/DESCRIPTION SECTION --- */
+
+/* --- USER ACTIVITY HISTORY VIEW STYLES --- */
+#user-history-view { /* Uses .view base styles */
+    padding: 20px;
+}
+
+#user-history-view h2 {
+    text-align: center;
+    color: var(--primary-accent-color);
+    margin-bottom: 25px;
+}
+
+#user-activity-list-container ul {
+    list-style: none;
+    padding: 0;
+}
+
+#user-activity-list-container li {
+    background-color: var(--surface-color);
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    border-left: 4px solid var(--action-color); /* Use a distinct accent color */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+#user-activity-list-container .user-activity-type {
+    display: block;
+    font-weight: bold;
+    color: var(--text-color);
+    font-size: 1.1em;
+    margin-bottom: 5px;
+    text-transform: capitalize; /* Nicer display for activity types */
+}
+
+#user-activity-list-container .user-activity-details {
+    display: block;
+    font-size: 0.9em;
+    color: var(--text-muted-color);
+    margin-bottom: 8px;
+    word-break: break-all; /* Prevent long details from breaking layout */
+}
+
+#user-activity-list-container .user-activity-meta {
+    font-size: 0.8em;
+    color: var(--text-muted-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap; /* Allow meta items to wrap on small screens */
+}
+
+#user-activity-list-container .user-activity-url {
+    font-style: italic;
+    margin-left: 5px; /* Give a little space if it wraps under time */
+}
+
+#user-activity-list-container p { /* For loading/empty messages */
+    text-align: center;
+    font-size: 1.1em;
+    color: var(--text-muted-color);
+    padding: 20px;
+}
+/* --- END OF USER ACTIVITY HISTORY VIEW STYLES --- */

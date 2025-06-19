@@ -48,13 +48,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (typeof loadStoryHistory === 'function') loadStoryHistory();
             const sgDisplay = document.getElementById('generated-story-display');
             if(sgDisplay) sgDisplay.innerHTML = '<p>Your generated story will appear here.</p>';
-            currentGeneratedStoryContent = ""; // Reset global var for story content
-            currentGeneratedStoryTheme = ""; // Reset global var for story theme
+            currentGeneratedStoryContent = "";
+            currentGeneratedStoryTheme = "";
             if(typeof updateStoryVipControlsVisibility === 'function') updateStoryVipControlsVisibility();
         } else if (viewIdToShow === 'vip-view') {
-            if (typeof checkInitialVipStatus === 'function') checkInitialVipStatus();
-            const vipMsg = document.getElementById('vip-status-message');
-            if(vipMsg) vipMsg.style.display = 'none';
+            if (typeof setupVipView === 'function') setupVipView();
         } else if (viewIdToShow === 'weather-view') {
             const weatherView = document.getElementById('weather-view');
             if (currentWeatherData) {
@@ -64,8 +62,37 @@ document.addEventListener('DOMContentLoaded', () => {
                 initWeatherDisplay();
             }
         } else if (viewIdToShow === 'admin-panel-view') {
-            loadAdminComments(); // Load comments when admin panel is shown
+            const adminPanel = document.getElementById('admin-panel-view');
+            if (adminPanel) {
+                const commentsTabButton = adminPanel.querySelector('.admin-tab-button[data-tab="comments-admin"]');
+                const commentsTabContent = adminPanel.querySelector('#comments-admin-tab');
+                const analyticsTabButton = adminPanel.querySelector('.admin-tab-button[data-tab="analytics-admin"]');
+                const analyticsTabContent = adminPanel.querySelector('#analytics-admin-tab');
+
+                let analyticsWasActive = analyticsTabButton && analyticsTabButton.classList.contains('active');
+
+                adminPanel.querySelectorAll('.admin-tab-button').forEach(b => b.classList.remove('active'));
+                adminPanel.querySelectorAll('.admin-tab-content').forEach(c => c.classList.remove('active'));
+
+                if (analyticsWasActive && analyticsTabContent) {
+                    analyticsTabButton.classList.add('active');
+                    analyticsTabContent.classList.add('active');
+                    if (typeof loadAdminAnalytics === 'function') loadAdminAnalytics();
+                } else {
+                    if (commentsTabButton) commentsTabButton.classList.add('active');
+                    if (commentsTabContent) commentsTabContent.classList.add('active');
+                    if (typeof loadAdminComments === 'function') loadAdminComments();
+                }
+            } else {
+                 if (typeof loadAdminComments === 'function') loadAdminComments();
+            }
+        } else if (viewIdToShow === 'user-history-view') {
+            if (typeof loadUserActivityHistory === 'function') {
+                loadUserActivityHistory();
+            }
         }
+        // Track view visit at the end of showView, after all specific view logic has run
+        if(typeof trackActivity === 'function') trackActivity('view_visit', { view: viewIdToShow });
     };
 
     // --- Navigation Event Listeners ---
@@ -107,6 +134,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     chatUID = getOrCreateUID();
 
+    // --- User Activity Tracking ---
+    async function trackActivity(activityType, detailsObject = {}) {
+        if (!chatUID) {
+            console.warn("User UID still not available. Activity not tracked.");
+            return;
+        }
+        const activityData = {
+            uid: chatUID,
+            activityType: activityType,
+            details: detailsObject,
+            timestamp: new Date().toISOString(),
+            url: window.location.href
+        };
+        try {
+            const response = await fetch('/api/activity', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(activityData)
+            });
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Failed to track activity:', response.status, errorText);
+            }
+        } catch (error) {
+            console.error('Error sending activity data:', error);
+        }
+    }
+
     // --- WEATHER DISPLAY LOGIC ---
     const weatherDisplayContainerRef = document.getElementById('weather-display-container');
     const sunnySvg = '<svg viewBox="0 0 24 24" class="weather-condition-svg"><path d="M12 5c.55 0 1 .45 1 1v2c0 .55-.45 1-1 1s-1-.45-1-1V6c0-.55.45-1 1-1zm0 12c.55 0 1 .45 1 1v2c0 .55-.45 1-1 1s-1-.45-1-1v-2c0-.55.45-1 1-1zM5.22 6.22l1.41-1.41c.2-.2.2-.51 0-.71s-.51-.2-.71 0L4.51 5.51c-.2.2-.2.51 0 .71.2.19.51.19.71 0zm12.73 12.73l1.41-1.41c.2-.2.2-.51 0-.71s-.51-.2-.71 0l-1.41 1.41c-.2.2-.2.51 0 .71.2.2.51.2.71 0zM4 12c0-.55.45-1 1-1h2c.55 0 1 .45 1 1s-.45 1-1 1H5c-.55 0-1-.45-1-1zm14 0c0-.55.45-1 1-1h2c.55 0 1 .45 1 1s-.45 1-1 1h-2c-.55 0-1-.45-1-1zm-9.19-6.07L6.22 4.51c-.2-.2-.51-.2-.71 0s-.2.51 0 .71l1.41 1.41c.2.2.51.2.71 0s.2-.51 0-.71zm11.31 11.31l-1.41 1.41c-.2.2-.51-.2-.71 0s-.2-.51 0-.71l1.41-1.41c.2-.2.51-.2.71 0s.2.51 0 .71zM12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5z"/></svg>';
@@ -115,6 +170,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const snowySvg = '<svg viewBox="0 0 24 24" class="weather-condition-svg"><path d="M19 13h-2V9h-2v4H9V9H7v4H5l7 7 7-7zm-8 2h2v2H9v-2zm4 0h2v2h-2v-2zm-4-4h2v2H9v-2zm4 0h2v2h-2v-2zm2-2V7H7v2h10zM5.41 6.12L4 7.54l3.03 3.03L12 5.59 8.97 2.56 7.55 4l2.04 2.04L5.41 6.12zM19.99 6.12L15.96 2.08 14.55 3.5l3.03 3.03L12 11.59l4.97-4.97L18.59 5l-2.04-2.04 4.48 4.48c.78.78.78 2.05 0 2.83l-4.48 4.48 2.04 2.04 1.41-1.41-3.03-3.03L20 8.96l-4.97 4.97-1.41-1.41 3.03-3.03c.78-.78.78-2.05 0-2.83l-2.04-2.04z"/></svg>';
     const partlyCloudySvg = '<svg viewBox="0 0 24 24" class="weather-condition-svg"><path d="M17.52 10.31C17.16 7.33 14.83 5 12 5c-2.32 0-4.35 1.32-5.31 3.24C4.32 8.64 2.5 10.61 2.5 13c0 2.48 2.02 4.5 4.5 4.5h10.5c2.21 0 4-1.79 4-4 0-2.06-1.54-3.78-3.48-3.96zM12 7c1.89 0 3.47 1.21 4.01 2.87l.23.67.73.03C17.56 10.6 18 11.03 18 11.5c0 .83-.67 1.5-1.5 1.5H7.21c-.49 0-.9-.35-1.02-.82-.01-.05-.02-.1-.02-.15 0-.74.55-1.36 1.27-1.48l.65-.11.28-.6C8.92 8.47 10.35 7 12 7z"/></svg>';
     const defaultWeatherSvg = '<svg viewBox="0 0 24 24" class="weather-condition-svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>';
+
+    let currentWeatherData = null;
+
     function getWeatherSvgIcon(skytext) {
         if (!skytext) return defaultWeatherSvg; const lowerSkytext = skytext.toLowerCase();
         if (lowerSkytext.includes("sun") || lowerSkytext.includes("clear")) return sunnySvg;
@@ -132,7 +190,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     async function fetchWeather(location) {
         if (!weatherDisplayContainerRef) {
-            // Still attempt to fetch for detailed view if applicable, just don't update top bar
             console.warn("Top bar weather display container not found, but fetching weather for detailed view.");
         } else {
             weatherDisplayContainerRef.innerHTML = `<p class="weather-loading">Loading...</p>`;
@@ -144,12 +201,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const errorData = await response.json().catch(() => ({ error: `HTTP error! ${response.statusText}` }));
                 throw new Error(errorData.error || `Weather API Error: ${response.statusText}`);
             }
-            const data = await response.json(); // This 'data' is the responseData[0] from server
+            const data = await response.json();
 
-            currentWeatherData = data; // Store globally
+            currentWeatherData = data;
 
             if (weatherDisplayContainerRef) {
-                displayWeather(currentWeatherData); // Updates top bar
+                displayWeather(currentWeatherData);
             }
 
             const weatherViewActive = document.getElementById('weather-view');
@@ -161,7 +218,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (weatherDisplayContainerRef) {
                 weatherDisplayContainerRef.innerHTML = `<p class="weather-error">Weather unavailable</p>`;
             }
-            // If detailed view is active, show error there too
             const weatherView = document.getElementById('weather-view');
             if (weatherView && weatherView.classList.contains('active')) {
                 weatherView.innerHTML = `<p class="weather-error">Failed to fetch weather: ${error.message}</p>`;
@@ -176,7 +232,6 @@ document.addEventListener('DOMContentLoaded', () => {
             );
         } else { console.log("Geolocation not supported. Using default."); fetchWeather('Antananarivo'); }
     }
-    let currentWeatherData = null; // Store last fetched weather data
     initWeatherDisplay();
     // --- END OF WEATHER DISPLAY LOGIC ---
 
@@ -187,14 +242,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if(weatherView) weatherView.innerHTML = '<p class="weather-error">Detailed weather data is currently unavailable.</p>';
             return;
         }
-
-        // Helper to get forecast day name; robustly handles invalid dates
         const getDayName = (dateString) => {
             const date = new Date(dateString);
-            if (isNaN(date.getTime())) return "N/A"; // Handle invalid date
+            if (isNaN(date.getTime())) return "N/A";
             return date.toLocaleDateString(undefined, { weekday: 'long' });
         };
-
         let forecastHTML = '<p>No forecast data available.</p>';
         if (data.forecast && Array.isArray(data.forecast) && data.forecast.length > 0) {
             forecastHTML = data.forecast.slice(0, 5).map(day => `
@@ -206,7 +258,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `).join('');
         }
-
         const detailedWeatherHTML = `
             <div class="weather-location-title">Weather in ${data.location.name}</div>
             <div class="current-conditions">
@@ -237,59 +288,45 @@ document.addEventListener('DOMContentLoaded', () => {
     const commentsDisplayArea = document.getElementById('comments-display-area');
     const commentNameInput = document.getElementById('comment-name');
     const commentTextInput = document.getElementById('comment-text');
-    // const portfolioCommentsKey = 'portfolioComments'; // No longer using localStorage for comments
 
-    async function loadComments() { // Now async
+    async function loadComments() {
         if (!commentsDisplayArea) return;
         commentsDisplayArea.innerHTML = '<p>Loading comments...</p>';
-        let errorMessage = ''; // To store potential error message
-
+        let errorMessage = '';
         try {
             const response = await fetch('/api/comments');
             if (!response.ok) {
-                const errData = await response.json().catch(() => null); // Try to parse error from server
+                const errData = await response.json().catch(() => null);
                 errorMessage = errData?.error || `Failed to fetch comments: ${response.statusText}`;
                 throw new Error(errorMessage);
             }
             const comments = await response.json();
-
-            commentsDisplayArea.innerHTML = ''; // Clear loading message
+            commentsDisplayArea.innerHTML = '';
             if (comments.length === 0) {
                 commentsDisplayArea.innerHTML = '<p>No comments yet. Be the first to comment!</p>';
             } else {
-                // Comments are already sorted by server (createdAt: -1)
                 comments.forEach(comment => {
                     const item = document.createElement('div');
                     item.className = 'comment-item';
-                    item.dataset.commentId = comment._id; // Store ID for potential future use (e.g., direct linking)
-
+                    item.dataset.commentId = comment._id;
                     const nameEl = document.createElement('strong');
                     nameEl.textContent = escapeHTML(comment.name);
-
                     const textEl = document.createElement('p');
-                    textEl.textContent = escapeHTML(comment.text); // Main comment text
-
+                    textEl.textContent = escapeHTML(comment.text);
                     const timeEl = document.createElement('small');
                     timeEl.className = 'comment-timestamp';
                     timeEl.textContent = new Date(comment.createdAt).toLocaleString();
-
                     item.append(nameEl, textEl, timeEl);
-
-                    // Display admin reply if it exists and is not empty
                     if (comment.adminReplyText && comment.adminReplyText.trim() !== "") {
                         const replyDiv = document.createElement('div');
                         replyDiv.className = 'admin-reply-public';
-
                         const replyStrong = document.createElement('strong');
                         replyStrong.textContent = 'Admin Reply:';
-
                         const replyTextP = document.createElement('p');
-                        replyTextP.style.margin = '5px 0 0 0'; // Add some style to separate from "Admin Reply:"
+                        replyTextP.style.margin = '5px 0 0 0';
                         replyTextP.textContent = escapeHTML(comment.adminReplyText);
-
                         replyDiv.appendChild(replyStrong);
                         replyDiv.appendChild(replyTextP);
-
                         if (comment.adminReplyTimestamp) {
                             const replyTimeEl = document.createElement('small');
                             replyTimeEl.className = 'comment-timestamp';
@@ -303,13 +340,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error('Error loading comments:', error);
-            // Display the captured or default error message
             commentsDisplayArea.innerHTML = `<p class="error-message">${errorMessage || 'Could not load comments. Please try again later.'}</p>`;
         }
     }
 
     if (commentForm) {
-        commentForm.addEventListener('submit', async (e) => { // Now async
+        commentForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = commentNameInput.value.trim();
             const text = commentTextInput.value.trim();
@@ -320,13 +356,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 submitButton.disabled = true;
                 submitButton.textContent = 'Submitting...';
             }
-
-            // Clear previous error messages
             const existingError = commentForm.querySelector('.error-message');
             if (existingError) existingError.remove();
-
             if (!name || !text) {
-                // alert('Name and comment are required.');
                 const errorDiv = document.createElement('div');
                 errorDiv.className = 'error-message';
                 errorDiv.textContent = 'Name and comment are required.';
@@ -337,27 +369,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 return;
             }
-
             try {
                 const response = await fetch('/api/comments', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name, text })
                 });
-
                 if (!response.ok) {
                     const errData = await response.json().catch(() => null);
                     const errorMsg = errData?.error || `Failed to submit comment: ${response.statusText}`;
                     throw new Error(errorMsg);
                 }
-
-                // const newComment = await response.json(); // We don't necessarily need the new comment data back for this simple refresh
                 commentNameInput.value = '';
                 commentTextInput.value = '';
-                loadComments(); // Refresh the comments list from the server
+                loadComments();
+                trackActivity('comment_posted', { nameLength: name.length, textLength: text.length });
             } catch (error) {
                 console.error('Error submitting comment:', error);
-                // alert(`Error: ${error.message}`);
                 const errorDiv = document.createElement('div');
                 errorDiv.className = 'error-message';
                 errorDiv.textContent = error.message || 'Could not submit comment. Please try again.';
@@ -388,11 +416,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const messageBubble = document.createElement('div'); messageBubble.classList.add('chat-bubble');
 
         if (isTyping) {
-            messageBubble.innerHTML = typingIndicatorHTML; // This remains the same
+            messageBubble.innerHTML = typingIndicatorHTML;
             messageWrapper.id = 'typing-indicator-message';
             currentTypingIndicator = messageWrapper;
         } else {
-            messageBubble.innerHTML = formatTextContent(message); // Apply formatting here
+            messageBubble.innerHTML = formatTextContent(message);
         }
 
         messageWrapper.append(avatarContainer, messageBubble); chatMessagesArea.appendChild(messageWrapper);
@@ -416,7 +444,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     async function handleSendMessage() {
         if (!chatInputField || !chatUID) return; const messageText = chatInputField.value.trim(); if (!messageText) return;
-        addMessageToChat(messageText, 'user'); saveMessageToHistory(messageText, 'user'); chatInputField.value = '';
+        addMessageToChat(messageText, 'user'); saveMessageToHistory(messageText, 'user');
+        trackActivity('ai_chat_message_sent', { messageLength: messageText.length, webSearch: webSearchToggle ? webSearchToggle.checked : false });
+        chatInputField.value = '';
         chatInputField.disabled = true; if(chatSendButton) chatSendButton.disabled = true;
         removeTypingIndicator(); addMessageToChat(null, 'ai', true);
         try {
@@ -451,6 +481,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!imagePromptField || !imageDisplayArea || !generateImageButton || !downloadImageButton) return;
         const promptValue = imagePromptField.value.trim();
         if (!promptValue) { alert('Please enter a prompt.'); return; }
+        trackActivity('image_generation_requested', { promptLength: promptValue.length });
         imageDisplayArea.innerHTML = '<p class="image-loading">Generating image...</p>';
         generateImageButton.disabled = true; imagePromptField.disabled = true; downloadImageButton.style.display = 'none';
 
@@ -580,7 +611,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentGeneratedStoryContent = "";
     let currentGeneratedStoryTheme = "";
 
-    function checkVIPStatus() { return localStorage.getItem('isUserVIP') === 'true'; }
+    // VIP features are now always considered active as direct access to VIP lounge is given
+    function checkVIPStatus() { return true; }
 
     function updateStoryVipControlsVisibility() {
         if (!storyVipControls) return;
@@ -636,6 +668,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Please enter a theme or title for your story.');
             return;
         }
+        trackActivity('story_generation_requested', { themeLength: theme.length });
         generatedStoryDisplay.innerHTML = '<p class="story-loading">Crafting your tale... Please hold on.</p>';
         generateStoryButton.disabled = true; storyThemeField.disabled = true;
         currentGeneratedStoryContent = ""; // Reset raw content
@@ -771,82 +804,31 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // --- END OF STORY GENERATOR INTERFACE LOGIC ---
 
-    // --- VIP AREA LOGIC ---
-    const vipCodeInput = document.getElementById('vip-code-input');
-    const vipCodeSubmitButton = document.getElementById('vip-code-submit');
-    const vipStatusMessage = document.getElementById('vip-status-message');
-    const vipAccessArea = document.getElementById('vip-access-area');
-    const vipToolsContainer = document.getElementById('vip-tools-container'); // This will be null, but let's keep it for now to avoid breaking other parts of the code if it's used elsewhere, will be removed if not.
-    const iframeContainer = document.getElementById('vip-iframe-container');
-    const HARDCODED_VIP_CODE = "VIP123";
-
-    function handleVipAccess() {
-        if (!vipCodeInput || !vipStatusMessage || !vipAccessArea || !iframeContainer) {
-            console.error("One or more VIP access elements are missing.");
-            return;
-        }
-        const enteredCode = vipCodeInput.value;
-
-        if (enteredCode === HARDCODED_VIP_CODE) {
-            localStorage.setItem('isUserVIP', 'true'); // Corrected key to 'isUserVIP' to match checkInitialVipStatus
-            vipAccessArea.style.display = 'none';
-
-            iframeContainer.innerHTML = ''; // Clear previous iframe if any
+    // --- VIP AREA LOGIC (Simplified for direct iframe display) ---
+    function setupVipView() {
+        const vipIframeContainer = document.getElementById('vip-iframe-container');
+        if (vipIframeContainer) {
+            vipIframeContainer.innerHTML = '';
             const iframe = document.createElement('iframe');
             iframe.src = 'https://sitebymegg.onrender.com';
             iframe.style.width = '100%';
             iframe.style.height = '100%';
             iframe.style.border = 'none';
-            iframeContainer.appendChild(iframe);
-            iframeContainer.style.display = 'block';
-
-            vipStatusMessage.textContent = 'Access Granted. Welcome to the VIP Lounge!';
-            vipStatusMessage.className = 'vip-status-success'; // Using class for styling consistency
-            if (typeof updateStoryVipControlsVisibility === 'function') updateStoryVipControlsVisibility();
+            vipIframeContainer.appendChild(iframe);
+            vipIframeContainer.style.display = 'block';
         } else {
-            localStorage.setItem('isUserVIP', 'false'); // Corrected key
-            iframeContainer.innerHTML = ''; // Clear iframe
-            iframeContainer.style.display = 'none';
-            // vipAccessArea.style.display = 'block'; // Ensure access area is visible if code is wrong. It should be already.
-
-            vipStatusMessage.textContent = 'Invalid VIP code. Please try again.';
-            vipStatusMessage.className = 'vip-status-error'; // Using class for styling consistency
-            if (typeof updateStoryVipControlsVisibility === 'function') updateStoryVipControlsVisibility();
+            console.error("VIP iframe container not found.");
         }
-        vipStatusMessage.style.display = 'block';
-        setTimeout(() => { if(vipStatusMessage) vipStatusMessage.style.display = 'none'; }, 3000);
-        vipCodeInput.value = '';
+        localStorage.removeItem('isUserVIP');
+        if (typeof updateStoryVipControlsVisibility === 'function') {
+             updateStoryVipControlsVisibility();
+        }
     }
-
-    function checkInitialVipStatus() {
-        if (!vipAccessArea || !iframeContainer) { // Check iframeContainer instead of vipToolsContainer
-             console.error("VIP access area or iframe container not found for initial status check.");
-            return;
-        }
-        const isVIP = localStorage.getItem('isUserVIP') === 'true';
-        vipAccessArea.style.display = isVIP ? 'none' : 'block';
-
-        if (isVIP) {
-            iframeContainer.innerHTML = ''; // Clear previous iframe if any
-            const iframe = document.createElement('iframe');
-            iframe.src = 'https://sitebymegg.onrender.com';
-            iframe.style.width = '100%';
-            iframe.style.height = '100%';
-            iframe.style.border = 'none';
-            iframeContainer.appendChild(iframe);
-            iframeContainer.style.display = 'block';
-        } else {
-            iframeContainer.innerHTML = '';
-            iframeContainer.style.display = 'none';
-        }
-        // Update story controls based on initial status
-        if (typeof updateStoryVipControlsVisibility === 'function') updateStoryVipControlsVisibility();
-    }
-    if (vipCodeSubmitButton) vipCodeSubmitButton.addEventListener('click', handleVipAccess);
-    if (vipCodeInput) vipCodeInput.addEventListener('keypress', e => { if(e.key === 'Enter') handleVipAccess(); });
     // --- END OF VIP AREA LOGIC ---
 
     // --- PREMIUM AI TOOLS (VIP SECTION) LOGIC ---
+    // This section might be deprecated if VIP tools are fully replaced by the iframe.
+    // For now, keeping the JS logic if some elements remain or are repurposed.
     const vipAiTools = [
         { name: 'gemini', inputId: 'gemini-input', buttonId: 'gemini-send-btn', responseId: 'gemini-response' },
         { name: 'claude-haiku', inputId: 'claude-haiku-input', buttonId: 'claude-haiku-send-btn', responseId: 'claude-haiku-response' },
@@ -875,11 +857,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if(sendButtonElement && inputElement && responseElement){
             sendButtonElement.addEventListener('click', () => handleVipAiRequest(tool.name, inputElement, responseElement, sendButtonElement));
             inputElement.addEventListener('keypress', e => { if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); handleVipAiRequest(tool.name, inputElement, responseElement, sendButtonElement);}});
-        } else { console.warn(`UI elements for VIP tool ${tool.name} not fully found.`); }
+        } else {
+            // console.warn(`UI elements for VIP tool ${tool.name} not fully found.`); // Less noisy if these tools are meant to be gone
+        }
     });
     // --- END OF PREMIUM AI TOOLS (VIP SECTION) LOGIC ---
 
     // --- VIP FILE READER TOOL LOGIC ---
+    // Similar to above, this might be deprecated.
     const fileReaderInput = document.getElementById('file-reader-input');
     const fileReaderProcessBtn = document.getElementById('file-reader-process-btn');
     const fileReaderContentDisplay = document.getElementById('file-reader-content-display');
@@ -933,9 +918,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (fileReaderQuestionInput) fileReaderQuestionInput.addEventListener('keypress', e => { if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); handleFileQuestion(); }});
     // --- END OF VIP FILE READER TOOL LOGIC ---
 
-    // --- Final Initial State Call ---
-    window.showView('home-view');
-
     // --- Helper function to escape HTML for security ---
     function escapeHTML(str) {
         if (typeof str !== 'string') return '';
@@ -945,11 +927,53 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Admin Panel Logic ---
+    async function loadAdminAnalytics() {
+        const summaryDiv = document.getElementById('admin-analytics-summary');
+        const recentActivitiesDiv = document.getElementById('admin-recent-activities');
+        if (!summaryDiv || !recentActivitiesDiv) {
+            console.warn("Analytics display elements not found.");
+            return;
+        }
+        summaryDiv.innerHTML = '<p>Loading analytics...</p>';
+        recentActivitiesDiv.innerHTML = '<p>Loading recent activities...</p>';
+        try {
+            const response = await fetch('/api/activities?limit=15');
+            if (!response.ok) {
+                const errData = await response.json().catch(()=>null);
+                throw new Error(errData?.error || `Failed to fetch analytics: ${response.statusText}`);
+            }
+            const data = await response.json();
+            summaryDiv.innerHTML = `
+                <p><strong>Total Unique Visitors:</strong> ${data.uniqueVisitors !== undefined ? data.uniqueVisitors : 'N/A'}</p>
+                <p><strong>Total Tracked Activities:</strong> ${data.totalActivities}</p>
+            `;
+            if (data.activities && data.activities.length > 0) {
+                let activitiesHTML = '<ul>';
+                data.activities.forEach(activity => {
+                    activitiesHTML += `
+                        <li>
+                            <strong>${escapeHTML(activity.activityType)}</strong> by user <span class="activity-uid">${escapeHTML(activity.uid.slice(0,8))}...</span>
+                            <br><span class="activity-details">Details: ${escapeHTML(JSON.stringify(activity.details))}</span>
+                            <br><span class="activity-time">${new Date(activity.timestamp).toLocaleString()}</span>
+                            <br><span class="activity-time">URL: ${escapeHTML(activity.url)}</span>
+                        </li>`;
+                });
+                activitiesHTML += '</ul>';
+                recentActivitiesDiv.innerHTML = activitiesHTML;
+            } else {
+                recentActivitiesDiv.innerHTML = '<p>No recent activities found.</p>';
+            }
+        } catch (error) {
+            console.error('Error loading admin analytics:', error);
+            if(summaryDiv) summaryDiv.innerHTML = `<p class="error-message">Error loading summary: ${error.message}</p>`;
+            if(recentActivitiesDiv) recentActivitiesDiv.innerHTML = `<p class="error-message">Error loading activities: ${error.message}</p>`;
+        }
+    }
+
     async function loadAdminComments() {
         const adminCommentsList = document.getElementById('admin-comments-list');
         if (!adminCommentsList) return;
         adminCommentsList.innerHTML = '<p>Loading comments...</p>';
-
         try {
             const response = await fetch('/api/comments');
             if (!response.ok) {
@@ -957,21 +981,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(errData?.error || `Failed to fetch comments: ${response.statusText}`);
             }
             const comments = await response.json();
-
             if (comments.length === 0) {
                 adminCommentsList.innerHTML = '<p>No comments to display.</p>';
                 return;
             }
-
-            adminCommentsList.innerHTML = ''; // Clear loading message
+            adminCommentsList.innerHTML = '';
             comments.forEach(comment => {
                 const item = document.createElement('div');
                 item.className = 'admin-comment-item';
                 item.dataset.commentId = comment._id;
-
                 const replyTimestamp = comment.adminReplyTimestamp ? new Date(comment.adminReplyTimestamp).toLocaleString() : '';
                 const existingReplyText = comment.adminReplyText || '';
-
                 item.innerHTML = `
                     <div class="comment-header">
                         <strong>${escapeHTML(comment.name)}</strong> -
@@ -983,18 +1003,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <div class="admin-actions">
                         <textarea class="admin-reply-input" placeholder="Type your reply...">${escapeHTML(existingReplyText)}</textarea>
-                        <button class="btn-admin-reply">Save Reply</button>
-                        <button class="btn-admin-delete">Delete Comment</button>
+                        <button class="btn-admin-reply icon-button" title="Save Reply">
+                            <svg viewBox="0 0 24 24" class="icon"><path d="M21 3H3c-1.11 0-2 .89-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 16H5V7h14v12zm-2-7H7v-2h10v2z"></path></svg>
+                        </button>
+                        <button class="btn-admin-delete icon-button" title="Delete Comment">
+                            <svg viewBox="0 0 24 24" class="icon"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"></path></svg>
+                        </button>
                     </div>
                     <hr>
                 `;
                 adminCommentsList.appendChild(item);
-
-                // Event listener for "Save Reply"
                 item.querySelector('.btn-admin-reply').addEventListener('click', async () => {
                     const replyInput = item.querySelector('.admin-reply-input');
-                    const replyText = replyInput.value; // No trim here, allow spaces if admin wants, server will trim for storage
-
+                    const replyText = replyInput.value;
                     try {
                         const replyResponse = await fetch(`/api/comments/${comment._id}/reply`, {
                             method: 'POST',
@@ -1005,15 +1026,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             const errData = await replyResponse.json().catch(()=>null);
                             throw new Error(errData?.error || `Failed to save reply: ${replyResponse.statusText}`);
                         }
-                        // Successfully saved, reload comments to show update
                         loadAdminComments();
                     } catch (err) {
                         console.error('Error saving reply:', err);
                         alert(`Error saving reply: ${err.message}`);
                     }
                 });
-
-                // Event listener for "Delete Comment"
                 item.querySelector('.btn-admin-delete').addEventListener('click', async () => {
                     if (!confirm('Are you sure you want to delete this comment? This action cannot be undone.')) {
                         return;
@@ -1024,7 +1042,6 @@ document.addEventListener('DOMContentLoaded', () => {
                              const errData = await deleteResponse.json().catch(()=>null);
                             throw new Error(errData?.error || `Failed to delete comment: ${deleteResponse.statusText}`);
                         }
-                        // Successfully deleted, reload comments
                         loadAdminComments();
                     } catch (err) {
                         console.error('Error deleting comment:', err);
@@ -1032,24 +1049,101 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
             });
-
         } catch (error) {
             console.error('Failed to load admin comments:', error);
-            adminCommentsList.innerHTML = `<p class="weather-error">Error loading comments: ${error.message}</p>`; // Using weather-error for similar styling
+            adminCommentsList.innerHTML = `<p class="weather-error">Error loading comments: ${error.message}</p>`;
         }
     }
 
+    // --- Admin Panel Tab Switching & Analytics Loader ---
+    const adminPanel = document.getElementById('admin-panel-view');
+    if (adminPanel) {
+        const tabButtons = adminPanel.querySelectorAll('.admin-tab-button');
+        const tabContents = adminPanel.querySelectorAll('.admin-tab-content');
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                const tabId = button.dataset.tab;
+                tabContents.forEach(content => {
+                    if (content.id === tabId + '-tab') {
+                        content.classList.add('active');
+                        if (tabId === 'analytics-admin' && typeof loadAdminAnalytics === 'function') {
+                            loadAdminAnalytics();
+                        }
+                    } else {
+                        content.classList.remove('active');
+                    }
+                });
+            });
+        });
+    }
 
     // --- Admin Login Trigger ---
     const adminLoginTrigger = document.getElementById('admin-login-trigger-icon');
     if (adminLoginTrigger) {
         adminLoginTrigger.addEventListener('click', () => {
             const enteredCode = prompt('Enter admin code:');
-            if (enteredCode === '121206') { // Hardcoded admin code
+            if (enteredCode === '121206') {
                 window.showView('admin-panel-view');
-            } else if (enteredCode !== null && enteredCode !== "") { // Only show error if a code was entered and it's wrong
+            } else if (enteredCode !== null && enteredCode !== "") {
                 alert('Invalid admin code.');
             }
         });
     }
+
+    // --- User Activity History View Logic ---
+    async function loadUserActivityHistory() {
+        const activityListContainer = document.getElementById('user-activity-list-container');
+        if (!activityListContainer) {
+            console.error("User activity list container not found.");
+            return;
+        }
+        if (!chatUID) {
+            activityListContainer.innerHTML = '<p>User ID not found. Cannot load history.</p>';
+            return;
+        }
+        activityListContainer.innerHTML = '<p>Loading your activity...</p>';
+        try {
+            const response = await fetch(`/api/activities?uid=${encodeURIComponent(chatUID)}&limit=100`);
+            if (!response.ok) {
+                const errData = await response.json().catch(()=>null);
+                throw new Error(errData?.error || `Failed to fetch your activity: ${response.statusText}`);
+            }
+            const data = await response.json();
+            if (data.activities && data.activities.length > 0) {
+                let activitiesHTML = '<ul>';
+                data.activities.forEach(activity => {
+                    let detailsStr = '';
+                    if (activity.details && typeof activity.details === 'object' && Object.keys(activity.details).length > 0) {
+                        detailsStr = Object.entries(activity.details)
+                                         .map(([key, value]) => `${escapeHTML(key)}: ${escapeHTML(String(value))}`)
+                                         .join(', ');
+                        detailsStr = ` (${detailsStr})`;
+                    } else if (activity.details && typeof activity.details === 'string' && activity.details.trim() !== '') {
+                        detailsStr = ` (${escapeHTML(activity.details)})`;
+                    }
+                    activitiesHTML += `
+                        <li>
+                            <span class="user-activity-type">${escapeHTML(activity.activityType.replace(/_/g, ' '))}</span>
+                            <span class="user-activity-details">${detailsStr}</span>
+                            <div class="user-activity-meta">
+                                <span class="user-activity-time">${new Date(activity.timestamp).toLocaleString()}</span>
+                                <span class="user-activity-url">on ${escapeHTML(activity.url.replace(window.location.origin, '')) || '/'}</span>
+                            </div>
+                        </li>`;
+                });
+                activitiesHTML += '</ul>';
+                activityListContainer.innerHTML = activitiesHTML;
+            } else {
+                activityListContainer.innerHTML = '<p>No activities recorded for you yet.</p>';
+            }
+        } catch (error) {
+            console.error('Error loading user activity history:', error);
+            activityListContainer.innerHTML = `<p class="error-message">Could not load your activity: ${error.message}</p>`;
+        }
+    }
+
+    // --- Final Initial State Call ---
+    window.showView('home-view');
 });

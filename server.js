@@ -1,7 +1,7 @@
 const express = require('express');
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const path = require('path');
-const { MongoClient, ObjectId, ServerApiVersion } = require('mongodb'); // Added ServerApiVersion
+const { MongoClient, ObjectId } = require('mongodb');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,42 +13,21 @@ const IMAGE_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
 
 // MongoDB Connection
 const mongoUri = "mongodb+srv://rtmtafita:tafitaniaina1206@rtmchat.pzebpqh.mongodb.net/?retryWrites=true&w=majority&appName=rtmchat";
-const dbName = 'futuristicPortfolioDb'; // Defined dbName
-// Updated MongoClient instantiation with recommended options
-const client = new MongoClient(mongoUri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    serverApi: ServerApiVersion.v1
-});
+const client = new MongoClient(mongoUri);
 
-let db; // Renamed from portfolioDb for consistency with prompt, will hold the db instance
-let commentsCollection; // This can be initialized after db is set
+let portfolioDb;
+let commentsCollection;
 
 async function connectDB() {
     try {
         await client.connect();
-        console.log("Successfully connected to MongoDB client!");
-        db = client.db(dbName); // Use the defined dbName
-
-        // Optional: Ping to confirm connection
-        await db.command({ ping: 1 });
-        console.log("Pinged your deployment. You successfully connected to MongoDB!");
-
-        // Initialize collections after db is confirmed
-        commentsCollection = db.collection("comments");
-        // Ensure indexes if needed (example for comments)
-        // It's good practice to move index creation to a more dedicated setup spot or ensure it runs once
-        const existingIndexes = await commentsCollection.listIndexes().toArray();
-        const indexExists = existingIndexes.some(idx => idx.name === "createdAt_-1");
-        if (!indexExists) {
-            await commentsCollection.createIndex({ createdAt: -1 });
-            console.log("Index on createdAt ensured for comments collection.");
-        } else {
-            console.log("Index on createdAt already exists for comments collection.");
-        }
-
+        portfolioDb = client.db("portfolioDb");
+        commentsCollection = portfolioDb.collection("comments");
+        console.log("Successfully connected to MongoDB Atlas!");
+        await commentsCollection.createIndex({ createdAt: -1 });
+        console.log("Indexes ensured for comments collection.");
     } catch (err) {
-        console.error("Failed to connect to MongoDB or ensure setup:", err);
+        console.error("Failed to connect to MongoDB Atlas or ensure indexes", err);
         process.exit(1);
     }
 }
@@ -218,55 +197,5 @@ async function startServer() {
         console.log(`Server is running on http://localhost:${PORT}`);
     });
 }
-
-// --- VIP Chat API Route (Placeholder) ---
-app.post('/api/vip-chat', async (req, res) => {
-    const { model, prompt, uid } = req.body;
-
-    if (!model || !prompt || !uid) {
-        return res.status(400).json({ error: 'Parameters "model", "prompt", and "uid" are required.' });
-    }
-
-    // Simulate API call and response
-    console.log(`VIP Chat request received for model: ${model}, UID: ${uid}, Prompt: "${prompt.substring(0, 50)}..."`);
-
-    // Placeholder: Check if user is actually VIP (e.g., from a session or database)
-    // For now, we assume VIP access is granted if they can reach this endpoint.
-
-    // Simulate different response times and styles based on model
-    let delay = 500;
-    let simulatedResponse = "";
-    let authorName = model.charAt(0).toUpperCase() + model.slice(1) + " AI (Simulated)";
-
-    switch (model.toLowerCase()) {
-        case 'gemini':
-            delay = 700;
-            simulatedResponse = `This is a simulated advanced response from Gemini. Your insightful prompt was: "${prompt}". Gemini would typically provide a comprehensive and multi-faceted answer here.`;
-            break;
-        case 'claude': // Assuming 'claude-haiku' will be sent as 'claude' or similar
-        case 'claude-haiku':
-            delay = 400;
-            simulatedResponse = `A simulated creative burst from Claude Haiku! You asked about: "${prompt}". Claude Haiku might respond with a poem or a uniquely structured text.`;
-            authorName = "Claude Haiku AI (Simulated)";
-            break;
-        case 'deepseek':
-            delay = 600;
-            simulatedResponse = `Deepseek (Simulated) processing your technical query: "${prompt}". Expect a code snippet or a detailed explanation related to programming or AI research.`;
-            break;
-        case 'rtm':
-        case 'rtm-ai':
-            delay = 300;
-            simulatedResponse = `RTM AI (Simulated) here! For your prompt: "${prompt}", this custom model would give a specialized answer relevant to this portfolio's context.`;
-            authorName = "RTM AI (Simulated)";
-            break;
-        default:
-            return res.status(400).json({ error: `Unknown VIP model: ${model}` });
-    }
-
-    setTimeout(() => {
-        res.json({ response: simulatedResponse, author: authorName });
-    }, delay);
-});
-
 
 startServer();

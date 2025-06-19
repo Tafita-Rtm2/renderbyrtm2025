@@ -277,7 +277,9 @@ app.post('/api/comments', async (req, res) => {
         const newComment = {
             name: name.trim(),
             text: text.trim(),
-            createdAt: new Date()
+            createdAt: new Date(),
+            likes: { count: 0, users: [] },      // Initialize likes
+            dislikes: { count: 0, users: [] }   // Initialize dislikes
         };
 
         const result = await commentsCollection.insertOne(newComment);
@@ -291,6 +293,88 @@ app.post('/api/comments', async (req, res) => {
     } catch (error) {
         console.error("Error posting comment:", error);
         res.status(500).json({ error: "Failed to post comment due to server error." });
+    }
+});
+
+// POST /api/comments/:commentId/like - Like a comment
+app.post('/api/comments/:commentId/like', async (req, res) => {
+    if (!commentsCollection) return res.status(503).json({ error: "Database not connected." });
+    try {
+        const { commentId } = req.params;
+        const { uid } = req.body; // User's UID performing the action
+
+        if (!ObjectId.isValid(commentId)) return res.status(400).json({ error: "Invalid comment ID." });
+        if (!uid) return res.status(400).json({ error: "User ID is required." });
+
+        const mongoCommentId = new ObjectId(commentId);
+        const comment = await commentsCollection.findOne({ _id: mongoCommentId });
+        if (!comment) return res.status(404).json({ error: "Comment not found." });
+
+        // Ensure likes/dislikes fields exist (for older comments)
+        comment.likes = comment.likes || { count: 0, users: [] };
+        comment.dislikes = comment.dislikes || { count: 0, users: [] };
+
+        const hasLiked = comment.likes.users.includes(uid);
+        const hasDisliked = comment.dislikes.users.includes(uid);
+
+        if (hasLiked) { // User wants to unlike
+            comment.likes.users = comment.likes.users.filter(userId => userId !== uid);
+            comment.likes.count = comment.likes.users.length;
+        } else { // User wants to like
+            comment.likes.users.push(uid);
+            comment.likes.count = comment.likes.users.length;
+            if (hasDisliked) { // If previously disliked, remove dislike
+                comment.dislikes.users = comment.dislikes.users.filter(userId => userId !== uid);
+                comment.dislikes.count = comment.dislikes.users.length;
+            }
+        }
+
+        await commentsCollection.updateOne({ _id: mongoCommentId }, { $set: { likes: comment.likes, dislikes: comment.dislikes } });
+        res.status(200).json(comment); // Return updated comment
+    } catch (error) {
+        console.error("Error liking comment:", error);
+        res.status(500).json({ error: "Server error while liking comment." });
+    }
+});
+
+// POST /api/comments/:commentId/dislike - Dislike a comment
+app.post('/api/comments/:commentId/dislike', async (req, res) => {
+    if (!commentsCollection) return res.status(503).json({ error: "Database not connected." });
+    try {
+        const { commentId } = req.params;
+        const { uid } = req.body;
+
+        if (!ObjectId.isValid(commentId)) return res.status(400).json({ error: "Invalid comment ID." });
+        if (!uid) return res.status(400).json({ error: "User ID is required." });
+
+        const mongoCommentId = new ObjectId(commentId);
+        const comment = await commentsCollection.findOne({ _id: mongoCommentId });
+        if (!comment) return res.status(404).json({ error: "Comment not found." });
+
+        // Ensure likes/dislikes fields exist (for older comments)
+        comment.likes = comment.likes || { count: 0, users: [] };
+        comment.dislikes = comment.dislikes || { count: 0, users: [] };
+
+        const hasLiked = comment.likes.users.includes(uid);
+        const hasDisliked = comment.dislikes.users.includes(uid);
+
+        if (hasDisliked) { // User wants to un-dislike
+            comment.dislikes.users = comment.dislikes.users.filter(userId => userId !== uid);
+            comment.dislikes.count = comment.dislikes.users.length;
+        } else { // User wants to dislike
+            comment.dislikes.users.push(uid);
+            comment.dislikes.count = comment.dislikes.users.length;
+            if (hasLiked) { // If previously liked, remove like
+                comment.likes.users = comment.likes.users.filter(userId => userId !== uid);
+                comment.likes.count = comment.likes.users.length;
+            }
+        }
+
+        await commentsCollection.updateOne({ _id: mongoCommentId }, { $set: { likes: comment.likes, dislikes: comment.dislikes } });
+        res.status(200).json(comment);
+    } catch (error) {
+        console.error("Error disliking comment:", error);
+        res.status(500).json({ error: "Server error while disliking comment." });
     }
 });
 

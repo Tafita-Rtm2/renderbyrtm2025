@@ -220,9 +220,14 @@ h4 { font-size: 1.2em; } /* e.g., Sub-section titles or item titles */
 
 /* Specific overrides for certain views */
 #ai-chat-view {
-    padding: 0; /* Chat view manages its own internal padding for messages area */
-    border-radius: 10px; /* Retain previous specific radius if different, or remove if 8px is fine */
+    padding: 0 !important; /* Chat view manages its own internal padding for messages area */
+    border-radius: 10px !important;
     /* background-color already set by .view, if #ai-chat-view needs specific bg, set it here */
+    display: flex !important;
+    flex-direction: column !important;
+    height: calc(100vh - var(--top-bar-height) - 30px) !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 #home-view {
@@ -295,10 +300,6 @@ h4 { font-size: 1.2em; } /* e.g., Sub-section titles or item titles */
     position: fixed;
     bottom: 15px; /* Adjust if #home-bottom-app-icons is not used, or relative to it */
     left: 15px;
-    /* If #home-bottom-app-icons is used, this should be above it or elsewhere */
-    /* For now, assuming #home-bottom-app-icons IS the primary bottom bar for home */
-    /* So, this admin icon might be better placed elsewhere or its 'fixed' nature re-evaluated */
-    /* Or, if it's part of #home-view content, its 'bottom' should be relative to that view's padding */
     cursor: pointer;
     z-index: 999;
 }
@@ -321,7 +322,6 @@ h4 { font-size: 1.2em; } /* e.g., Sub-section titles or item titles */
     top: calc(var(--top-bar-height) / 2 - 22px / 2 - 8px); /* Approx vertical center, considering padding */
     left: 15px;
     z-index: 1010;
-    /* .icon-button styling is applied */
 }
 
 
@@ -404,17 +404,16 @@ h4 { font-size: 1.2em; } /* e.g., Sub-section titles or item titles */
 /* --- EXISTING FEATURE STYLES (MERGED) --- */
 
 /* Weather Display (already partially in #top-bar section) */
-.weather-info { display: flex; align-items: center; gap: 8px; /* Added gap for spacing */ }
-/* .weather-icon class was for old img tag, new class is .weather-condition-svg */
-.weather-condition-svg { /* Styling for the new SVG weather icons */
-    width: 28px; /* Adjusted size for better fit in top bar */
+.weather-info { display: flex; align-items: center; gap: 8px; }
+.weather-condition-svg {
+    width: 28px;
     height: 28px;
-    fill: var(--accent-color); /* Use theme accent color */
-    flex-shrink: 0; /* Prevent shrinking if space is tight */
+    fill: var(--accent-color);
+    flex-shrink: 0;
 }
 .weather-text p { margin: 0; line-height: 1.3; }
-.weather-location { font-weight: 500; font-size: 0.9em; /* Slightly smaller to fit better */ }
-.weather-temp { font-size: 1.1em; font-weight: bold; color: var(--highlight-yellow); /* Gold/Yellow for temp */ }
+.weather-location { font-weight: 500; font-size: 0.9em; }
+.weather-temp { font-size: 1.1em; font-weight: bold; color: var(--highlight-yellow); }
 .weather-description { font-size: 0.8em; color: var(--text-muted-color); }
 .weather-loading, .weather-error { font-style: italic; color: var(--text-muted-color); }
 
@@ -435,148 +434,143 @@ h4 { font-size: 1.2em; } /* e.g., Sub-section titles or item titles */
 
 /* AI CHAT */
 #ai-chat-view {
-    display: flex;
-    flex-direction: column;
-    height: calc(100vh - var(--top-bar-height) - 30px); /* Adjusted for main-content padding */
-    padding:0;
-    box-sizing: border-box;
-    background-color: var(--secondary-bg); /* Darker, distinct background for the chat view */
-    border-radius: 10px; /* Optional: if views have distinct containers */
-    overflow: hidden; /* If using border-radius on the view itself */
+    display: flex !important;
+    flex-direction: column !important;
+    height: calc(100vh - var(--top-bar-height) - 30px) !important;
+    padding:0 !important;
+    box-sizing: border-box !important;
+    background-color: var(--secondary-bg) !important;
+    border-radius: 10px !important;
+    overflow: hidden !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 #chat-messages-area {
-    flex-grow: 1;
-    overflow-y: auto;
-    padding: 20px; /* More spacing */
-    background-color: var(--primary-bg); /* Or keep var(--primary-bg) if preferred over --secondary-bg from #ai-chat-view */
-    border-bottom: 1px solid var(--border-color);
-    display: flex;
-    flex-direction: column;
-    gap: 15px; /* Increased gap between messages */
+    flex-grow: 1 !important;
+    overflow-y: auto !important;
+    padding: 20px !important;
+    background-color: var(--primary-bg) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 15px !important;
 }
 
-/* Custom Scrollbar (Webkit browsers) */
 #chat-messages-area::-webkit-scrollbar { width: 8px; }
-#chat-messages-area::-webkit-scrollbar-track { background: var(--primary-bg); } /* Or var(--secondary-bg) to match view */
+#chat-messages-area::-webkit-scrollbar-track { background: var(--primary-bg); }
 #chat-messages-area::-webkit-scrollbar-thumb { background-color: var(--accent-color); border-radius: 4px; }
 #chat-messages-area::-webkit-scrollbar-thumb:hover { background-color: var(--primary-accent-color); }
 
 .chat-message-wrapper {
-    display: flex;
-    align-items: flex-end;
-    margin-bottom: 0; /* Gap is now on #chat-messages-area */
-    max-width: 85%;
+    display: flex !important;
+    align-items: flex-end !important;
+    margin-bottom: 0 !important;
+    max-width: 85% !important;
 }
 
 .chat-message-wrapper.user {
-    align-self: flex-end;
-    flex-direction: row-reverse;
+    align-self: flex-end !important;
+    flex-direction: row-reverse !important;
 }
 
 .chat-message-wrapper.ai {
-    align-self: flex-start;
-    flex-direction: row;
+    align-self: flex-start !important;
+    flex-direction: row !important;
 }
 
 .chat-avatar-container {
-    width: 36px; /* Avatar size */
-    height: 36px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 8px;
-    flex-shrink: 0;
-    border: 1px solid var(--border-color); /* Added border */
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 8px !important;
+    flex-shrink: 0 !important;
+    border: 1px solid var(--border-color) !important;
 }
 
 .chat-message-wrapper.user .chat-avatar-container {
-    background-color: var(--accent-color);
+    background-color: var(--accent-color) !important;
 }
 .chat-message-wrapper.user .chat-avatar-container .icon {
-    fill: var(--primary-bg);
+    fill: var(--primary-bg) !important;
 }
 .chat-message-wrapper.ai .chat-avatar-container {
-    background-color: var(--surface-color);
+    background-color: var(--surface-color) !important;
 }
 .chat-message-wrapper.ai .chat-avatar-container .icon {
-    fill: var(--accent-color);
+    fill: var(--accent-color) !important;
 }
 
 .chat-avatar-container .icon {
-    width: 20px;
-    height: 20px;
-    /* fill is set by user/ai specific rules above */
+    width: 20px !important;
+    height: 20px !important;
 }
 
 
 .chat-bubble {
-    padding: 12px 18px; /* Slightly more padding */
-    border-radius: 22px; /* More pronounced rounding */
-    max-width: calc(100% - 40px - 16px);
-    line-height: 1.6; /* Improved line height */
-    word-wrap: break-word;
-    box-shadow: 0 3px 6px rgba(0,0,0,0.25); /* Enhanced shadow */
+    padding: 12px 18px !important;
+    border-radius: 22px !important;
+    max-width: calc(100% - 40px - 16px) !important;
+    line-height: 1.6 !important;
+    word-wrap: break-word !important;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.25) !important;
 }
 
 .chat-message-wrapper.user .chat-bubble {
-    background-color: var(--primary-accent-color); /* A different shade for user */
-    color: #ffffff; /* Ensure text is readable */
-    border-bottom-right-radius: 6px; /* Sharper corner for "tail" effect */
+    background-color: var(--primary-accent-color) !important;
+    color: #ffffff !important;
+    border-bottom-right-radius: 6px !important;
 }
-.chat-message-wrapper.user .chat-bubble strong { color: #fff; } /* Ensure bold is visible */
+.chat-message-wrapper.user .chat-bubble strong { color: #fff !important; }
 .chat-message-wrapper.user .chat-bubble h3,
-.chat-message-wrapper.user .chat-bubble h4 { color: #f0f0f0; }
+.chat-message-wrapper.user .chat-bubble h4 { color: #f0f0f0 !important; }
 
 
 .chat-message-wrapper.ai .chat-bubble {
-    background-color: var(--surface-color); /* Keep AI bubbles distinct */
-    color: var(--text-color);
-    border-bottom-left-radius: 6px; /* Sharper corner for "tail" effect */
+    background-color: var(--surface-color) !important;
+    color: var(--text-color) !important;
+    border-bottom-left-radius: 6px !important;
 }
 
-/* Styling for formatted text within chat bubbles */
-.chat-bubble h3 { /* For ### titles in chat */
-    font-size: 1.2em; /* Adjust as needed for chat context */
-    color: var(--secondary-accent-color); /* Or another distinct color */
-    margin-top: 0.5em;
-    margin-bottom: 0.3em;
-    font-weight: 600;
+.chat-bubble h3 {
+    font-size: 1.2em !important;
+    color: var(--secondary-accent-color) !important;
+    margin-top: 0.5em !important;
+    margin-bottom: 0.3em !important;
+    font-weight: 600 !important;
 }
-.chat-bubble h4 { /* For ## subtitles in chat */
-    font-size: 1.1em;
-    color: var(--primary-accent-color); /* Use a theme color */
-    margin-top: 0.4em;
-    margin-bottom: 0.2em;
-    font-weight: 600;
+.chat-bubble h4 {
+    font-size: 1.1em !important;
+    color: var(--primary-accent-color) !important;
+    margin-top: 0.4em !important;
+    margin-bottom: 0.2em !important;
+    font-weight: 600 !important;
 }
-/* .chat-bubble strong styling will be inherited or can be specified if needed.
-   For example, if the default strong color isn't contrasting enough in a specific bubble type: */
-/* .chat-message-wrapper.ai .chat-bubble strong { color: var(--accent-color); } */
-
 
 .chat-bubble .typing-indicator {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 10px 0;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 10px 0 !important;
 }
 
 .typing-indicator span {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    margin: 0 2px;
-    background-color: var(--text-muted-color); /* Or specific to bubble bg */
-    border-radius: 50%;
-    animation: typing-bounce 1.4s infinite ease-in-out both;
+    display: inline-block !important;
+    width: 8px !important;
+    height: 8px !important;
+    margin: 0 2px !important;
+    background-color: var(--text-muted-color) !important;
+    border-radius: 50% !important;
+    animation: typing-bounce 1.4s infinite ease-in-out both !important;
 }
 .chat-message-wrapper.ai .chat-bubble .typing-indicator span {
-     background-color: var(--accent-color); /* Example: make AI typing dots match accent */
+     background-color: var(--accent-color) !important;
 }
-.typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
-.typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+.typing-indicator span:nth-child(1) { animation-delay: -0.32s !important; }
+.typing-indicator span:nth-child(2) { animation-delay: -0.16s !important; }
 
 
 @keyframes typing-bounce {
@@ -585,76 +579,99 @@ h4 { font-size: 1.2em; } /* e.g., Sub-section titles or item titles */
 }
 
 #chat-input-bar {
-    display: flex;
-    align-items: center;
-    padding: 15px; /* More padding */
-    background-color: var(--primary-bg); /* Match primary background for contrast with secondary-bg view */
-    border-top: 1px solid var(--surface-color); /* Softer border */
+    display: flex !important;
+    align-items: center !important;
+    padding: 15px !important;
+    background-color: var(--primary-bg) !important;
+    border-top: 1px solid var(--surface-color) !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: auto !important;
+    min-height: 70px !important;
+    position: relative !important;
+    z-index: 100 !important;
+    flex-shrink: 0 !important;
 }
+
+.web-search-container {
+    display: flex !important;
+    align-items: center !important;
+    margin-right: 15px !important;
+    font-size: 0.9em !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+.web-search-container .web-search-label,
+.web-search-container .switch {
+    visibility: visible !important;
+    opacity: 1 !important;
+    display: inline-block !important;
+}
+.web-search-container .switch input {
+    opacity: 1 !important; /* Make the checkbox itself part of the visible logic if needed for interaction */
+}
+ .web-search-container .slider { /* Ensure slider part of switch is visible */
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+
 #chat-input-field {
-    flex-grow: 1;
-    padding: 14px 20px; /* More padding */
-    border: 1px solid var(--border-color);
-    border-radius: 25px; /* More rounded */
-    background-color: var(--surface-color); /* Slightly different from bar for definition */
-    color: var(--text-color);
-    font-family: var(--font-primary);
-    margin-right: 10px;
-    outline: none;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    font-size: 1em;
+    flex-grow: 1 !important;
+    padding: 14px 20px !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 25px !important;
+    background-color: var(--surface-color) !important;
+    color: var(--text-color) !important;
+    font-family: var(--font-primary) !important;
+    margin-right: 10px !important;
+    outline: none !important;
+    display: block !important;
+    min-width: 50px !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    min-height: 48px !important;
+    height: 48px !important;
+    position: relative !important;
 }
-#chat-input-field:focus { border-color: var(--accent-color); box-shadow: 0 0 8px var(--accent-color); }
+#chat-input-field:focus {
+    border-color: var(--action-color) !important;
+    box-shadow: 0 0 8px rgba(255, 153, 0, 0.6) !important;
+}
 
-#chat-send-button { /* Assuming it's still an .icon-button */
-    width: 48px; /* Slightly larger */
-    height: 48px;
-    padding:0; /* Reset padding if using fixed size */
-    background-color: var(--accent-color); /* Ensure it stands out */
-    border: none; /* Overrides default .icon-button border if any */
+#chat-send-button {
+    background-color: var(--action-color) !important;
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    padding: 0 !important;
+    flex-shrink: 0 !important;
+    position: relative !important;
+    border: none !important;
 }
-#chat-send-button .icon {
-     width: 26px; /* Adjust icon size within button */
-     height: 26px;
-     fill: var(--primary-bg); /* Icon color on accent background */
-     margin-right: 0; /* Remove margin if centered in circle */
-}
-#chat-send-button:hover { background-color: var(--primary-accent-color); } /* Darken on hover */
-#chat-send-button:disabled { background-color: var(--text-muted-color) !important; cursor: not-allowed; }
-
-/* Generic Button Styling - .btn-primary */
-.btn-primary,
-#generate-image-button,
-#generate-story-button,
-#chat-send-button { /* Applying --action-color to these primary buttons */
-    background-color: var(--action-color); /* New orange */
-    color: var(--primary-bg); /* Ensure contrast */
-    border: none; /* Common style for these buttons */
-    padding: 10px 20px;
-    border-radius: 25px; /* Pill shape */
-    font-family: var(--font-primary);
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
-}
-.btn-primary:hover,
-#generate-image-button:hover,
-#generate-story-button:hover,
 #chat-send-button:hover {
-    background-color: #ffad33; /* Lighter orange for hover */
-    transform: translateY(-2px); /* Keep existing transform */
-    box-shadow: 0 4px 10px rgba(255, 153, 0, 0.3); /* Orange glow for hover */
+    background-color: #ffad33 !important; /* Lighter orange for hover */
 }
-.btn-primary:disabled {
-    background-color: var(--text-muted-color) !important; /* Ensure precedence */
-    color: var(--surface-color) !important;
+#chat-send-button:disabled {
+    background-color: var(--text-muted-color) !important;
     cursor: not-allowed !important;
-    transform: none !important;
-    box-shadow: none !important;
 }
+
+#chat-send-button .icon {
+    fill: var(--primary-bg) !important;
+    width: 26px !important;
+    height: 26px !important;
+    display: inline-block !important;
+}
+
 
 /* General Input and Textarea Styling */
 /* Ensure .icon-button is suitable for icon-only buttons */
@@ -670,7 +687,7 @@ h4 { font-size: 1.2em; } /* e.g., Sub-section titles or item titles */
 /* Specific icon color adjustments based on new button backgrounds */
 #generate-image-button .icon,
 #generate-story-button .icon,
-#chat-send-button .icon,
+/* #chat-send-button .icon, /* Already handled above */
 .btn-primary .icon { /* If .btn-primary can contain icons */
     fill: var(--primary-bg); /* Icon color for --action-color background */
 }
@@ -975,6 +992,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 #story-vip-controls {
     display: none;
     justify-content: center;
+    align-items: center; /* Ensure vertical alignment */
     gap: 10px;
     padding-top: 15px; /* Adjusted padding */
     padding-bottom: 15px; /* Adjusted padding */
@@ -1035,23 +1053,21 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 
 /* VIP AREA & TOOLS */
 #vip-view {
-    /* .view base styles are applied (background, default padding, border-radius for the view itself) */
-    /* Override padding if needed for more "full screen" feel */
-    padding: 15px; /* Or less, e.g., 10px or 5px, depending on desired spacing around iframe */
-    display: flex; /* Use flex to make iframe container fill height */
-    flex-direction: column;
-    /* Ensure vip-view itself tries to take full content height.
-       The main #main-content is already flex-grow: 1.
-       .view.active is display:block, flex-grow:1. This should work. */
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 5px !important; /* Minimal padding for the overall view */
+    box-sizing: border-box !important;
+    overflow: hidden !important; /* Prevent potential scrollbars from view itself */
+    /* height: 100%; /* This might be tricky; rely on flex-grow of children and .view.active */
 }
+
 #vip-view h2 {
-    color: var(--highlight-yellow); /* Updated color */
-    text-align: center; /* Center title as access area is gone */
-    margin-top: 0; /* Remove default top margin if view padding handles it */
-    margin-bottom: 10px; /* Space between title and iframe container */
-    flex-shrink: 0; /* Prevent title from shrinking if content grows */
+    color: var(--highlight-yellow, #ffd700) !important; /* Fallback for safety */
+    font-size: 1.5em !important; /* Or smaller if needed */
+    /* flex-shrink: 0; /* Already inline */
+    /* margin: 5px 0 10px 0 !important; /* Already inline, but CSS can reinforce */
+    /* text-align: center; /* Already inline */
 }
-/* #vip-view > p related styles can be removed as the <p> element was removed from HTML */
 
 /* Remove styles for the old vip-access-area as it's deleted from HTML */
 /*
@@ -1066,14 +1082,15 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 .vip-status-error { background-color: rgba(255, 0, 0, 0.1); color: #ff4d4d; border: 1px solid #ff4d4d; }
 */
 
-/* Styles for the iframe container to achieve full-screen feel within the view */
+/* Styles for the iframe container as per new plan */
 #vip-iframe-container {
     width: 100%;
-    flex-grow: 1; /* This will make it take available vertical space */
-    border: 1px solid var(--border-color); /* Optional: keep a border for the iframe area */
+    /* Adjust height as needed, perhaps relative to viewport or parent elements like header, title, access area */
+    height: calc(100vh - 200px); /* Example: (Full viewport height) - (approximate height of other elements like header, h2, p, vip-access-area) */
+    border: 1px solid var(--border-color); /* Optional border */
     border-radius: 8px;
-    overflow: hidden; /* To respect border-radius for iframe content */
-    /* margin-top is removed as h2 margin-bottom handles spacing, or can be added if no title */
+    overflow: hidden; /* Ensures iframe corners are rounded if container has border-radius */
+    /* display: none; /* Initial state handled by JS, but CSS can default if needed */
 }
 
 #vip-iframe-container iframe {
@@ -1181,93 +1198,6 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 }
 #weather-view .weather-error {
     color: var(--secondary-accent-color);
-}
-/* --- END OF DETAILED WEATHER VIEW STYLES --- */
-*/
-
-/* --- DETAILED WEATHER VIEW STYLES --- */
-#weather-view {
-    /* .view base styles are applied: background-color, padding, border-radius */
-    text-align: center;
-}
-.weather-location-title {
-    font-size: 1.8em;
-    color: var(--accent-color);
-    margin-bottom: 20px;
-}
-.current-conditions {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 30px;
-    background-color: var(--surface-color);
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-}
-.current-temp {
-    font-size: 3.5em;
-    font-weight: bold;
-    color: var(--text-color);
-}
-.current-sky {
-    font-size: 1.3em;
-    color: var(--text-muted-color);
-    margin-bottom: 10px;
-}
-/* Targeting the SVG directly if getWeatherSvgIcon injects it */
-.current-conditions .weather-condition-svg {
-    width: 100px;
-    height: 100px;
-    fill: var(--accent-color);
-    margin-top: 10px;
-}
-
-.weather-details-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 15px;
-    margin-bottom: 30px;
-    text-align: left;
-}
-.weather-details-grid > div {
-    background-color: var(--surface-color);
-    padding: 15px;
-    border-radius: 8px;
-    font-size: 0.95em;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
-.weather-details-grid > div:nth-child(odd) { /* Optional: slightly different bg for alternating items */
-    /* background-color: #2a2a4e; */ /* Example if var(--surface-color) is too uniform */
-}
-
-
-.weather-forecast h4 {
-    font-size: 1.5em;
-    color: var(--primary-accent-color);
-    margin-bottom: 15px;
-    border-bottom: 1px solid var(--surface-color);
-    padding-bottom: 10px;
-}
-.forecast-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); /* Adjusted minmax for potentially smaller items */
-    gap: 15px;
-}
-.forecast-day {
-    background-color: var(--surface-color);
-    padding: 15px;
-    border-radius: 8px;
-    text-align: center;
-    font-size: 0.9em;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
-.forecast-day > div { margin-bottom: 5px; }
-.forecast-day .weather-condition-svg { /* if using SVG directly */
-    width: 50px;
-    height: 50px;
-    fill: var(--accent-color);
-    margin: 5px auto;
 }
 /* --- END OF DETAILED WEATHER VIEW STYLES --- */
 #vip-tools-container h3 { color: var(--primary-accent-color); margin-top: 20px; margin-bottom: 15px; grid-column: 1 / -1; border-bottom: 1px solid var(--surface-color); padding-bottom: 10px; }
@@ -1760,3 +1690,88 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
     padding: 20px;
 }
 /* --- END OF USER ACTIVITY HISTORY VIEW STYLES --- */
+
+/* --- DEDICATED COMMENTS VIEW (Phase 4.2) --- */
+#comments-view { /* Uses .view base styles */
+    padding: 20px;
+}
+#comments-view h2 {
+    text-align: center;
+    color: var(--primary-accent-color);
+    margin-bottom: 25px;
+}
+.all-comments-list-ul {
+    list-style: none;
+    padding: 0;
+    max-width: 800px;
+    margin: 0 auto;
+}
+.all-comment-item {
+    background-color: var(--surface-color);
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+.all-comment-item .comment-content strong {
+    color: var(--accent-color);
+}
+.all-comment-item .comment-content p {
+    margin: 5px 0 10px 0;
+    line-height: 1.6;
+    color: var(--text-color); /* Ensure text color is applied */
+}
+.comment-actions {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+.comment-actions button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--text-muted-color);
+    padding: 5px;
+    border-radius: 4px;
+    transition: color 0.2s ease, background-color 0.2s ease; /* Added transitions */
+}
+.comment-actions button:hover {
+    color: var(--text-color);
+    background-color: var(--secondary-bg);
+}
+.comment-actions button.active {
+    color: var(--action-color);
+}
+.comment-actions button.active .icon {
+    fill: var(--action-color);
+}
+.comment-actions button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+.comment-actions .icon {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
+.comment-actions .like-count, .comment-actions .dislike-count {
+    font-size: 0.9em;
+}
+/* Styles for .admin-reply-public are already defined and should apply here too */
+.see-all-comments-link {
+    display: block;
+    text-align: center;
+    margin-top: 15px;
+    color: var(--accent-color);
+    font-weight: bold;
+}
+.see-all-comments-link:hover {
+    text-decoration: underline;
+    color: var(--primary-accent-color);
+}
+
+[end of public/style.css]

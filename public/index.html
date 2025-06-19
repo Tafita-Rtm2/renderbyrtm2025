@@ -187,6 +187,9 @@
                 <button id="story-listen-button" class="icon-button" title="Listen to Story">
                     <svg viewBox="0 0 24 24" class="icon"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"></path></svg>
                 </button>
+                <button id="story-stop-speech-button" class="icon-button" title="Stop Speech" style="display: none;">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M6 6h12v12H6z"></path></svg>
+                </button>
                 <button id="story-translate-button" class="icon-button" title="Translate Story">
                     <svg viewBox="0 0 24 24" class="icon"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4.84 19l5.05-5.05.03.03 2.5 2.5.03.03 2.54 2.51zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"></path></svg>
                 </button>
@@ -199,8 +202,14 @@
         </div>
     <div id="vip-view" class="view" style="display: none;">
         <h2>VIP Lounge</h2>
-        <!-- Introductory paragraph removed -->
-        <div id="vip-iframe-container" style="width: 100%; /* height will be controlled by CSS flex */ border: none;">
+        <p>Access exclusive premium tools and features.</p>
+        <div id="vip-access-area">
+            <p>Enter VIP Access Code:</p>
+            <input type="password" id="vip-code-input" placeholder="VIP Code">
+            <button id="vip-code-submit">Enter VIP Lounge</button>
+            <p id="vip-status-message" style="display:none;"></p>
+        </div>
+        <div id="vip-iframe-container" style="display: none; width: 100%; height: calc(100vh - 150px); border: none;">
             <!-- Iframe will be added here by script.js -->
         </div>
     </div>
@@ -268,7 +277,13 @@
              <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d120077.70880567693!2d47.46434084863282!3d-18.89750799999999!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x21f07e0034298787%3A0x4a71d53e0abbc919!2sAntananarivo%2C%20Madagascar!5e0!3m2!1sen!2sus!4v1700000000000!5m2!1sen!2sus" width="100%" height="300" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
         </div>
     </div>
-        <div id="comments-view" class="view" style="display: none;"><p>Full Comments Page - Content TBD (or link to home's section)</p></div>
+    <div id="comments-view" class="view" style="display: none;">
+        <h2>All User Comments</h2>
+        <div id="all-comments-list-container">
+            <p>Loading all comments...</p>
+            <!-- Comments will be listed here -->
+        </div>
+    </div>
     <div id="user-history-view" class="view" style="display: none;">
         <h2>Your Activity History</h2>
         <div id="user-activity-list-container">

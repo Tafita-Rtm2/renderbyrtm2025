@@ -46,6 +46,62 @@
 
     <main id="main-content">
         <div id="home-view" class="view active">
+            <!-- Existing #home-bottom-app-icons are fixed, so content flows above/around it -->
+
+            <section id="welcome-description-section">
+                <h2>Welcome to Your Enhanced Digital Hub!</h2>
+                <p class="site-tagline">Explore a suite of AI-powered tools and creative utilities designed to inspire and assist you. Here's what you can do:</p>
+
+                <div class="feature-highlights-grid">
+                    <div class="feature-highlight-item">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" class="icon"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"></path></svg> <!-- AI Chat Icon -->
+                        </div>
+                        <h3>AI Chat</h3>
+                        <p>Engage in intelligent conversations, ask questions, get assistance, and enable web search for up-to-date information. Your creative partner for ideas and problem-solving.</p>
+                    </div>
+
+                    <div class="feature-highlight-item">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" class="icon"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"></path></svg> <!-- Image Gen Icon -->
+                        </div>
+                        <h3>Image Generator</h3>
+                        <p>Unleash your creativity by generating unique images from text prompts. Describe your vision and watch it come to life. Save your favorite creations!</p>
+                    </div>
+
+                    <div class="feature-highlight-item">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" class="icon"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"></path></svg> <!-- Story Gen Icon -->
+                        </div>
+                        <h3>Story Generator</h3>
+                        <p>Craft compelling narratives and short stories from a simple theme or title. Explore different genres and let the AI weave engaging tales for you.</p>
+                    </div>
+
+                    <div class="feature-highlight-item">
+                         <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" class="icon"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path></svg> <!-- VIP Icon -->
+                        </div>
+                        <h3>VIP Zone</h3>
+                        <p>Access an exclusive embedded experience from our partner site. (Direct access, no code needed!).</p>
+                    </div>
+
+                    <div class="feature-highlight-item">
+                         <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" class="icon"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"></path></svg> <!-- Weather Icon -->
+                        </div>
+                        <h3>Weather Details</h3>
+                        <p>Get the latest weather updates for your location or any city, including current conditions and a 5-day forecast, presented in a clear and detailed view.</p>
+                    </div>
+                     <div class="feature-highlight-item">
+                         <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" class="icon"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7v-3l-4.89-4.89-.07-.14L2 15h3c0 4.97 4.03 9 9 9s9-4.03 9-9-4.03-9-9-9z"></path></svg> <!-- User History Icon -->
+                        </div>
+                        <h3>Activity History</h3>
+                        <p>Keep track of your interactions and activities within the site. Review your journey and easily revisit your favorite features.</p>
+                    </div>
+                </div>
+            </section>
+
             <!-- Home Page App Icons -->
             <nav id="home-bottom-app-icons">
                 <button class="home-app-btn" data-view="ai-chat-view">
@@ -108,15 +164,13 @@
             <h2>Image Generator</h2>
             <div id="image-prompt-area">
                 <input type="text" id="image-prompt-field" placeholder="Enter image description...">
-                <button id="generate-image-button" class="icon-button">
-                    <svg viewBox="0 0 24 24" class="icon"><path d="M9.5 15.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0-5c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zm-7-8.5c1.84 0 3.5.71 4.75 1.86l-2.09 2.09C15.92 13.71 15.01 13 14 13c-1.93 0-3.5 1.57-3.5 3.5S12.07 20 14 20s3.5-1.57 3.5-3.5V15c0-2.01-1.11-3.75-2.75-4.64.9-.87 1.5-2.03 1.5-3.36 0-2.48-2.02-4.5-4.5-4.5S7.25 4.52 7.25 7c0 1.33.6 2.46 1.5 3.36C6.97 11.29 5.5 13.29 5.5 15.5c0 1.38.47 2.65 1.26 3.64l1.41-1.41C7.69 17.21 7.5 16.39 7.5 15.5c0-1.45.62-2.75 1.61-3.66.08-.08.16-.15.25-.21.2-.15.4-.27.6-.39.9-.55 1.92-.84 3.04-.84z"/></svg>
-                    <span>Generate</span>
+                <button id="generate-image-button" class="icon-button" title="Generate Image">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"></path></svg> <!-- Simple "add/create" icon, changed from original plan's complex one -->
                 </button>
             </div>
             <div id="image-display-area"><p>Generated image will appear here.</p></div>
-            <button id="download-image-button" class="icon-button" style="display: none;">
+            <button id="download-image-button" class="icon-button" title="Download Image" style="display: none;">
                  <svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>
-                <span>Download</span>
             </button>
             <div id="image-history-gallery"><h4>History</h4></div>
         </div>
@@ -124,37 +178,56 @@
             <h2>Story Generator</h2>
             <div id="story-prompt-area">
                 <input type="text" id="story-theme-field" placeholder="Enter story title or theme...">
-                <button id="generate-story-button" class="icon-button">
-                    <svg viewBox="0 0 24 24" class="icon"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
-                    <span>Generate Story</span>
+                <button id="generate-story-button" class="icon-button" title="Generate Story">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"></path></svg>
                 </button>
             </div>
             <div id="generated-story-display"><p>Your generated story will appear here.</p></div>
             <div id="story-vip-controls" style="display:none;">
-                <button id="story-listen-button" class="icon-button">Listen</button>
-                <button id="story-translate-button" class="icon-button">Translate</button>
-                <button id="story-download-button-text" class="icon-button">Download Text</button>
+                <button id="story-listen-button" class="icon-button" title="Listen to Story">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"></path></svg>
+                </button>
+                <button id="story-translate-button" class="icon-button" title="Translate Story">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4.84 19l5.05-5.05.03.03 2.5 2.5.03.03 2.54 2.51zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"></path></svg>
+                </button>
+                <button id="story-download-button-text" class="icon-button" title="Download Story Text">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>
+                    <span>TXT</span>
+                </button>
             </div>
             <div id="story-history-area"><h4>My Stories</h4><div id="story-history-list"></div></div>
         </div>
     <div id="vip-view" class="view" style="display: none;">
         <h2>VIP Lounge</h2>
-        <p>Access exclusive premium tools and features.</p> <!-- This can be changed to better reflect the iframe content -->
-        <div id="vip-access-area">
-            <p>Enter VIP Access Code:</p>
-            <input type="password" id="vip-code-input" placeholder="VIP Code">
-            <button id="vip-code-submit">Enter VIP Lounge</button>
-            <p id="vip-status-message" style="display:none;"></p>
-        </div>
-        <div id="vip-iframe-container" style="display: none; width: 100%; height: calc(100vh - 150px); border: none;">
+        <!-- Introductory paragraph removed -->
+        <div id="vip-iframe-container" style="width: 100%; /* height will be controlled by CSS flex */ border: none;">
             <!-- Iframe will be added here by script.js -->
         </div>
     </div>
     <div id="admin-panel-view" class="view" style="display: none;">
-        <h2>Admin Panel - Manage Comments</h2>
-        <div id="admin-comments-list">
-            <!-- Comments will be loaded here by script.js -->
-            <p>Loading comments...</p>
+        <h2>Admin Panel</h2>
+
+        <div class="admin-panel-tabs">
+            <button class="admin-tab-button active" data-tab="comments-admin">Manage Comments</button>
+            <button class="admin-tab-button" data-tab="analytics-admin">Site Analytics</button>
+        </div>
+
+        <div id="comments-admin-tab" class="admin-tab-content active">
+            <h3>Manage Comments</h3>
+            <div id="admin-comments-list">
+                <p>Loading comments...</p>
+            </div>
+        </div>
+
+        <div id="analytics-admin-tab" class="admin-tab-content">
+            <h3>Site Analytics</h3>
+            <div id="admin-analytics-summary">
+                <p>Loading analytics...</p>
+            </div>
+            <h4>Recent Activities:</h4>
+            <div id="admin-recent-activities">
+                <p>Loading recent activities...</p>
+            </div>
         </div>
     </div>
         <div id="about-view" class="view" style="display: none;"><p>About Page - Content TBD</p></div>
@@ -196,7 +269,13 @@
         </div>
     </div>
         <div id="comments-view" class="view" style="display: none;"><p>Full Comments Page - Content TBD (or link to home's section)</p></div>
-        <div id="user-history-view" class="view" style="display: none;"><p>User History - Content TBD</p></div>
+    <div id="user-history-view" class="view" style="display: none;">
+        <h2>Your Activity History</h2>
+        <div id="user-activity-list-container">
+            <p>Loading your activity...</p>
+            <!-- Activities will be listed here -->
+        </div>
+    </div>
         <div id="gallery-view-main" class="view" style="display: none;"><p>Main Image Gallery - Content TBD</p></div>
         <div id="ads-partners-view" class="view" style="display: none;"><p>Ads & Partners - Content TBD</p></div>
          <div id="weather-view" class="view" style="display: none;"><p>Detailed Weather View - Content TBD</p></div>

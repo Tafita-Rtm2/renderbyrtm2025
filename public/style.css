@@ -343,14 +343,14 @@ nav#bottom-menu button#btn-main-menu {
 }
 
 .chat-bubble-user {
-    background-color: var(--primary-accent-color); 
+    background-color: var(--primary-accent-color);
     color: var(--bg-color); /* Dark text on light accent */
     align-self: flex-end; /* Align user messages to the right */
     border-bottom-right-radius: 5px;
 }
 
 .chat-bubble-ai {
-    background-color: var(--surface-color); 
+    background-color: var(--surface-color);
     color: var(--text-color); /* Light text on dark surface */
     align-self: flex-start; /* Align AI messages to the left */
     border-bottom-left-radius: 5px;
@@ -529,3 +529,551 @@ nav#bottom-menu button#btn-main-menu {
     font-style: italic;
     color: var(--text-muted-color);
 }
+
+/* Icon Styling */
+.icon-container {
+    display: inline-block; /* Or flex, depending on context */
+    padding: 5px;
+    margin: 5px;
+    /* border: 1px solid #ccc; */ /* Basic outline for testing - using theme border */
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+}
+
+.icon {
+    width: 24px;  /* Default size */
+    height: 24px; /* Default size */
+    fill: var(--text-color);   /* Default color - can be overridden */
+    vertical-align: middle;
+}
+
+/* Example: Style the sample menu icon */
+#sample-menu-icon-container { /* More specific to avoid conflict if other icons are in top-menu */
+    border: none; /* Assuming no border for this specific icon container */
+    padding: 0;
+    margin-left: 1em; /* Add some space from nav items */
+}
+
+#sample-menu-icon-container .icon-menu {
+    fill: var(--primary-accent-color); /* Use accent color for visibility */
+    width: 30px;
+    height: 30px;
+}
+#sample-menu-icon-container .icon-menu:hover {
+    fill: var(--secondary-accent-color);
+}
+
+
+/* Example: Style the sample chat icon */
+#sample-chat-icon-container { /* More specific */
+   border: none;
+   padding: 0;
+   margin-left: 0.5em;
+}
+
+#sample-chat-icon-container .icon-chat {
+    fill: var(--primary-accent-color);
+    width: 28px;
+    height: 28px;
+}
+#sample-chat-icon-container .icon-chat:hover {
+    fill: var(--secondary-accent-color);
+}
+
+
+/* Example: Style the sample WhatsApp icon */
+#sample-whatsapp-icon-container .icon-whatsapp {
+    fill: #25D366; /* WhatsApp green */
+    width: 20px;
+    height: 20px;
+    margin-right: 5px; /* Space between icon and text */
+}
+
+.icon-link {
+    display: inline-flex; /* Align icon and text */
+    align-items: center;
+    text-decoration: none;
+    color: var(--text-color); /* Inherit text color from parent, but can be specific */
+}
+.icon-link:hover {
+    color: var(--primary-accent-color); /* Hover effect for the link */
+}
+
+/* Adjust contact-info p a to ensure icon-link behaves as expected */
+section#contact-info p a.icon-link {
+    color: var(--text-color); /* Ensure link color is consistent */
+}
+section#contact-info p a.icon-link:hover {
+    color: var(--primary-accent-color);
+}
+/* Ensure the placeholder [WA] is removed or hidden if icon is present */
+/* This might need JS or direct HTML change if icons are always present */
+/* For now, assuming the [WA] text is removed when icon is added in HTML */
+
+/* === Futuristic Theme & Core Navigation Styling === */
+
+/* Basic Theme Variables (can be expanded) */
+:root {
+    --primary-bg: #1a1a2e; /* Dark blue/purple */
+    --secondary-bg: #162447; /* Slightly lighter dark blue */
+    --accent-color: #00ffff; /* Cyan/Aqua */
+    --text-color: #e0e0e0;   /* Light grey/white for text */
+    --border-color: var(--accent-color); /* Cyan for borders/outlines */
+    --icon-fill: var(--accent-color);
+    --icon-hover-fill: #ffffff;
+    --button-bg: transparent;
+    --button-hover-bg: rgba(0, 255, 255, 0.1); /* Slight cyan glow on hover */
+}
+
+body {
+    background-color: var(--primary-bg);
+    color: var(--text-color);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Modern sans-serif */
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding-top: 50px; /* Space for fixed top menu */
+    padding-bottom: 60px; /* Space for fixed bottom menu */
+}
+
+/* Generic Icon Button Styling */
+.icon-button {
+    background: var(--button-bg);
+    border: 1px solid var(--border-color);
+    color: var(--icon-fill); /* For text if any, but mainly for SVG fill if not overridden */
+    padding: 8px;
+    margin: 5px;
+    border-radius: 8px; /* Rounded corners for futuristic feel */
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease, border-color 0.3s ease, fill 0.3s ease;
+}
+
+.icon-button .icon { /* Style SVGs within buttons */
+    width: 24px;
+    height: 24px;
+    fill: var(--icon-fill); /* Default icon color */
+}
+
+.icon-button:hover {
+    background-color: var(--button-hover-bg);
+    border-color: var(--icon-hover-fill);
+}
+
+.icon-button:hover .icon {
+    fill: var(--icon-hover-fill);
+}
+
+/* Top Menu Styling */
+header#top-menu {
+    background-color: var(--secondary-bg);
+    color: var(--text-color);
+    padding: 5px 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 40px; /* Adjust as needed */
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+}
+
+#top-menu-main-icon {
+    border: none; /* Remove generic icon-container border if it was applied */
+    padding: 0;
+}
+#top-menu-main-icon .icon-menu {
+    fill: var(--accent-color);
+}
+
+
+/* Bottom App-like Menu Styling */
+nav#bottom-menu {
+    background-color: var(--secondary-bg);
+    padding: 5px 0;
+    border-top: 1px solid var(--border-color);
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 50px; /* Adjust as needed */
+    z-index: 1000;
+    display: flex;
+    justify-content: space-around; /* Distribute icons evenly */
+    align-items: center;
+}
+
+.bottom-menu-button .icon { /* Specific styling for bottom menu icons if needed */
+    width: 28px;
+    height: 28px;
+}
+
+/* Floating Menu Button Styling */
+#floating-menu-btn {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 1010; /* Above other content, below vertical menu if it slides over */
+    padding: 10px;
+}
+/* (Visibility is controlled by inline style `display: none` initially from HTML) */
+
+
+/* Vertical Scroll Menu Styling */
+#vertical-scroll-menu {
+    position: fixed;
+    top: 0;
+    left: -300px; /* Initially off-screen */
+    width: 280px;
+    height: 100%;
+    background-color: #10101a; /* Even darker for the slide-out menu */
+    border-right: 2px solid var(--accent-color);
+    padding: 60px 10px 20px 10px; /* Padding top to be below top-menu */
+    box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+    z-index: 1005; /* Above content, potentially below floating button if it needs to overlap */
+    overflow-y: auto;
+    transition: left 0.3s ease-in-out;
+}
+
+#vertical-scroll-menu.visible {
+    left: 0; /* Slide in */
+}
+
+#vertical-scroll-menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#vertical-scroll-menu ul li a {
+    display: block;
+    color: var(--text-color);
+    text-decoration: none;
+    padding: 12px 15px;
+    margin: 5px 0;
+    border-radius: 5px;
+    border: 1px solid transparent; /* For outline effect on hover */
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+#vertical-scroll-menu ul li a:hover {
+    background-color: var(--button-hover-bg);
+    color: var(--icon-hover-fill);
+    border-color: var(--accent-color);
+}
+
+/* Main Content Area - Ensure it doesn't get hidden by fixed menus */
+main#main-content-area {
+    flex-grow: 1;
+    padding: 20px;
+    margin: 0; /* Reset margin from previous phase */
+    background-color: transparent; /* Let body background show */
+    border: none; /* Reset border */
+    border-radius: 0;
+}
+
+/* Specific View Styling (basic visibility) */
+#home-view, #chat-view, #image-generator-view, #history-generator-view, #vip-view {
+    background-color: var(--secondary-bg-opac); /* Slightly transparent secondary bg */
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 20px; /* Space between sections if multiple are shown (e.g. in home) */
+}
+
+/* Weather Display Styling */
+section#weather-display {
+    background-color: rgba(22, 36, 71, 0.8); /* secondary-bg with alpha */
+    padding: 15px;
+    margin-bottom: 20px; /* Spacing from content below */
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    text-align: center;
+    color: var(--text-color);
+}
+#weather-display p { margin: 5px 0; }
+#weather-display strong { color: var(--accent-color); }
+
+/* Contact Info Styling */
+section#contact-info {
+    background-color: rgba(22, 36, 71, 0.8);
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+#contact-info h3 {
+    color: var(--accent-color);
+    margin-top: 0;
+    text-align: center;
+    border-bottom: 1px solid var(--accent-color);
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+#contact-info p {
+    display: flex; /* For aligning icon and text */
+    align-items: center;
+    margin: 10px 0;
+}
+#contact-info .icon-link .icon { /* Ensure contact icons use accent color */
+    fill: var(--accent-color);
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+}
+#contact-info a {
+    color: var(--text-color);
+    text-decoration: none;
+}
+#contact-info a:hover {
+    color: var(--accent-color);
+    text-decoration: underline;
+}
+#contact-info a:hover .icon {
+    fill: var(--icon-hover-fill);
+}
+
+/* Comments Section Styling */
+section#comments-section {
+    background-color: rgba(22, 36, 71, 0.8);
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+#comments-section h3 {
+    color: var(--accent-color);
+    text-align: center;
+    border-bottom: 1px solid var(--accent-color);
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+#comment-form label { display: block; margin-bottom: 5px; color: var(--text-color); }
+#comment-form input[type="text"],
+#comment-form textarea {
+    width: calc(100% - 22px);
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--primary-bg);
+    color: var(--text-color);
+    margin-bottom: 10px;
+}
+#comment-form button { /* This is the submit comment button */
+    padding: 10px 15px;
+    background-color: var(--accent-color);
+    color: var(--primary-bg); /* Dark text on light button */
+    border: 1px solid var(--accent-color);
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+#comment-form button:hover {
+    background-color: var(--icon-hover-fill);
+    border-color: var(--icon-hover-fill);
+}
+#comments-display {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: var(--primary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+/* Admin Login Icon Container */
+#admin-login-icon-container {
+    text-align: center; /* Center the button */
+    margin-top: 20px;
+}
+#admin-login-icon { /* This is now an .icon-button */
+    /* General .icon-button styles apply */
+    /* Add specific overrides if needed */
+}
+
+/* Remove old .icon-container styling if it conflicts */
+.icon-container { /* This was a generic wrapper, might not be needed if using .icon-button */
+    border: none; /* Resetting if it was used as icon wrapper before */
+    padding: 0;
+    margin: 0;
+}
+
+/* Ensure SVGs scale if they have fixed width/height attributes in HTML */
+svg.icon {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+/* === AI Chat Interface Styling === */
+#chat-view {
+    display: flex; /* Use flex to control layout of messages and input area */
+    flex-direction: column;
+    height: calc(100vh - 120px); /* Example height, adjust as needed considering top/bottom bars */
+    /* max-height: 70vh; */ /* Or a max height */
+    background-color: var(--primary-bg); /* Match overall theme */
+    border: 1px solid var(--border-color);
+    border-radius: 8px; /* Consistent with other views */
+    overflow: hidden; /* Prevent content from spilling out before scroll is applied */
+}
+
+#chat-messages-container {
+    flex-grow: 1; /* Takes up available space */
+    overflow-y: auto; /* Enables scrolling for messages */
+    padding: 10px 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+#chat-messages {
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* Space between messages */
+}
+
+.message-wrapper {
+    display: flex;
+    align-items: flex-end; /* Align icon with bottom of bubble */
+    max-width: 80%; /* Messages don't take full width */
+    gap: 8px;
+}
+
+.message-icon .icon {
+    width: 30px;
+    height: 30px;
+    fill: var(--accent-color);
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    padding: 4px;
+    background-color: var(--secondary-bg);
+}
+.user-wrapper .message-icon .icon {
+    fill: var(--text-color); /* Different color for user icon perhaps */
+}
+
+
+.message-bubble {
+    padding: 10px 15px;
+    border-radius: 15px; /* Bubble shape */
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+
+/* User messages */
+.user-wrapper {
+    align-self: flex-end; /* Push to the right */
+    flex-direction: row-reverse; /* Icon on the right */
+}
+.user-bubble {
+    background-color: var(--accent-color);
+    color: var(--primary-bg); /* Dark text on light bubble */
+    border-top-right-radius: 5px; /* Flat edge towards user */
+}
+
+/* AI messages */
+.ai-wrapper {
+    align-self: flex-start; /* Push to the left */
+}
+.ai-bubble {
+    background-color: var(--secondary-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-top-left-radius: 5px; /* Flat edge towards AI */
+}
+
+
+#chat-input-area {
+    display: flex;
+    padding: 10px;
+    border-top: 1px solid var(--border-color);
+    background-color: var(--secondary-bg); /* Input area distinct background */
+    align-items: center;
+}
+
+#chat-input-text {
+    flex-grow: 1;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 20px; /* Pill shape */
+    background-color: var(--primary-bg);
+    color: var(--text-color);
+    font-size: 1em;
+    margin-right: 8px;
+}
+#chat-input-text:focus {
+    outline: none;
+    border-color: var(--icon-hover-fill); /* Highlight on focus */
+}
+
+#chat-send-btn {
+    /* .icon-button styles already apply */
+    padding: 10px; /* Adjust padding if needed */
+    border-radius: 50%; /* Circular send button */
+}
+#chat-send-btn .icon-send {
+    width: 20px;
+    height: 20px;
+}
+
+/* Web Search Toggle Styling */
+#web-search-controls {
+    display: flex;
+    align-items: center;
+    margin-left: 10px;
+}
+.toggle-label {
+    margin-right: 8px;
+    font-size: 0.9em;
+    color: var(--text-color);
+}
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px; /* Smaller toggle */
+  height: 24px;
+}
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #444; /* Off state */
+  transition: .4s;
+  border: 1px solid var(--border-color);
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 16px; /* Smaller knob */
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+}
+input:checked + .slider {
+  background-color: var(--accent-color);
+}
+input:focus + .slider {
+  box-shadow: 0 0 1px var(--accent-color);
+}
+input:checked + .slider:before {
+  transform: translateX(20px); /* Adjust for smaller width */
+}
+.slider.round {
+  border-radius: 24px; /* Fully rounded */
+}
+.slider.round:before {
+  border-radius: 50%;
+    }

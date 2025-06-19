@@ -55,6 +55,16 @@ document.addEventListener('DOMContentLoaded', () => {
             if (typeof checkInitialVipStatus === 'function') checkInitialVipStatus();
             const vipMsg = document.getElementById('vip-status-message');
             if(vipMsg) vipMsg.style.display = 'none';
+        } else if (viewIdToShow === 'weather-view') {
+            const weatherView = document.getElementById('weather-view');
+            if (currentWeatherData) {
+                displayDetailedWeather(currentWeatherData);
+            } else {
+                if(weatherView) weatherView.innerHTML = '<p class="weather-loading">Loading detailed weather...</p>';
+                initWeatherDisplay();
+            }
+        } else if (viewIdToShow === 'admin-panel-view') {
+            loadAdminComments(); // Load comments when admin panel is shown
         }
     };
 
@@ -121,12 +131,42 @@ document.addEventListener('DOMContentLoaded', () => {
         weatherDisplayContainerRef.innerHTML = weatherHTML;
     }
     async function fetchWeather(location) {
-        if (!weatherDisplayContainerRef) return; weatherDisplayContainerRef.innerHTML = `<p class="weather-loading">Loading...</p>`;
+        if (!weatherDisplayContainerRef) {
+            // Still attempt to fetch for detailed view if applicable, just don't update top bar
+            console.warn("Top bar weather display container not found, but fetching weather for detailed view.");
+        } else {
+            weatherDisplayContainerRef.innerHTML = `<p class="weather-loading">Loading...</p>`;
+        }
+
         try {
             const response = await fetch(`/api/weather?location=${encodeURIComponent(location)}`);
-            if (!response.ok) { const errorData = await response.json().catch(() => ({ error: `HTTP error! ${response.statusText}` })); throw new Error(errorData.error || `Weather API Error: ${response.statusText}`);}
-            const data = await response.json(); displayWeather(data);
-        } catch (error) { console.error('Error fetching weather:', error); if (weatherDisplayContainerRef) weatherDisplayContainerRef.innerHTML = `<p class="weather-error">Weather unavailable</p>`;}
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: `HTTP error! ${response.statusText}` }));
+                throw new Error(errorData.error || `Weather API Error: ${response.statusText}`);
+            }
+            const data = await response.json(); // This 'data' is the responseData[0] from server
+
+            currentWeatherData = data; // Store globally
+
+            if (weatherDisplayContainerRef) {
+                displayWeather(currentWeatherData); // Updates top bar
+            }
+
+            const weatherViewActive = document.getElementById('weather-view');
+            if (weatherViewActive && weatherViewActive.classList.contains('active')) {
+                displayDetailedWeather(currentWeatherData);
+            }
+        } catch (error) {
+            console.error('Error fetching weather:', error);
+            if (weatherDisplayContainerRef) {
+                weatherDisplayContainerRef.innerHTML = `<p class="weather-error">Weather unavailable</p>`;
+            }
+            // If detailed view is active, show error there too
+            const weatherView = document.getElementById('weather-view');
+            if (weatherView && weatherView.classList.contains('active')) {
+                weatherView.innerHTML = `<p class="weather-error">Failed to fetch weather: ${error.message}</p>`;
+            }
+        }
     }
     function initWeatherDisplay() {
         if (navigator.geolocation) {
@@ -136,39 +176,198 @@ document.addEventListener('DOMContentLoaded', () => {
             );
         } else { console.log("Geolocation not supported. Using default."); fetchWeather('Antananarivo'); }
     }
+    let currentWeatherData = null; // Store last fetched weather data
     initWeatherDisplay();
     // --- END OF WEATHER DISPLAY LOGIC ---
+
+    // --- DETAILED WEATHER VIEW FUNCTION ---
+    function displayDetailedWeather(data) {
+        const weatherView = document.getElementById('weather-view');
+        if (!weatherView || !data || !data.current || !data.location) {
+            if(weatherView) weatherView.innerHTML = '<p class="weather-error">Detailed weather data is currently unavailable.</p>';
+            return;
+        }
+
+        // Helper to get forecast day name; robustly handles invalid dates
+        const getDayName = (dateString) => {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return "N/A"; // Handle invalid date
+            return date.toLocaleDateString(undefined, { weekday: 'long' });
+        };
+
+        let forecastHTML = '<p>No forecast data available.</p>';
+        if (data.forecast && Array.isArray(data.forecast) && data.forecast.length > 0) {
+            forecastHTML = data.forecast.slice(0, 5).map(day => `
+                <div class="forecast-day">
+                    <div>${getDayName(day.date)}</div>
+                    ${getWeatherSvgIcon(day.skytextday)}
+                    <div>${day.high}° / ${day.low}°${data.location.degreetype}</div>
+                    <div>${day.skytextday}</div>
+                </div>
+            `).join('');
+        }
+
+        const detailedWeatherHTML = `
+            <div class="weather-location-title">Weather in ${data.location.name}</div>
+            <div class="current-conditions">
+                <div class="current-temp">${data.current.temperature}°${data.location.degreetype}</div>
+                <div class="current-sky">${data.current.skytext}</div>
+                ${getWeatherSvgIcon(data.current.skytext)}
+            </div>
+            <div class="weather-details-grid">
+                <div>Feels Like: ${data.current.feelslike}°${data.location.degreetype}</div>
+                <div>Humidity: ${data.current.humidity}%</div>
+                <div>Wind: ${data.current.winddisplay}</div>
+                ${data.current.pressure ? `<div>Pressure: ${data.current.pressure} mb</div>` : ''}
+                ${data.current.visibility ? `<div>Visibility: ${data.current.visibility} km</div>` : ''}
+                <div>Day/Time: ${data.current.day}, ${data.current.observationtime}</div>
+            </div>
+            <div class="weather-forecast">
+                <h4>5-Day Forecast</h4>
+                <div class="forecast-grid">
+                    ${forecastHTML}
+                </div>
+            </div>
+        `;
+        weatherView.innerHTML = detailedWeatherHTML;
+    }
 
     // --- COMMENTS SECTION LOGIC ---
     const commentForm = document.getElementById('comment-form');
     const commentsDisplayArea = document.getElementById('comments-display-area');
     const commentNameInput = document.getElementById('comment-name');
     const commentTextInput = document.getElementById('comment-text');
-    const portfolioCommentsKey = 'portfolioComments';
-    function loadComments() {
-        if (!commentsDisplayArea) return; let comments = [];
-        try { const stored = localStorage.getItem(portfolioCommentsKey); if (stored) comments = JSON.parse(stored); } catch (e) { console.error(e); }
-        commentsDisplayArea.innerHTML = '';
-        if (comments.length === 0) { commentsDisplayArea.innerHTML = '<p>No comments yet.</p>'; }
-        else {
-            comments.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)).forEach(c => {
-                const item = document.createElement('div'); item.className = 'comment-item';
-                const nameEl = document.createElement('strong'); nameEl.textContent = c.name;
-                const textEl = document.createElement('p'); textEl.textContent = c.text;
-                const timeEl = document.createElement('small'); timeEl.className = 'comment-timestamp'; timeEl.textContent = new Date(c.timestamp).toLocaleString();
-                item.append(nameEl, textEl, timeEl); commentsDisplayArea.appendChild(item);
-            });
+    // const portfolioCommentsKey = 'portfolioComments'; // No longer using localStorage for comments
+
+    async function loadComments() { // Now async
+        if (!commentsDisplayArea) return;
+        commentsDisplayArea.innerHTML = '<p>Loading comments...</p>';
+        let errorMessage = ''; // To store potential error message
+
+        try {
+            const response = await fetch('/api/comments');
+            if (!response.ok) {
+                const errData = await response.json().catch(() => null); // Try to parse error from server
+                errorMessage = errData?.error || `Failed to fetch comments: ${response.statusText}`;
+                throw new Error(errorMessage);
+            }
+            const comments = await response.json();
+
+            commentsDisplayArea.innerHTML = ''; // Clear loading message
+            if (comments.length === 0) {
+                commentsDisplayArea.innerHTML = '<p>No comments yet. Be the first to comment!</p>';
+            } else {
+                // Comments are already sorted by server (createdAt: -1)
+                comments.forEach(comment => {
+                    const item = document.createElement('div');
+                    item.className = 'comment-item';
+                    item.dataset.commentId = comment._id; // Store ID for potential future use (e.g., direct linking)
+
+                    const nameEl = document.createElement('strong');
+                    nameEl.textContent = escapeHTML(comment.name);
+
+                    const textEl = document.createElement('p');
+                    textEl.textContent = escapeHTML(comment.text); // Main comment text
+
+                    const timeEl = document.createElement('small');
+                    timeEl.className = 'comment-timestamp';
+                    timeEl.textContent = new Date(comment.createdAt).toLocaleString();
+
+                    item.append(nameEl, textEl, timeEl);
+
+                    // Display admin reply if it exists and is not empty
+                    if (comment.adminReplyText && comment.adminReplyText.trim() !== "") {
+                        const replyDiv = document.createElement('div');
+                        replyDiv.className = 'admin-reply-public';
+
+                        const replyStrong = document.createElement('strong');
+                        replyStrong.textContent = 'Admin Reply:';
+
+                        const replyTextP = document.createElement('p');
+                        replyTextP.style.margin = '5px 0 0 0'; // Add some style to separate from "Admin Reply:"
+                        replyTextP.textContent = escapeHTML(comment.adminReplyText);
+
+                        replyDiv.appendChild(replyStrong);
+                        replyDiv.appendChild(replyTextP);
+
+                        if (comment.adminReplyTimestamp) {
+                            const replyTimeEl = document.createElement('small');
+                            replyTimeEl.className = 'comment-timestamp';
+                            replyTimeEl.textContent = new Date(comment.adminReplyTimestamp).toLocaleString();
+                            replyDiv.appendChild(replyTimeEl);
+                        }
+                        item.appendChild(replyDiv);
+                    }
+                    commentsDisplayArea.appendChild(item);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading comments:', error);
+            // Display the captured or default error message
+            commentsDisplayArea.innerHTML = `<p class="error-message">${errorMessage || 'Could not load comments. Please try again later.'}</p>`;
         }
     }
+
     if (commentForm) {
-        commentForm.addEventListener('submit', (e) => {
-            e.preventDefault(); const name = commentNameInput.value.trim(); const text = commentTextInput.value.trim();
-            if(!name || !text){ alert('Name and comment required.'); return; }
-            const newComment = {name, text, timestamp: new Date().toISOString()};
-            let comments = []; try{ const stored = localStorage.getItem(portfolioCommentsKey); if(stored) comments = JSON.parse(stored); }catch(err){console.error(err);}
-            comments.push(newComment);
-            try{ localStorage.setItem(portfolioCommentsKey, JSON.stringify(comments)); } catch(err){console.error(err); alert('Error saving.'); return;}
-            commentNameInput.value = ''; commentTextInput.value = ''; loadComments();
+        commentForm.addEventListener('submit', async (e) => { // Now async
+            e.preventDefault();
+            const name = commentNameInput.value.trim();
+            const text = commentTextInput.value.trim();
+            const submitButton = commentForm.querySelector('button[type="submit"]');
+            let originalButtonText = '';
+            if(submitButton) {
+                originalButtonText = submitButton.textContent;
+                submitButton.disabled = true;
+                submitButton.textContent = 'Submitting...';
+            }
+
+            // Clear previous error messages
+            const existingError = commentForm.querySelector('.error-message');
+            if (existingError) existingError.remove();
+
+            if (!name || !text) {
+                // alert('Name and comment are required.');
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error-message';
+                errorDiv.textContent = 'Name and comment are required.';
+                commentForm.appendChild(errorDiv);
+                if(submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.textContent = originalButtonText;
+                }
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/comments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, text })
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => null);
+                    const errorMsg = errData?.error || `Failed to submit comment: ${response.statusText}`;
+                    throw new Error(errorMsg);
+                }
+
+                // const newComment = await response.json(); // We don't necessarily need the new comment data back for this simple refresh
+                commentNameInput.value = '';
+                commentTextInput.value = '';
+                loadComments(); // Refresh the comments list from the server
+            } catch (error) {
+                console.error('Error submitting comment:', error);
+                // alert(`Error: ${error.message}`);
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error-message';
+                errorDiv.textContent = error.message || 'Could not submit comment. Please try again.';
+                commentForm.appendChild(errorDiv);
+            } finally {
+                 if(submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.textContent = originalButtonText;
+                }
+            }
         });
     }
     // --- END OF COMMENTS SECTION LOGIC ---
@@ -187,8 +386,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const messageWrapper = document.createElement('div'); messageWrapper.classList.add('chat-message-wrapper', sender === 'user' ? 'user' : 'ai');
         const avatarContainer = document.createElement('div'); avatarContainer.classList.add('chat-avatar-container'); avatarContainer.innerHTML = sender === 'user' ? userAvatarSvg : aiAvatarSvg;
         const messageBubble = document.createElement('div'); messageBubble.classList.add('chat-bubble');
-        if (isTyping) { messageBubble.innerHTML = typingIndicatorHTML; messageWrapper.id = 'typing-indicator-message'; currentTypingIndicator = messageWrapper; }
-        else { messageBubble.textContent = message; }
+
+        if (isTyping) {
+            messageBubble.innerHTML = typingIndicatorHTML; // This remains the same
+            messageWrapper.id = 'typing-indicator-message';
+            currentTypingIndicator = messageWrapper;
+        } else {
+            messageBubble.innerHTML = formatTextContent(message); // Apply formatting here
+        }
+
         messageWrapper.append(avatarContainer, messageBubble); chatMessagesArea.appendChild(messageWrapper);
         chatMessagesArea.scrollTop = chatMessagesArea.scrollHeight;
     }
@@ -385,42 +591,89 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function formatTextContent(text) { // Renamed from formatStoryContent
+        if (!text) return "";
+        let formattedText = text;
+
+        // ### Title -> <h3>Title</h3>
+        formattedText = formattedText.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+
+        // ## Subtitle -> <h4>Subtitle</h4> (chosen for H4)
+        formattedText = formattedText.replace(/^## (.*$)/gim, '<h4>$1</h4>');
+
+        // ***Subtitle*** -> <h4>Subtitle</h4> (alternative, if ## is not matched or for flexibility)
+        // To avoid double processing if ## was already handled, ensure it's not already an h4
+        // This regex is a bit simplistic and might conflict if *** is used inside other markdown
+        // A more robust parser would be needed for complex cases, but for now:
+        formattedText = formattedText.replace(/^\*\*\*(.*?)\*\*\*$/gim, (match, p1) => {
+            if (formattedText.includes(`<h4>${p1}</h4>`)) return match; // Avoid double if already h4
+            return `<h4>${p1}</h4>`;
+        });
+
+        // **Bold Text** -> <strong>Bold Text</strong>
+        formattedText = formattedText.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>');
+
+        // *Bold Text* (if not already strong and not part of ***)
+        // Avoid converting * within <strong> tags or if it's part of ***
+        formattedText = formattedText.replace(/(?<!\*)\*(?!\*)(.*?)(?<!\*)\*(?!\*)/gim, (match, p1) => {
+             // Basic check to avoid re-bolding already bolded text by the previous rule or part of ***
+            if (match.startsWith('<strong>') || match.endsWith('</strong>') || match.includes('***')) return match;
+            return `<strong>${p1}</strong>`;
+        });
+
+        // Replace newlines with <br> - this might not be strictly necessary if CSS white-space: pre-wrap is effective
+        // but can be useful if other replacements remove newlines or if more explicit control is needed.
+        // For now, let's assume pre-wrap handles it, unless issues arise.
+        // formattedText = formattedText.replace(/\n/g, '<br>');
+
+        return formattedText;
+    }
+
     async function handleStoryGeneration() {
         if (!storyThemeField || !generatedStoryDisplay || !generateStoryButton) return;
-        const theme = storyThemeField.value.trim(); if (!theme) { alert('Please enter a theme or title for your story.'); return; }
+        const theme = storyThemeField.value.trim();
+        if (!theme) {
+            alert('Please enter a theme or title for your story.');
+            return;
+        }
         generatedStoryDisplay.innerHTML = '<p class="story-loading">Crafting your tale... Please hold on.</p>';
         generateStoryButton.disabled = true; storyThemeField.disabled = true;
-        currentGeneratedStoryContent = "";
+        currentGeneratedStoryContent = ""; // Reset raw content
         currentGeneratedStoryTheme = theme;
         updateStoryVipControlsVisibility();
 
-        const storyPrompt = `Create a short story about the following topic or title: "${theme}". Be creative and engaging.`;
+        // The prompt clearly indicates it's a story request for the server.
+        const storyPrompt = `Create a short story about: ${theme}`;
         if (!chatUID) chatUID = getOrCreateUID();
 
         try {
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ask: storyPrompt, uid: chatUID, webSearch: 'off' })
+                // Send a flag if it helps server differentiate, or rely on prompt prefix
+                body: JSON.stringify({ ask: storyPrompt, uid: chatUID, webSearch: 'off', isStoryRequestFlag: true })
             });
+
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({ error: `Server error: ${response.status}` }));
                 throw new Error(errorData.error || `Story generation failed: ${response.status}`);
             }
-            const aiResponse = await response.json();
+
+            const aiResponse = await response.json(); // Expecting { author: "Kaizenji", response: "story content" }
+
             if (aiResponse && aiResponse.response) {
-                currentGeneratedStoryContent = aiResponse.response;
-                generatedStoryDisplay.textContent = currentGeneratedStoryContent;
-                saveStoryToHistory(currentGeneratedStoryTheme, currentGeneratedStoryContent);
+                currentGeneratedStoryContent = aiResponse.response; // Store raw original
+                generatedStoryDisplay.innerHTML = formatTextContent(currentGeneratedStoryContent); // Display formatted - use renamed function
+                saveStoryToHistory(currentGeneratedStoryTheme, currentGeneratedStoryContent); // Save raw
                 loadStoryHistory();
                 updateStoryVipControlsVisibility();
             } else {
-                throw new Error("Invalid response structure from story AI.");
+                throw new Error("Invalid response structure from story AI. Missing 'response' field.");
             }
         } catch (error) {
             console.error('Error generating story:', error);
             generatedStoryDisplay.innerHTML = `<p class="story-error">Error: ${error.message}</p>`;
-            currentGeneratedStoryContent = "";
+            currentGeneratedStoryContent = ""; // Clear content on error
         } finally {
             generateStoryButton.disabled = false; storyThemeField.disabled = false;
             if(storyThemeField) storyThemeField.focus();
@@ -430,16 +683,20 @@ document.addEventListener('DOMContentLoaded', () => {
     function saveStoryToHistory(theme, content) {
         if (!localStorage) return;
         let history = JSON.parse(localStorage.getItem(storyHistoryKey)) || [];
+        // Avoid saving duplicates if the exact same theme and content are generated again.
         if (history.some(item => item.theme === theme && item.content === content)) return;
+
         history.unshift({ theme, content, timestamp: new Date().toISOString() });
-        const maxStoryHistoryItems = 10;
+        const maxStoryHistoryItems = 10; // Keep this limit
         if (history.length > maxStoryHistoryItems) history = history.slice(0, maxStoryHistoryItems);
         localStorage.setItem(storyHistoryKey, JSON.stringify(history));
     }
 
     function loadStoryHistory() {
         if (!storyHistoryList || !localStorage) return;
-        const titleEl = storyHistoryArea.querySelector('h4'); // Assuming storyHistoryArea is parent of storyHistoryList
+        const storyHistoryArea = document.getElementById('story-history-area'); // Make sure this element exists
+        if (!storyHistoryArea) return;
+        const titleEl = storyHistoryArea.querySelector('h4');
         storyHistoryList.innerHTML = ''; // Clear previous items
 
         let history = JSON.parse(localStorage.getItem(storyHistoryKey)) || [];
@@ -454,10 +711,11 @@ document.addEventListener('DOMContentLoaded', () => {
             themeText.textContent = story.theme;
             themeText.title = `Saved on: ${new Date(story.timestamp).toLocaleString()}`;
             storyItem.appendChild(themeText);
+
             storyItem.addEventListener('click', () => {
                 if(generatedStoryDisplay) {
-                    generatedStoryDisplay.textContent = story.content;
-                    currentGeneratedStoryContent = story.content;
+                    currentGeneratedStoryContent = story.content; // Store raw original
+                    generatedStoryDisplay.innerHTML = formatTextContent(story.content); // Display formatted - use renamed function
                     currentGeneratedStoryTheme = story.theme;
                     if(storyThemeField) storyThemeField.value = story.theme;
                     updateStoryVipControlsVisibility();
@@ -518,31 +776,71 @@ document.addEventListener('DOMContentLoaded', () => {
     const vipCodeSubmitButton = document.getElementById('vip-code-submit');
     const vipStatusMessage = document.getElementById('vip-status-message');
     const vipAccessArea = document.getElementById('vip-access-area');
-    const vipToolsContainer = document.getElementById('vip-tools-container');
+    const vipToolsContainer = document.getElementById('vip-tools-container'); // This will be null, but let's keep it for now to avoid breaking other parts of the code if it's used elsewhere, will be removed if not.
+    const iframeContainer = document.getElementById('vip-iframe-container');
     const HARDCODED_VIP_CODE = "VIP123";
+
     function handleVipAccess() {
-        if (!vipCodeInput || !vipStatusMessage || !vipAccessArea || !vipToolsContainer) return;
+        if (!vipCodeInput || !vipStatusMessage || !vipAccessArea || !iframeContainer) {
+            console.error("One or more VIP access elements are missing.");
+            return;
+        }
         const enteredCode = vipCodeInput.value;
+
         if (enteredCode === HARDCODED_VIP_CODE) {
-            localStorage.setItem('isUserVIP', 'true');
-            vipAccessArea.style.display = 'none'; vipToolsContainer.style.display = 'grid';
-            vipStatusMessage.textContent = 'Access granted!'; vipStatusMessage.className = 'vip-status-success';
+            localStorage.setItem('isUserVIP', 'true'); // Corrected key to 'isUserVIP' to match checkInitialVipStatus
+            vipAccessArea.style.display = 'none';
+
+            iframeContainer.innerHTML = ''; // Clear previous iframe if any
+            const iframe = document.createElement('iframe');
+            iframe.src = 'https://sitebymegg.onrender.com';
+            iframe.style.width = '100%';
+            iframe.style.height = '100%';
+            iframe.style.border = 'none';
+            iframeContainer.appendChild(iframe);
+            iframeContainer.style.display = 'block';
+
+            vipStatusMessage.textContent = 'Access Granted. Welcome to the VIP Lounge!';
+            vipStatusMessage.className = 'vip-status-success'; // Using class for styling consistency
             if (typeof updateStoryVipControlsVisibility === 'function') updateStoryVipControlsVisibility();
         } else {
-            localStorage.setItem('isUserVIP', 'false');
-            vipStatusMessage.textContent = 'Invalid VIP code.'; vipStatusMessage.className = 'vip-status-error';
-            vipToolsContainer.style.display = 'none';
-             if (typeof updateStoryVipControlsVisibility === 'function') updateStoryVipControlsVisibility(); // Also update if access revoked
+            localStorage.setItem('isUserVIP', 'false'); // Corrected key
+            iframeContainer.innerHTML = ''; // Clear iframe
+            iframeContainer.style.display = 'none';
+            // vipAccessArea.style.display = 'block'; // Ensure access area is visible if code is wrong. It should be already.
+
+            vipStatusMessage.textContent = 'Invalid VIP code. Please try again.';
+            vipStatusMessage.className = 'vip-status-error'; // Using class for styling consistency
+            if (typeof updateStoryVipControlsVisibility === 'function') updateStoryVipControlsVisibility();
         }
         vipStatusMessage.style.display = 'block';
         setTimeout(() => { if(vipStatusMessage) vipStatusMessage.style.display = 'none'; }, 3000);
         vipCodeInput.value = '';
     }
+
     function checkInitialVipStatus() {
-        if (!vipAccessArea || !vipToolsContainer) return;
+        if (!vipAccessArea || !iframeContainer) { // Check iframeContainer instead of vipToolsContainer
+             console.error("VIP access area or iframe container not found for initial status check.");
+            return;
+        }
         const isVIP = localStorage.getItem('isUserVIP') === 'true';
         vipAccessArea.style.display = isVIP ? 'none' : 'block';
-        vipToolsContainer.style.display = isVIP ? 'grid' : 'none';
+
+        if (isVIP) {
+            iframeContainer.innerHTML = ''; // Clear previous iframe if any
+            const iframe = document.createElement('iframe');
+            iframe.src = 'https://sitebymegg.onrender.com';
+            iframe.style.width = '100%';
+            iframe.style.height = '100%';
+            iframe.style.border = 'none';
+            iframeContainer.appendChild(iframe);
+            iframeContainer.style.display = 'block';
+        } else {
+            iframeContainer.innerHTML = '';
+            iframeContainer.style.display = 'none';
+        }
+        // Update story controls based on initial status
+        if (typeof updateStoryVipControlsVisibility === 'function') updateStoryVipControlsVisibility();
     }
     if (vipCodeSubmitButton) vipCodeSubmitButton.addEventListener('click', handleVipAccess);
     if (vipCodeInput) vipCodeInput.addEventListener('keypress', e => { if(e.key === 'Enter') handleVipAccess(); });
@@ -637,4 +935,121 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Final Initial State Call ---
     window.showView('home-view');
+
+    // --- Helper function to escape HTML for security ---
+    function escapeHTML(str) {
+        if (typeof str !== 'string') return '';
+        return str.replace(/[&<>"']/g, function (match) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[match];
+        });
+    }
+
+    // --- Admin Panel Logic ---
+    async function loadAdminComments() {
+        const adminCommentsList = document.getElementById('admin-comments-list');
+        if (!adminCommentsList) return;
+        adminCommentsList.innerHTML = '<p>Loading comments...</p>';
+
+        try {
+            const response = await fetch('/api/comments');
+            if (!response.ok) {
+                const errData = await response.json().catch(() => null);
+                throw new Error(errData?.error || `Failed to fetch comments: ${response.statusText}`);
+            }
+            const comments = await response.json();
+
+            if (comments.length === 0) {
+                adminCommentsList.innerHTML = '<p>No comments to display.</p>';
+                return;
+            }
+
+            adminCommentsList.innerHTML = ''; // Clear loading message
+            comments.forEach(comment => {
+                const item = document.createElement('div');
+                item.className = 'admin-comment-item';
+                item.dataset.commentId = comment._id;
+
+                const replyTimestamp = comment.adminReplyTimestamp ? new Date(comment.adminReplyTimestamp).toLocaleString() : '';
+                const existingReplyText = comment.adminReplyText || '';
+
+                item.innerHTML = `
+                    <div class="comment-header">
+                        <strong>${escapeHTML(comment.name)}</strong> -
+                        <span class="comment-timestamp">${new Date(comment.createdAt).toLocaleString()}</span>
+                    </div>
+                    <p class="comment-text-admin">${escapeHTML(comment.text)}</p>
+                    <div class="admin-reply-display">
+                        ${existingReplyText ? `<p class="admin-reply-text"><strong>Admin Reply (${replyTimestamp}):</strong> ${escapeHTML(existingReplyText)}</p>` : '<p>No admin reply yet.</p>'}
+                    </div>
+                    <div class="admin-actions">
+                        <textarea class="admin-reply-input" placeholder="Type your reply...">${escapeHTML(existingReplyText)}</textarea>
+                        <button class="btn-admin-reply">Save Reply</button>
+                        <button class="btn-admin-delete">Delete Comment</button>
+                    </div>
+                    <hr>
+                `;
+                adminCommentsList.appendChild(item);
+
+                // Event listener for "Save Reply"
+                item.querySelector('.btn-admin-reply').addEventListener('click', async () => {
+                    const replyInput = item.querySelector('.admin-reply-input');
+                    const replyText = replyInput.value; // No trim here, allow spaces if admin wants, server will trim for storage
+
+                    try {
+                        const replyResponse = await fetch(`/api/comments/${comment._id}/reply`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ replyText: replyText })
+                        });
+                        if (!replyResponse.ok) {
+                            const errData = await replyResponse.json().catch(()=>null);
+                            throw new Error(errData?.error || `Failed to save reply: ${replyResponse.statusText}`);
+                        }
+                        // Successfully saved, reload comments to show update
+                        loadAdminComments();
+                    } catch (err) {
+                        console.error('Error saving reply:', err);
+                        alert(`Error saving reply: ${err.message}`);
+                    }
+                });
+
+                // Event listener for "Delete Comment"
+                item.querySelector('.btn-admin-delete').addEventListener('click', async () => {
+                    if (!confirm('Are you sure you want to delete this comment? This action cannot be undone.')) {
+                        return;
+                    }
+                    try {
+                        const deleteResponse = await fetch(`/api/comments/${comment._id}`, { method: 'DELETE' });
+                        if (!deleteResponse.ok) {
+                             const errData = await deleteResponse.json().catch(()=>null);
+                            throw new Error(errData?.error || `Failed to delete comment: ${deleteResponse.statusText}`);
+                        }
+                        // Successfully deleted, reload comments
+                        loadAdminComments();
+                    } catch (err) {
+                        console.error('Error deleting comment:', err);
+                        alert(`Error deleting comment: ${err.message}`);
+                    }
+                });
+            });
+
+        } catch (error) {
+            console.error('Failed to load admin comments:', error);
+            adminCommentsList.innerHTML = `<p class="weather-error">Error loading comments: ${error.message}</p>`; // Using weather-error for similar styling
+        }
+    }
+
+
+    // --- Admin Login Trigger ---
+    const adminLoginTrigger = document.getElementById('admin-login-trigger-icon');
+    if (adminLoginTrigger) {
+        adminLoginTrigger.addEventListener('click', () => {
+            const enteredCode = prompt('Enter admin code:');
+            if (enteredCode === '121206') { // Hardcoded admin code
+                window.showView('admin-panel-view');
+            } else if (enteredCode !== null && enteredCode !== "") { // Only show error if a code was entered and it's wrong
+                alert('Invalid admin code.');
+            }
+        });
+    }
 });

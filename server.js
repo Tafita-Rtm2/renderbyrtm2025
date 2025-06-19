@@ -58,27 +58,105 @@ app.get('/api/weather', async (req, res) => { /* ... existing unchanged code ...
     }
 });
 
-// --- AI Chat API Route ---
-app.post('/api/chat', async (req, res) => { /* ... existing unchanged code ... */
-    const { ask, uid, webSearch } = req.body;
-    if (!ask || !uid) { return res.status(400).json({ error: 'Parameters "ask" and "uid" are required.' }); }
-    const webSearchParam = (webSearch === true || String(webSearch).toLowerCase() === 'on') ? 'on' : 'off';
-    const chatApiUrl = `https://kaiz-apis.gleeze.com/api/gpt-4o?ask=${encodeURIComponent(ask)}&uid=${encodeURIComponent(uid)}&webSearch=${webSearchParam}&apikey=${CHAT_API_KEY}`;
+// POST /api/comments/:commentId/reply - Add/update admin reply to a comment
+app.post('/api/comments/:commentId/reply', async (req, res) => {
+    if (!commentsCollection) {
+        return res.status(503).json({ error: "Database not connected." });
+    }
     try {
-        const apiResponse = await fetch(chatApiUrl);
-        const responseText = await apiResponse.text();
-        if (!apiResponse.ok) {
-            let errorJson = { error: `External Chat API Error: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
-            try { errorJson = JSON.parse(responseText); if (!errorJson.error && !errorJson.message) { errorJson.error = `External Chat API Error: ${apiResponse.status} ${apiResponse.statusText}`; } } catch (e) { /* Not JSON */ }
-            return res.status(apiResponse.status).json(errorJson);
+        const { commentId } = req.params;
+        const { replyText } = req.body;
+
+        if (!ObjectId.isValid(commentId)) {
+            return res.status(400).json({ error: "Invalid comment ID format." });
         }
-        let data;
-        try { data = JSON.parse(responseText); } catch (e) { return res.status(500).json({ error: 'Failed to parse response from Chat API.', details: responseText }); }
-        if (data && data.response) { res.json({ author: data.author || "Kaizenji", response: data.response }); }
-        else { return res.status(500).json({ error: 'Unexpected response structure from Chat API.', details: data }); }
+        // replyText can be an empty string (to clear a reply)
+        if (replyText === undefined || typeof replyText !== 'string') {
+            return res.status(400).json({ error: 'Reply text must be a string.' });
+        }
+
+        const mongoDbCommentId = new ObjectId(commentId);
+        const updateFields = {
+            adminReplyText: replyText.trim(), // Store trimmed reply
+            adminReplyTimestamp: new Date()
+        };
+
+        // If replyText is empty, it effectively clears the reply.
+        // We still update the timestamp to know when it was last actioned.
+        // If you wanted to truly "remove" the reply fields, you'd use $unset here.
+        // For simplicity, setting to empty string is fine.
+
+        const updateResult = await commentsCollection.updateOne(
+            { _id: mongoDbCommentId },
+            { $set: updateFields }
+        );
+
+        if (updateResult.matchedCount === 0) {
+            return res.status(404).json({ error: "Comment not found." });
+        }
+
+        // Fetch the updated comment to return it
+        const updatedComment = await commentsCollection.findOne({ _id: mongoDbCommentId });
+        res.status(200).json(updatedComment);
+
     } catch (error) {
-        console.error('Server error while calling Chat API:', error);
-        return res.status(500).json({ error: 'Server error while processing chat request.' });
+        console.error("Error posting admin reply:", error);
+        res.status(500).json({ error: "Failed to post admin reply due to server error." });
+    }
+});
+
+// --- AI Chat API Route ---
+app.post('/api/chat', async (req, res) => {
+    const { ask, uid, webSearch, isStoryRequestFlag } = req.body; // Added isStoryRequestFlag
+    if (!ask || !uid) { return res.status(400).json({ error: 'Parameters "ask" and "uid" are required.' }); }
+
+    const storyKeywords = ["create a short story about", "generate a story about", "write a story about", "tell me a story about", "story about"];
+    // Check both the flag and keywords for robustness
+    const isStoryRequest = isStoryRequestFlag || storyKeywords.some(keyword => ask.toLowerCase().startsWith(keyword));
+
+    if (isStoryRequest) {
+        const storyApiUrl = `https://kaiz-apis.gleeze.com/api/gpt-4o-pro?ask=${encodeURIComponent(ask)}&uid=${encodeURIComponent(uid)}&imageUrl=&apikey=${CHAT_API_KEY}`;
+        try {
+            const apiResponse = await fetch(storyApiUrl);
+            const responseText = await apiResponse.text(); // Get text first for better error handling
+            if (!apiResponse.ok) {
+                let errorJson = { error: `External Story API Error: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
+                try { errorJson = JSON.parse(responseText); if(!errorJson.error && !errorJson.message) { errorJson.error = `External Story API Error: ${apiResponse.status} ${apiResponse.statusText}`; } } catch (e) { /* Not JSON */ }
+                return res.status(apiResponse.status).json(errorJson);
+            }
+            let data;
+            try { data = JSON.parse(responseText); } catch (e) { return res.status(500).json({ error: 'Failed to parse response from Story API.', details: responseText }); }
+
+            if (data && data.response) {
+                // Ensure the response structure matches what the client expects for stories
+                res.json({ author: data.author || "Kaizenji", response: data.response });
+            } else {
+                return res.status(500).json({ error: 'Unexpected response structure from Story API.', details: data });
+            }
+        } catch (error) {
+            console.error('Server error while calling Story API:', error);
+            return res.status(500).json({ error: 'Server error while processing story generation request.' });
+        }
+    } else {
+        // Existing chat logic using gpt-4o
+        const webSearchParam = (webSearch === true || String(webSearch).toLowerCase() === 'on') ? 'on' : 'off';
+        const chatApiUrl = `https://kaiz-apis.gleeze.com/api/gpt-4o?ask=${encodeURIComponent(ask)}&uid=${encodeURIComponent(uid)}&webSearch=${webSearchParam}&apikey=${CHAT_API_KEY}`;
+        try {
+            const apiResponse = await fetch(chatApiUrl);
+            const responseText = await apiResponse.text();
+            if (!apiResponse.ok) {
+                let errorJson = { error: `External Chat API Error: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
+                try { errorJson = JSON.parse(responseText); if (!errorJson.error && !errorJson.message) { errorJson.error = `External Chat API Error: ${apiResponse.status} ${apiResponse.statusText}`; } } catch (e) { /* Not JSON */ }
+                return res.status(apiResponse.status).json(errorJson);
+            }
+            let data;
+            try { data = JSON.parse(responseText); } catch (e) { return res.status(500).json({ error: 'Failed to parse response from Chat API.', details: responseText }); }
+            if (data && data.response) { res.json({ author: data.author || "Kaizenji", response: data.response }); }
+            else { return res.status(500).json({ error: 'Unexpected response structure from Chat API.', details: data }); }
+        } catch (error) {
+            console.error('Server error while calling Chat API:', error);
+            return res.status(500).json({ error: 'Server error while processing chat request.' });
+        }
     }
 });
 

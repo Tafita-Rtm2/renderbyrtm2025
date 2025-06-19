@@ -198,4 +198,54 @@ async function startServer() {
     });
 }
 
+// --- VIP Chat API Route (Placeholder) ---
+app.post('/api/vip-chat', async (req, res) => {
+    const { model, prompt, uid } = req.body;
+
+    if (!model || !prompt || !uid) {
+        return res.status(400).json({ error: 'Parameters "model", "prompt", and "uid" are required.' });
+    }
+
+    // Simulate API call and response
+    console.log(`VIP Chat request received for model: ${model}, UID: ${uid}, Prompt: "${prompt.substring(0, 50)}..."`);
+
+    // Placeholder: Check if user is actually VIP (e.g., from a session or database)
+    // For now, we assume VIP access is granted if they can reach this endpoint.
+
+    // Simulate different response times and styles based on model
+    let delay = 500;
+    let simulatedResponse = "";
+    let authorName = model.charAt(0).toUpperCase() + model.slice(1) + " AI (Simulated)";
+
+    switch (model.toLowerCase()) {
+        case 'gemini':
+            delay = 700;
+            simulatedResponse = `This is a simulated advanced response from Gemini. Your insightful prompt was: "${prompt}". Gemini would typically provide a comprehensive and multi-faceted answer here.`;
+            break;
+        case 'claude': // Assuming 'claude-haiku' will be sent as 'claude' or similar
+        case 'claude-haiku':
+            delay = 400;
+            simulatedResponse = `A simulated creative burst from Claude Haiku! You asked about: "${prompt}". Claude Haiku might respond with a poem or a uniquely structured text.`;
+            authorName = "Claude Haiku AI (Simulated)";
+            break;
+        case 'deepseek':
+            delay = 600;
+            simulatedResponse = `Deepseek (Simulated) processing your technical query: "${prompt}". Expect a code snippet or a detailed explanation related to programming or AI research.`;
+            break;
+        case 'rtm':
+        case 'rtm-ai':
+            delay = 300;
+            simulatedResponse = `RTM AI (Simulated) here! For your prompt: "${prompt}", this custom model would give a specialized answer relevant to this portfolio's context.`;
+            authorName = "RTM AI (Simulated)";
+            break;
+        default:
+            return res.status(400).json({ error: `Unknown VIP model: ${model}` });
+    }
+
+    setTimeout(() => {
+        res.json({ response: simulatedResponse, author: authorName });
+    }, delay);
+});
+
+
 startServer();

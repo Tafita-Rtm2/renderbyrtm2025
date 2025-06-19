@@ -1,1546 +1,550 @@
+/* --- GLOBAL STYLES & THEME --- */
 @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;700&display=swap');
 
 :root {
+    --primary-bg: #0a0f1e; /* Darker space blue */
+    --secondary-bg: #1a1a2e; /* Existing dark blue */
+    --surface-color: #1f1f38; /* For cards, modals */
+    --accent-color: #00ffff; /* Cyan */
+    --primary-accent-color: #00c2cb; /* Teal */
+    --secondary-accent-color: #e94560; /* Magenta/Red */
+    --text-color: #e0e0e0;
+    --text-muted-color: #a0a0a0;
+    --border-color: var(--accent-color);
+    --icon-fill-default: var(--accent-color);
+    --icon-fill-hover: #ffffff;
     --font-primary: 'Exo 2', sans-serif;
-    --bg-color: #1a1a2e; /* Dark blue/purple */
-    --surface-color: #1f1f38; /* Slightly lighter for cards/surfaces */
-    --primary-accent-color: #00c2cb; /* Bright cyan/teal accent */
-    --primary-accent-color-rgb: 0, 194, 203; /* Added for rgba use */
-    --secondary-accent-color: #e94560; /* Contrasting accent - magenta/red */
-    --text-color: #e0e0e0; /* Light grey/white text */
-    --text-muted-color: #a0a0a0; /* Muted text */
-    --border-color: #2f2f4f; /* Border color */
+
+    --top-bar-height: 60px;
+    --bottom-app-bar-height: 70px; /* For home page app icons */
 }
 
 body {
     font-family: var(--font-primary);
-    margin: 0;
-    padding: 4em 0 5em 0; /* Combined top and bottom padding */
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    line-height: 1.6;
-}
-
-header#top-menu {
-    background-color: var(--surface-color);
-    color: var(--text-color);
-    padding: 0.5em 1em; /* Adjusted padding for a sleeker bar */
-    border-bottom: 1px solid var(--border-color); /* Thinner border */
-    display: flex; /* Added for alignment */
-    justify-content: space-around; /* Distribute items, or use flex-end if preferred */
-    align-items: center;
-    position: fixed; /* Make it a fixed top bar */
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 1000; /* Ensure it's above other content */
-    box-sizing: border-box; /* Include padding in width calculation */
-}
-
-header#top-menu nav {
-    display: flex;
-    gap: 1.5em; /* Space between icon placeholders */
-}
-
-header#top-menu nav a {
-    color: var(--text-color);
-    text-decoration: none;
-    font-size: 1.2em; /* Placeholder size, adjust when actual icons are used */
-    padding: 0.5em;
-    border-radius: 50%; /* Make placeholders circular */
-    width: 2em; /* Fixed width for circle */
-    height: 2em; /* Fixed height for circle */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-header#top-menu nav a:hover {
-    background-color: var(--primary-accent-color);
-    color: var(--bg-color); /* Dark text on hover for contrast */
-}
-
-section#weather-display {
-    background-color: var(--surface-color);
-    color: var(--text-color);
-    padding: 15px;
-    margin: 10px;
-    border-radius: 5px;
-    border: 1px solid var(--border-color);
-    text-align: center;
-}
-
-main#main-content-area {
-    flex-grow: 1; /* Allows this area to take up available space */
-    padding: 20px;
-    margin: 10px;
-    background-color: var(--surface-color); /* Using surface color for consistency */
-    border: 1px solid var(--border-color);
-    border-radius: 5px;
-}
-
-nav#bottom-menu {
-    background-color: var(--surface-color); /* Updated */
-    color: var(--text-color);
-    padding: 0.5em 0; /* Vertical padding, horizontal will be handled by justify-content */
-    text-align: center;
-    border-top: 1px solid var(--border-color); /* Thinner border */
-}
-
-section#contact-info {
-    background-color: var(--surface-color);
-    padding: 1.5em; /* Use em */
-    margin: 1em auto; /* Centered with auto margins, or 1em if full width desired */
-    border: 1px solid var(--border-color);
-    border-radius: 8px; /* Consistent rounding */
-    max-width: 600px; /* Optional: constrain width for better readability */
-}
-
-section#contact-info h3 {
-    color: var(--primary-accent-color);
-    margin-top: 0;
-    margin-bottom: 1em;
-    text-align: center;
-}
-
-section#contact-info p {
-    display: flex; /* Align icon and text nicely */
-    align-items: center;
-    margin-bottom: 0.8em; /* Space between contact items */
-    color: var(--text-muted-color);
-}
-
-section#contact-info p a {
-    color: var(--text-color); /* Make links slightly more prominent than muted text */
-    text-decoration: none;
-    transition: color 0.3s ease;
-}
-
-section#contact-info p a:hover {
-    color: var(--primary-accent-color);
-}
-
-.contact-icon {
-    display: inline-block;
-    min-width: 40px; /* Give icons some space */
-    text-align: center; /* Center the placeholder text if it's shorter */
-    margin-right: 0.8em;
-    color: var(--primary-accent-color); /* Style for the icon placeholder text */
-    font-weight: bold; /* Make placeholder icons bold */
-    font-size: 1.1em;
-}
-
-section#comments-section {
-    background-color: var(--surface-color); /* Updated */
-    color: var(--text-color);
-    padding: 15px;
-    margin: 10px;
-    border: 1px solid var(--border-color); /* Updated */
-    border-radius: 5px;
-}
-
-#comments-section h3 {
-    margin-top: 0;
-    color: var(--primary-accent-color); /* Accent for headings */
-}
-
-#comment-form div {
-    margin-bottom: 10px;
-}
-
-#comment-form label {
-    display: block;
-    margin-bottom: 5px;
-    color: var(--text-muted-color);
-}
-
-#comment-form input[type="text"],
-#comment-form textarea {
-    width: calc(100% - 22px); /* Adjust for padding and border */
-    padding: 10px;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    background-color: var(--bg-color); /* Darker input background */
-    color: var(--text-color);
-}
-
-#comment-form button {
-    padding: 10px 15px;
-    background-color: var(--primary-accent-color); /* Use variable */
-    color: var(--bg-color); /* Text color for button for contrast */
-    font-weight: bold;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-#comment-form button:hover {
-    background-color: var(--secondary-accent-color); /* Use another accent for hover */
-}
-
-#comments-display {
-    margin-top: 20px;
-    padding: 10px;
-    background-color: var(--bg-color); /* Darker background for this display area */
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-}
-
-div#admin-login-icon {
-    background-color: var(--surface-color); /* Updated */
-    color: var(--text-color);
-    padding: 10px;
-    margin: 10px;
-    text-align: center;
-    border: 1px solid var(--border-color); /* Updated */
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-/* Basic responsive consideration */
-@media (max-width: 600px) {
-    section#weather-display,
-    main#main-content-area,
-    section#contact-info,
-    section#comments-section,
-    div#admin-login-icon {
-        margin: 10px 5px; /* Smaller margins on small screens */
-    }
-    header#top-menu, nav#bottom-menu {
-        padding: 0.5em;
-    }
-}
-
-/* Bottom Navigation Menu */
-nav#bottom-menu {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background-color: var(--surface-color); /* Dark background for bottom menu */
-    color: var(--text-color);
-    display: flex; /* Use flexbox to distribute items */
-    justify-content: space-around; /* Distribute items evenly */
-    /* padding: 10px 0; Removed, using new padding */
-    padding: 0.5em 0; /* Vertical padding, horizontal will be handled by justify-content */
-    border-top: 1px solid var(--border-color); /* Thinner border */
-    z-index: 1000; /* Ensure it's above other content */
-    box-sizing: border-box;
-}
-
-nav#bottom-menu button {
-    background-color: transparent;
-    color: var(--text-muted-color); /* Muted color for inactive icons */
-    border: none;
-    padding: 0.8em; /* Padding inside the button */
-    font-size: 1.1em; /* Adjust as needed for icon placeholders */
-    cursor: pointer;
-    display: flex;
-    flex-direction: column; /* If you want text below icon later */
-    align-items: center;
-    justify-content: center;
-    border-radius: 8px; /* Slightly rounded corners for buttons */
-    transition: color 0.3s ease, background-color 0.3s ease;
-    min-width: 60px; /* Minimum width for each button */
-    text-align: center;
-}
-
-nav#bottom-menu button:hover {
-    color: var(--primary-accent-color); /* Accent color on hover */
-    background-color: rgba(var(--primary-accent-color-rgb), 0.1); /* Faint background on hover */
-}
-
-/* Style for the central menu button to make it stand out if desired */
-nav#bottom-menu button#btn-main-menu {
-    color: var(--primary-accent-color); /* Make central button more prominent */
-    font-size: 1.3em; /* Larger icon placeholder */
-}
-
-/* Class to hide views */
-.view {
-   /* padding-bottom: 70px; This will be handled by body padding-bottom now */
-   /* No specific padding needed here if body has overall padding-bottom */
-   /* padding-bottom: 70px; This will be handled by body padding-bottom now */
-   /* No specific padding needed here if body has overall padding-bottom */
-   /* Retain any existing padding if it was for other purposes, or remove if solely for bottom menu overlap */
-    padding-bottom: 0; /* Assuming it was only for bottom menu, now handled by body padding */
-}
-
-/* Floating Menu Button - (Basic styles already inline, can be enhanced here) */
-#floating-menu-btn {
-    /* Styles like background, color, padding, border-radius are already set inline in HTML for initial setup.
-       Can be overridden or extended here if needed. For example, transitions or more complex hover effects. */
-    font-weight: bold;
-    background-color: var(--primary-accent-color);
-    color: var(--bg-color);
-}
-
-#floating-menu-btn:hover {
-    background-color: var(--secondary-accent-color); /* Darker on hover */
-}
-
-/* Vertical Scroll Menu */
-#vertical-scroll-menu {
-    /* Basic styles (display, position, z-index, bg, border, padding, shadow, width) are inline in HTML. */
-    max-height: calc(100vh - 100px); /* Max height, leaving some space from top/bottom */
-    overflow-y: auto; /* Enable scrolling if content overflows */
-    background-color: var(--surface-color);
-    border: 1px solid var(--border-color);
-}
-
-.vertical-menu-item {
-    padding: 10px;
-    cursor: pointer;
-    border-bottom: 1px solid var(--border-color);
-    color: var(--text-muted-color);
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-.vertical-menu-item:last-child {
-    border-bottom: none;
-}
-
-.vertical-menu-item:hover, .vertical-menu-item.active { /* Style for active/hover */
-    background-color: var(--primary-accent-color);
-    color: var(--bg-color);
-}
-
-/* AI Chat Feature Styles */
-#chat-view {
-    display: flex; /* Use flexbox for #chat-view to structure its children */
-    flex-direction: column;
-    height: calc(100% - 60px); /* Adjust if view padding is different, for full height feel */
-    /* Ensure #chat-view itself is not display:none from inline style if it's the active view */
-}
-
-#chat-messages-container {
-    flex-grow: 1; /* Allows message area to take available space */
-    overflow-y: auto; /* Enables scrolling for messages */
-    padding: 10px;
-    border: 1px solid var(--border-color);
-    background-color: var(--bg-color); /* Darker background */
-    margin-bottom: 10px;
-    min-height: 200px; /* Minimum height for the chat messages area */
-}
-
-#chat-messages {
-   display: flex;
-   flex-direction: column;
-}
-
-.chat-bubble {
-    padding: 8px 12px;
-    border-radius: 15px;
-    margin-bottom: 8px;
-    max-width: 70%;
-    word-wrap: break-word;
-    line-height: 1.4;
-}
-
-.chat-bubble-user {
-    background-color: var(--primary-accent-color);
-    color: var(--bg-color); /* Dark text on light accent */
-    align-self: flex-end; /* Align user messages to the right */
-    border-bottom-right-radius: 5px;
-}
-
-.chat-bubble-ai {
-    background-color: var(--surface-color);
-    color: var(--text-color); /* Light text on dark surface */
-    align-self: flex-start; /* Align AI messages to the left */
-    border-bottom-left-radius: 5px;
-}
-
-#chat-input-area {
-    display: flex;
-    padding: 10px;
-    border-top: 1px solid var(--border-color);
-}
-
-#chat-input {
-    flex-grow: 1;
-    padding: 10px;
-    border: 1px solid var(--border-color);
-    border-radius: 5px;
-    margin-right: 10px;
-    background-color: var(--surface-color); /* Consistent input styling */
-    color: var(--text-color);
-}
-
-#chat-send {
-    padding: 10px 15px;
-    background-color: var(--primary-accent-color); /* Accent for send button */
-    color: var(--bg-color);
-    font-weight: bold;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-#chat-send:hover {
-    background-color: var(--secondary-accent-color);
-}
-
-#chat-options {
-    padding: 5px 10px;
-    font-size: 0.9em;
-    color: var(--text-muted-color);
-}
-
-/* Chat Interface Specific Styles */
-#chat-interface {
-    display: none; /* Initially hidden, controlled by JS */
-    position: fixed; /* Take up the whole screen */
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: var(--bg-color);
-    z-index: 1100; /* Above other fixed elements like top/bottom menus */
-    flex-direction: column; /* Will be set to flex by JS when shown */
-}
-
-#chat-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.8em 1em;
-    background-color: var(--surface-color);
-    border-bottom: 1px solid var(--border-color);
-}
-
-#chat-header h2 {
-    margin: 0;
-    font-size: 1.2em;
-    color: var(--primary-accent-color);
-}
-
-#chat-interface #floating-menu-btn { /* More specific selector for the one in chat */
-    background: none;
-    border: none;
-    color: var(--text-muted-color);
-    font-size: 1.5em; /* Placeholder size */
-    cursor: pointer;
-    padding: 0.2em;
-    /* display: none; /* Controlled by JS, shown when chat is active */
-}
-#chat-interface #floating-menu-btn:hover {
-    color: var(--primary-accent-color);
-}
-
-
-#chat-interface #chat-messages-container { /* More specific selector */
-    flex-grow: 1;
-    overflow-y: auto;
-    padding: 1em;
-    display: flex;
-    flex-direction: column-reverse; /* New messages at the bottom, scrolls up */
-}
-
-#chat-interface #chat-messages { /* More specific selector */
-    display: flex;
-    flex-direction: column;
-    gap: 0.8em;
-}
-
-.chat-message {
-    padding: 0.6em 1em;
-    border-radius: 12px;
-    max-width: 75%;
-    word-wrap: break-word;
-}
-
-.user-message {
-    background-color: var(--primary-accent-color);
-    color: var(--bg-color); /* Dark text on accent background */
-    align-self: flex-end;
-    border-bottom-right-radius: 2px; /* "Tail" effect */
-}
-
-.ai-message {
-    background-color: var(--surface-color);
-    color: var(--text-color);
-    align-self: flex-start;
-    border-bottom-left-radius: 2px; /* "Tail" effect */
-}
-
-.system-message {
-    background-color: transparent;
-    color: var(--text-muted-color);
-    font-style: italic;
-    font-size: 0.9em;
-    text-align: center;
-    align-self: center;
-}
-
-
-#chat-interface #chat-input-area { /* More specific selector */
-    display: flex;
-    padding: 0.8em;
-    background-color: var(--surface-color);
-    border-top: 1px solid var(--border-color);
-    gap: 0.5em;
-}
-
-#chat-interface #chat-input { /* More specific selector */
-    flex-grow: 1;
-    padding: 0.8em;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    font-family: var(--font-primary);
-}
-
-#chat-interface #chat-input-area button { /* More specific selector */
-    background-color: var(--primary-accent-color);
-    color: var(--bg-color); /* Dark text for contrast on accent */
-    border: none;
-    padding: 0.8em 1em;
-    border-radius: 6px;
-    cursor: pointer;
-    font-family: var(--font-primary);
-    transition: background-color 0.3s ease;
-    font-weight: 500;
-}
-
-#chat-interface #chat-input-area button:hover { /* More specific selector */
-    background-color: var(--secondary-accent-color); /* Different hover for these buttons */
-}
-
-#chat-interface #chat-input-area button#chat-web-search-toggle { /* More specific selector */
-    background-color: var(--surface-color); /* Different style for toggle */
-    color: var(--text-muted-color);
-    border: 1px solid var(--border-color);
-}
-#chat-interface #chat-input-area button#chat-web-search-toggle.active { /* More specific selector */
-    background-color: var(--primary-accent-color);
-    color: var(--bg-color);
-    border-color: var(--primary-accent-color);
-}
-
-.ai-message.thinking {
-    font-style: italic;
-    color: var(--text-muted-color);
-}
-
-/* Icon Styling */
-.icon-container {
-    display: inline-block; /* Or flex, depending on context */
-    padding: 5px;
-    margin: 5px;
-    /* border: 1px solid #ccc; */ /* Basic outline for testing - using theme border */
-    border: 1px solid var(--border-color);
-    cursor: pointer;
-}
-
-.icon {
-    width: 24px;  /* Default size */
-    height: 24px; /* Default size */
-    fill: var(--text-color);   /* Default color - can be overridden */
-    vertical-align: middle;
-}
-
-/* Example: Style the sample menu icon */
-#sample-menu-icon-container { /* More specific to avoid conflict if other icons are in top-menu */
-    border: none; /* Assuming no border for this specific icon container */
-    padding: 0;
-    margin-left: 1em; /* Add some space from nav items */
-}
-
-#sample-menu-icon-container .icon-menu {
-    fill: var(--primary-accent-color); /* Use accent color for visibility */
-    width: 30px;
-    height: 30px;
-}
-#sample-menu-icon-container .icon-menu:hover {
-    fill: var(--secondary-accent-color);
-}
-
-
-/* Example: Style the sample chat icon */
-#sample-chat-icon-container { /* More specific */
-   border: none;
-   padding: 0;
-   margin-left: 0.5em;
-}
-
-#sample-chat-icon-container .icon-chat {
-    fill: var(--primary-accent-color);
-    width: 28px;
-    height: 28px;
-}
-#sample-chat-icon-container .icon-chat:hover {
-    fill: var(--secondary-accent-color);
-}
-
-
-/* Example: Style the sample WhatsApp icon */
-#sample-whatsapp-icon-container .icon-whatsapp {
-    fill: #25D366; /* WhatsApp green */
-    width: 20px;
-    height: 20px;
-    margin-right: 5px; /* Space between icon and text */
-}
-
-.icon-link {
-    display: inline-flex; /* Align icon and text */
-    align-items: center;
-    text-decoration: none;
-    color: var(--text-color); /* Inherit text color from parent, but can be specific */
-}
-.icon-link:hover {
-    color: var(--primary-accent-color); /* Hover effect for the link */
-}
-
-/* Adjust contact-info p a to ensure icon-link behaves as expected */
-section#contact-info p a.icon-link {
-    color: var(--text-color); /* Ensure link color is consistent */
-}
-section#contact-info p a.icon-link:hover {
-    color: var(--primary-accent-color);
-}
-/* Ensure the placeholder [WA] is removed or hidden if icon is present */
-/* This might need JS or direct HTML change if icons are always present */
-/* For now, assuming the [WA] text is removed when icon is added in HTML */
-
-/* === Futuristic Theme & Core Navigation Styling === */
-
-/* Basic Theme Variables (can be expanded) */
-:root {
-    --primary-bg: #1a1a2e; /* Dark blue/purple */
-    --secondary-bg: #162447; /* Slightly lighter dark blue */
-    --accent-color: #00ffff; /* Cyan/Aqua */
-    --text-color: #e0e0e0;   /* Light grey/white for text */
-    --border-color: var(--accent-color); /* Cyan for borders/outlines */
-    --icon-fill: var(--accent-color);
-    --icon-hover-fill: #ffffff;
-    --button-bg: transparent;
-    --button-hover-bg: rgba(0, 255, 255, 0.1); /* Slight cyan glow on hover */
-}
-
-body {
     background-color: var(--primary-bg);
     color: var(--text-color);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Modern sans-serif */
     margin: 0;
-    padding: 0;
+    padding-top: var(--top-bar-height); /* Space for fixed top bar */
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    padding-top: 50px; /* Space for fixed top menu */
-    padding-bottom: 60px; /* Space for fixed bottom menu */
+    box-sizing: border-box;
+    overflow-x: hidden; /* Prevent horizontal scroll */
 }
 
-/* Generic Icon Button Styling */
+/* --- SVG Icon Policy --- */
+.icon {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    fill: var(--icon-fill-default);
+    vertical-align: middle;
+    transition: fill 0.2s ease-in-out, transform 0.2s ease-in-out;
+}
+
+.icon-button .icon {
+    /* Specific sizing for icons within buttons can be adjusted if needed */
+}
+
+.icon-button:hover .icon {
+    fill: var(--icon-fill-hover);
+    transform: scale(1.1);
+}
+
+/* --- General .icon-button Styling --- */
 .icon-button {
-    background: var(--button-bg);
+    background-color: transparent;
     border: 1px solid var(--border-color);
-    color: var(--icon-fill); /* For text if any, but mainly for SVG fill if not overridden */
-    padding: 8px;
-    margin: 5px;
-    border-radius: 8px; /* Rounded corners for futuristic feel */
+    color: var(--text-color); /* For any text next to icon */
+    padding: 8px; /* Adjust for desired button size */
+    margin: 4px;
+    border-radius: 50%; /* Circular for standalone icon buttons */
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    transition: background-color 0.3s ease, border-color 0.3s ease, fill 0.3s ease;
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+    outline: none;
 }
-
-.icon-button .icon { /* Style SVGs within buttons */
-    width: 24px;
-    height: 24px;
-    fill: var(--icon-fill); /* Default icon color */
-}
-
 .icon-button:hover {
-    background-color: var(--button-hover-bg);
-    border-color: var(--icon-hover-fill);
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+    color: var(--primary-bg);
+    transform: translateY(-2px);
+}
+.icon-button:focus {
+    box-shadow: 0 0 0 2px var(--primary-bg), 0 0 0 4px var(--accent-color);
+}
+.icon-button:disabled {
+    background-color: var(--text-muted-color) !important;
+    border-color: var(--text-muted-color) !important;
+    cursor: not-allowed;
+    transform: none !important;
+}
+.icon-button:disabled .icon {
+    fill: var(--surface-color) !important;
 }
 
-.icon-button:hover .icon {
-    fill: var(--icon-hover-fill);
-}
 
-/* Top Menu Styling */
-header#top-menu {
-    background-color: var(--secondary-bg);
-    color: var(--text-color);
-    padding: 5px 15px;
-    text-align: left;
-    border-bottom: 1px solid var(--border-color);
+/* --- Top Bar --- */
+#top-bar {
     position: fixed;
     top: 0;
     left: 0;
-    right: 0;
-    height: 40px; /* Adjust as needed */
+    width: 100%;
+    height: var(--top-bar-height);
+    background-color: var(--secondary-bg);
+    padding: 0 15px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     z-index: 1000;
+    box-sizing: border-box;
+}
+#top-left-menu-icon-container .icon-menu-main {
+    cursor: pointer;
+}
+#weather-display-container {
+    min-width: 100px;
+    text-align: right;
     display: flex;
     align-items: center;
+    justify-content: flex-end;
+    font-size: 0.9em;
+    height: 100%;
 }
 
-#top-menu-main-icon {
-    border: none; /* Remove generic icon-container border if it was applied */
-    padding: 0;
+/* --- Main Content Area --- */
+#main-content {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
 }
-#top-menu-main-icon .icon-menu {
-    fill: var(--accent-color);
+
+/* --- View Management --- */
+.view {
+    display: none;
+    width: 100%;
+    flex-grow: 1;
+    animation: fadeInView 0.5s ease-in-out;
+}
+.view.active {
+    display: block;
+}
+
+@keyframes fadeInView {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 
-/* Bottom App-like Menu Styling */
-nav#bottom-menu {
-    background-color: var(--secondary-bg);
-    padding: 5px 0;
-    border-top: 1px solid var(--border-color);
+/* --- Home Page Specific --- */
+#home-view {
+    /* Home view might need specific padding if its bottom bar is part of it */
+    /* padding-bottom: var(--bottom-app-bar-height); */
+}
+
+#home-bottom-app-icons {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    height: 50px; /* Adjust as needed */
-    z-index: 1000;
-    display: flex;
-    justify-content: space-around; /* Distribute icons evenly */
-    align-items: center;
-}
-
-.bottom-menu-button .icon { /* Specific styling for bottom menu icons if needed */
-    width: 28px;
-    height: 28px;
-}
-
-/* Floating Menu Button Styling */
-#floating-menu-btn {
-    position: fixed;
-    top: 15px;
-    left: 15px;
-    z-index: 1010; /* Above other content, below vertical menu if it slides over */
-    padding: 10px;
-}
-/* (Visibility is controlled by inline style `display: none` initially from HTML) */
-
-
-/* Vertical Scroll Menu Styling */
-#vertical-scroll-menu {
-    position: fixed;
-    top: 0;
-    left: -300px; /* Initially off-screen */
-    width: 280px;
-    height: 100%;
-    background-color: #10101a; /* Even darker for the slide-out menu */
-    border-right: 2px solid var(--accent-color);
-    padding: 60px 10px 20px 10px; /* Padding top to be below top-menu */
-    box-shadow: 2px 0 10px rgba(0,0,0,0.5);
-    z-index: 1005; /* Above content, potentially below floating button if it needs to overlap */
-    overflow-y: auto;
-    transition: left 0.3s ease-in-out;
-}
-
-#vertical-scroll-menu.visible {
-    left: 0; /* Slide in */
-}
-
-#vertical-scroll-menu ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-#vertical-scroll-menu ul li a {
-    display: block;
-    color: var(--text-color);
-    text-decoration: none;
-    padding: 12px 15px;
-    margin: 5px 0;
-    border-radius: 5px;
-    border: 1px solid transparent; /* For outline effect on hover */
-    transition: background-color 0.2s ease, border-color 0.2s ease;
-}
-
-#vertical-scroll-menu ul li a:hover {
-    background-color: var(--button-hover-bg);
-    color: var(--icon-hover-fill);
-    border-color: var(--accent-color);
-}
-
-/* Main Content Area - Ensure it doesn't get hidden by fixed menus */
-main#main-content-area {
-    flex-grow: 1;
-    padding: 20px;
-    margin: 0; /* Reset margin from previous phase */
-    background-color: transparent; /* Let body background show */
-    border: none; /* Reset border */
-    border-radius: 0;
-}
-
-/* Specific View Styling (basic visibility) */
-#home-view, #chat-view, #image-generator-view, #history-generator-view, #vip-view {
-    background-color: var(--secondary-bg-opac); /* Slightly transparent secondary bg */
-    padding: 15px;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    margin-bottom: 20px; /* Space between sections if multiple are shown (e.g. in home) */
-}
-
-/* Weather Display Styling */
-section#weather-display {
-    background-color: rgba(22, 36, 71, 0.8); /* secondary-bg with alpha */
-    padding: 15px;
-    margin-bottom: 20px; /* Spacing from content below */
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    text-align: center;
-    color: var(--text-color);
-}
-#weather-display p { margin: 5px 0; }
-#weather-display strong { color: var(--accent-color); }
-
-/* Contact Info Styling */
-section#contact-info {
-    background-color: rgba(22, 36, 71, 0.8);
-    padding: 15px;
-    margin-bottom: 20px;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-}
-#contact-info h3 {
-    color: var(--accent-color);
-    margin-top: 0;
-    text-align: center;
-    border-bottom: 1px solid var(--accent-color);
-    padding-bottom: 10px;
-    margin-bottom: 15px;
-}
-#contact-info p {
-    display: flex; /* For aligning icon and text */
-    align-items: center;
-    margin: 10px 0;
-}
-#contact-info .icon-link .icon { /* Ensure contact icons use accent color */
-    fill: var(--accent-color);
-    width: 20px;
-    height: 20px;
-    margin-right: 10px;
-}
-#contact-info a {
-    color: var(--text-color);
-    text-decoration: none;
-}
-#contact-info a:hover {
-    color: var(--accent-color);
-    text-decoration: underline;
-}
-#contact-info a:hover .icon {
-    fill: var(--icon-hover-fill);
-}
-
-/* Comments Section Styling */
-section#comments-section {
-    background-color: rgba(22, 36, 71, 0.8);
-    padding: 15px;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-}
-#comments-section h3 {
-    color: var(--accent-color);
-    text-align: center;
-    border-bottom: 1px solid var(--accent-color);
-    padding-bottom: 10px;
-    margin-bottom: 15px;
-}
-#comment-form label { display: block; margin-bottom: 5px; color: var(--text-color); }
-#comment-form input[type="text"],
-#comment-form textarea {
-    width: calc(100% - 22px);
-    padding: 10px;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    background-color: var(--primary-bg);
-    color: var(--text-color);
-    margin-bottom: 10px;
-}
-#comment-form button { /* This is the submit comment button */
-    padding: 10px 15px;
-    background-color: var(--accent-color);
-    color: var(--primary-bg); /* Dark text on light button */
-    border: 1px solid var(--accent-color);
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: bold;
-}
-#comment-form button:hover {
-    background-color: var(--icon-hover-fill);
-    border-color: var(--icon-hover-fill);
-}
-#comments-display {
-    margin-top: 20px;
-    padding: 10px;
-    background-color: var(--primary-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-}
-
-/* Admin Login Icon Container */
-#admin-login-icon-container {
-    text-align: center; /* Center the button */
-    margin-top: 20px;
-}
-#admin-login-icon { /* This is now an .icon-button */
-    /* General .icon-button styles apply */
-    /* Add specific overrides if needed */
-}
-
-/* Remove old .icon-container styling if it conflicts */
-.icon-container { /* This was a generic wrapper, might not be needed if using .icon-button */
-    border: none; /* Resetting if it was used as icon wrapper before */
-    padding: 0;
-    margin: 0;
-}
-
-/* Ensure SVGs scale if they have fixed width/height attributes in HTML */
-svg.icon {
-    max-width: 100%;
-    max-height: 100%;
-}
-
-/* === AI Chat Interface Styling === */
-#chat-view {
-    display: flex; /* Use flex to control layout of messages and input area */
-    flex-direction: column;
-    height: calc(100vh - 120px); /* Example height, adjust as needed considering top/bottom bars */
-    /* max-height: 70vh; */ /* Or a max height */
-    background-color: var(--primary-bg); /* Match overall theme */
-    border: 1px solid var(--border-color);
-    border-radius: 8px; /* Consistent with other views */
-    overflow: hidden; /* Prevent content from spilling out before scroll is applied */
-}
-
-#chat-messages-container {
-    flex-grow: 1; /* Takes up available space */
-    overflow-y: auto; /* Enables scrolling for messages */
-    padding: 10px 15px;
-    display: flex;
-    flex-direction: column;
-}
-
-#chat-messages {
-    display: flex;
-    flex-direction: column;
-    gap: 12px; /* Space between messages */
-}
-
-.message-wrapper {
-    display: flex;
-    align-items: flex-end; /* Align icon with bottom of bubble */
-    max-width: 80%; /* Messages don't take full width */
-    gap: 8px;
-}
-
-.message-icon .icon {
-    width: 30px;
-    height: 30px;
-    fill: var(--accent-color);
-    border: 1px solid var(--border-color);
-    border-radius: 50%;
-    padding: 4px;
+    height: var(--bottom-app-bar-height);
     background-color: var(--secondary-bg);
-}
-.user-wrapper .message-icon .icon {
-    fill: var(--text-color); /* Different color for user icon perhaps */
-}
-
-
-.message-bubble {
-    padding: 10px 15px;
-    border-radius: 15px; /* Bubble shape */
-    line-height: 1.4;
-    word-wrap: break-word;
-}
-
-/* User messages */
-.user-wrapper {
-    align-self: flex-end; /* Push to the right */
-    flex-direction: row-reverse; /* Icon on the right */
-}
-.user-bubble {
-    background-color: var(--accent-color);
-    color: var(--primary-bg); /* Dark text on light bubble */
-    border-top-right-radius: 5px; /* Flat edge towards user */
-}
-
-/* AI messages */
-.ai-wrapper {
-    align-self: flex-start; /* Push to the left */
-}
-.ai-bubble {
-    background-color: var(--secondary-bg);
-    color: var(--text-color);
-    border: 1px solid var(--border-color);
-    border-top-left-radius: 5px; /* Flat edge towards AI */
-}
-
-
-#chat-input-area {
-    display: flex;
-    padding: 10px;
     border-top: 1px solid var(--border-color);
-    background-color: var(--secondary-bg); /* Input area distinct background */
-    align-items: center;
-}
-
-#chat-input-text {
-    flex-grow: 1;
-    padding: 10px 12px;
-    border: 1px solid var(--border-color);
-    border-radius: 20px; /* Pill shape */
-    background-color: var(--primary-bg);
-    color: var(--text-color);
-    font-size: 1em;
-    margin-right: 8px;
-}
-#chat-input-text:focus {
-    outline: none;
-    border-color: var(--icon-hover-fill); /* Highlight on focus */
-}
-
-#chat-send-btn {
-    /* .icon-button styles already apply */
-    padding: 10px; /* Adjust padding if needed */
-    border-radius: 50%; /* Circular send button */
-}
-#chat-send-btn .icon-send {
-    width: 20px;
-    height: 20px;
-}
-
-/* Web Search Toggle Styling */
-#web-search-controls {
     display: flex;
+    justify-content: space-around;
     align-items: center;
-    margin-left: 10px;
-}
-.toggle-label {
-    margin-right: 8px;
-    font-size: 0.9em;
-    color: var(--text-color);
-}
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 44px; /* Smaller toggle */
-  height: 24px;
-}
-.switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #444; /* Off state */
-  transition: .4s;
-  border: 1px solid var(--border-color);
-}
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 16px; /* Smaller knob */
-  width: 16px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  transition: .4s;
-}
-input:checked + .slider {
-  background-color: var(--accent-color);
-}
-input:focus + .slider {
-  box-shadow: 0 0 1px var(--accent-color);
-}
-input:checked + .slider:before {
-  transform: translateX(20px); /* Adjust for smaller width */
-}
-.slider.round {
-  border-radius: 24px; /* Fully rounded */
-}
-.slider.round:before {
-  border-radius: 50%;
+    padding: 0 10px;
+    z-index: 1000;
 }
 
-/* === Weather Display Enhancement Styling === */
-
-#weather-display {
-    display: flex; /* Use flexbox for layout */
-    align-items: center; /* Vertically align icon and text block */
-    justify-content: center; /* Center content if space allows */
-    gap: 15px; /* Space between icon and text block */
-    padding: 15px 20px; /* Adjust padding */
-    text-align: left; /* Align text to the left within its container */
-}
-
-.weather-icon-container {
-    flex-shrink: 0; /* Prevent icon container from shrinking */
-}
-
-.weather-condition-icon {
-    width: 60px;  /* Adjust size as needed */
-    height: 60px; /* Adjust size as needed */
-    background-color: rgba(255, 255, 255, 0.1); /* Slight background for the icon if it's transparent */
-    border-radius: 50%; /* Circular background/border for icon */
+.home-app-btn {
+    background-color: var(--surface-color);
+    border: 1px solid var(--primary-accent-color);
+    border-radius: 15px;
+    width: 60px;
+    height: 60px;
     padding: 5px;
-    border: 1px solid var(--accent-color);
-}
-
-.weather-text-container {
+    color: var(--text-color);
+    cursor: pointer;
     display: flex;
     flex-direction: column;
-    align-items: flex-start; /* Align text to the left */
-}
-
-#weather-display .location-name {
-    font-size: 1.1em;
-    margin-bottom: 5px;
-}
-#weather-display .temperature {
-    font-size: 1.8em; /* Larger temperature */
-    font-weight: bold;
-    color: var(--accent-color);
-    margin: 0;
-}
-#weather-display .skytext {
-    font-size: 1em;
-    margin: 2px 0 5px 0;
-    text-transform: capitalize;
-}
-#weather-display .feelslike {
-    font-size: 0.9em;
-    opacity: 0.8;
-}
-
-/* Remove default paragraph margins within weather text container for tighter layout */
-.weather-text-container p {
-    margin: 2px 0;
-}
-
-/* === Image Generator Interface Styling === */
-#image-generator-view h3 {
-    text-align: center;
-    color: var(--accent-color);
-    margin-bottom: 20px;
-    border-bottom: 1px solid var(--accent-color);
-    padding-bottom: 10px;
-}
-
-#image-gen-input-area {
-    display: flex;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-#image-prompt-input {
-    flex-grow: 1;
-    padding: 10px 12px;
-    border: 1px solid var(--border-color);
-    border-radius: 20px; /* Pill shape */
-    background-color: var(--primary-bg);
-    color: var(--text-color);
-    font-size: 1em;
-    margin-right: 8px;
-}
-#image-prompt-input:focus {
-    outline: none;
-    border-color: var(--icon-hover-fill);
-}
-
-#generate-image-btn { /* Specific styling if needed, else .icon-button applies */
-    padding: 10px; /* Adjust if needed */
-}
-#generate-image-btn .icon-image-generator { /* Size for this specific icon */
-    width: 22px;
-    height: 22px;
-}
-
-#generated-image-container {
-    width: 100%;
-    min-height: 200px; /* Min height before image loads */
-    display: flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--primary-bg);
-    border: 1px dashed var(--border-color);
+    text-align: center;
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, background-color 0.2s ease;
+    font-size: 0.7em;
+    gap: 4px;
+}
+.home-app-btn .icon {
+    width: 28px;
+    height: 28px;
+    fill: var(--icon-fill-default);
+    margin-bottom: 0;
+}
+.home-app-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0, 255, 255, 0.2);
+    background-color: var(--primary-accent-color);
+    color: var(--primary-bg);
+}
+.home-app-btn:hover .icon {
+    fill: var(--primary-bg);
+}
+
+
+#public-comments-section { /* This is within #home-view */
+    margin-top: 20px;
+    padding: 15px;
+    background-color: var(--surface-color);
     border-radius: 8px;
-    margin-bottom: 15px;
-    padding: 10px;
-    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+    margin-bottom: calc(var(--bottom-app-bar-height) + 15px); /* Ensure space for fixed bottom bar */
 }
-#generated-image-container img,
-#generated-image-container svg { /* Style for actual image or placeholder svg */
-    max-width: 100%;
-    max-height: 400px; /* Max height for displayed image */
-    border-radius: 4px;
-    object-fit: contain;
+
+#admin-login-trigger-icon {
+    position: fixed;
+    bottom: 15px; /* Adjust if #home-bottom-app-icons is not used, or relative to it */
+    left: 15px;
+    /* If #home-bottom-app-icons is used, this should be above it or elsewhere */
+    /* For now, assuming #home-bottom-app-icons IS the primary bottom bar for home */
+    /* So, this admin icon might be better placed elsewhere or its 'fixed' nature re-evaluated */
+    /* Or, if it's part of #home-view content, its 'bottom' should be relative to that view's padding */
+    cursor: pointer;
+    z-index: 999;
 }
-#generated-image-container p { /* Styling for placeholder text */
+#admin-login-trigger-icon .icon-admin-login {
+    width: 30px;
+    height: 30px;
+    fill: var(--text-muted-color);
+    background-color: var(--surface-color); /* Use CSS variable */
+    padding: 5px;
+    border-radius: 50%;
+}
+#admin-login-trigger-icon:hover .icon-admin-login {
+    fill: var(--accent-color);
+}
+
+
+/* --- Sub-View Menu Trigger (Top-Left) --- */
+#sub-view-menu-trigger {
+    position: fixed;
+    top: calc(var(--top-bar-height) / 2 - 22px / 2 - 8px); /* Approx vertical center, considering padding */
+    left: 15px;
+    z-index: 1010;
+    /* .icon-button styling is applied */
+}
+
+
+/* --- Side Menu --- */
+#side-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 280px;
+    height: 100vh;
+    background-color: var(--secondary-bg);
+    padding: var(--top-bar-height) 0 20px 0;
+    overflow-y: auto;
+    border-right: 1px solid var(--border-color);
+    box-shadow: 3px 0 15px rgba(0,0,0,0.2);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
+    z-index: 2000;
+    box-sizing: border-box;
+}
+#side-menu.visible {
+    transform: translateX(0);
+}
+#side-menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+#side-menu li a {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
     color: var(--text-color);
-    opacity: 0.7;
+    text-decoration: none;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    border-bottom: 1px solid var(--surface-color);
 }
-
-
-#download-image-btn {
-    display: inline-flex; /* Managed by JS, but default display if shown */
-    margin-top: 10px; /* Space above download button if image is small */
-    margin-bottom: 20px;
+#side-menu li a:hover {
+    background-color: var(--accent-color);
+    color: var(--primary-bg);
 }
-#download-image-btn .icon-download {
+#side-menu li a:hover .icon {
+    fill: var(--primary-bg);
+}
+#side-menu li a .icon {
+    margin-right: 15px;
     width: 20px;
     height: 20px;
 }
-
-#image-history-display h4 {
-    color: var(--accent-color);
-    margin-bottom: 10px;
-}
-#image-prompt-history-list {
-    list-style: none;
-    padding-left: 0;
-    max-height: 150px; /* Scrollable history */
-    overflow-y: auto;
-    background-color: var(--primary-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    padding: 10px;
-}
-#image-prompt-history-list li {
-    padding: 5px 0;
-    border-bottom: 1px solid rgba(0, 255, 255, 0.2); /* Assuming var(--accent-color) is cyan and using its RGB for opacity */
-    font-size: 0.9em;
-    opacity: 0.8;
-}
-#image-prompt-history-list li:last-child {
-    border-bottom: none;
-}
-
-/* Note: If var(--border-color-rgb) was intended for the rgba value above,
-   and it's not defined in :root, the fallback might not work as expected.
-   Using a direct color or ensuring --border-color-rgb is defined is better.
-   For now, I've used a direct rgba with common cyan values.
-   If var(--accent-color) is #00c2cb, its RGB is 0, 194, 203.
-   So, border-bottom: 1px solid rgba(0, 194, 203, 0.2); would be more theme-consistent.
-   The current CSS uses var(--primary-accent-color-rgb) for this in other places. I'll use that.
-*/
-#image-prompt-history-list li {
-    border-bottom: 1px solid rgba(var(--primary-accent-color-rgb, 0, 194, 203), 0.2);
-}
-
-/* === History Generator Interface Styling === */
-#history-generator-view h3 {
-    text-align: center;
-    color: var(--accent-color);
-    margin-bottom: 20px;
-    border-bottom: 1px solid var(--accent-color);
-    padding-bottom: 10px;
-}
-
-#history-gen-input-area {
-    display: flex;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-#history-topic-input {
-    flex-grow: 1;
-    padding: 10px 12px;
-    border: 1px solid var(--border-color);
-    border-radius: 20px; /* Pill shape */
-    background-color: var(--primary-bg);
-    color: var(--text-color);
-    font-size: 1em;
-    margin-right: 8px;
-}
-#history-topic-input:focus {
-    outline: none;
-    border-color: var(--icon-hover-fill);
-}
-
-#generate-history-btn { /* Specific styling if needed */
-    padding: 10px;
-}
-#generate-history-btn .icon-history-generator { /* Size for this specific icon */
-    width: 22px;
-    height: 22px;
-}
-
-#generated-history-display-container h4 {
-    color: var(--accent-color);
-    margin-bottom: 10px;
-}
-
-#generated-history-display {
-    width: 100%;
-    min-height: 150px; /* Min height */
-    max-height: 50vh; /* Max height, then scroll */
-    overflow-y: auto;
-    background-color: var(--primary-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 15px;
-    box-sizing: border-box;
-    color: var(--text-color);
-    line-height: 1.6;
-}
-#generated-history-display p {
-    margin-bottom: 1em;
-}
-#generated-history-display p:last-child {
-    margin-bottom: 0;
-}
-
-
-#story-history-log-display h4 {
-    color: var(--accent-color);
-    margin-bottom: 10px;
-}
-#story-topic-history-list {
-    list-style: none;
-    padding-left: 0;
-    max-height: 150px; /* Scrollable history */
-    overflow-y: auto;
-    background-color: var(--primary-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    padding: 10px;
-}
-#story-topic-history-list li {
-    padding: 5px 0;
-    border-bottom: 1px solid rgba(var(--primary-accent-color-rgb, 0, 194, 203), 0.2);
-    font-size: 0.9em;
-    opacity: 0.8;
-}
-#story-topic-history-list li:last-child {
-    border-bottom: none;
-}
-
-/* === Admin Comment Management Styling === */
-#admin-view h3 {
-    text-align: center;
-    color: var(--accent-color);
-    margin-bottom: 20px;
-    border-bottom: 1px solid var(--accent-color);
-    padding-bottom: 10px;
-}
-
-#admin-comments-list {
-    margin-top: 15px;
-}
-
-.admin-comments-ul {
-    list-style: none;
-    padding: 0;
-}
-
-.admin-comment-item {
-    background-color: var(--secondary-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    padding: 15px;
-    margin-bottom: 15px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.4);
-}
-
-.admin-comment-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-    padding-bottom: 8px;
-    border-bottom: 1px dashed rgba(var(--primary-accent-color-rgb, 0,255,255), 0.3);
-}
-
-.admin-comment-name {
-    font-weight: bold;
-    color: var(--accent-color);
-    font-size: 1.1em;
-}
-
-.admin-comment-date {
-    font-size: 0.8em;
-    color: var(--text-color);
-    opacity: 0.7;
-}
-
-.admin-comment-text {
+#side-menu li a span {
     font-size: 0.95em;
-    line-height: 1.6;
-    color: var(--text-color);
-    margin-bottom: 10px;
-    white-space: pre-wrap;
-    word-wrap: break-word;
+}
+#side-menu li:last-child a {
+    border-bottom: none;
 }
 
-.admin-delete-comment-btn {
-    /* Uses .icon-button styles */
-    background-color: #612727; /* Reddish background for delete */
-    border-color: #ff4d4d; /* Reddish border */
-    padding: 6px 10px; /* Smaller padding */
+
+/* --- Private Message Floating Button --- */
+#private-message-trigger-container {
+    position: fixed;
+    bottom: 15px;
+    right: 15px;
+    z-index: 999;
 }
-.admin-delete-comment-btn .icon-delete {
-    width: 18px;
-    height: 18px;
-    fill: #ffdddd; /* Light red icon fill */
+#private-message-float-btn {
+    background-color: var(--secondary-accent-color);
+    border-color: var(--secondary-accent-color);
 }
-.admin-delete-comment-btn:hover {
-    background-color: #803030;
-    border-color: #ff6666;
+#private-message-float-btn:hover {
+    background-color: #ff6b81;
+    border-color: #ff6b81;
 }
-.admin-delete-comment-btn:hover .icon-delete {
+#private-message-float-btn .icon {
+    fill: var(--text-color);
+}
+#private-message-float-btn:hover .icon {
     fill: #ffffff;
 }
 
-/* === Public Comment System Styling === */
-#comments-display {
-    margin-top: 20px;
-    padding: 10px;
-    background-color: var(--primary-bg); /* Match theme */
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    min-height: 50px; /* So "Loading..." or "No comments" is visible */
-}
+/* --- EXISTING FEATURE STYLES (MERGED) --- */
 
-.comment-item {
-    padding: 12px 15px; /* More padding */
-    margin-bottom: 12px;
-    background-color: var(--secondary-bg);
-    border: 1px solid rgba(var(--primary-accent-color-rgb, 0,255,255), 0.3);
-    border-radius: 6px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3); /* Slightly more shadow */
-}
-.comment-item:last-child {
-    margin-bottom: 0;
-}
+/* Weather Display (already partially in #top-bar section) */
+.weather-info { display: flex; align-items: center; }
+.weather-icon { width: 40px; height: 40px; margin-right: 10px; object-fit: contain; }
+.weather-text p { margin: 0; line-height: 1.3; }
+.weather-location { font-weight: 500; }
+.weather-temp { font-size: 1.1em; font-weight: bold; color: var(--accent-color); }
+.weather-description { font-size: 0.8em; color: var(--text-muted-color); }
+.weather-loading, .weather-error { font-style: italic; color: var(--text-muted-color); }
 
-.comment-header {
+/* Comments Section (already partially in #home-view section) */
+#public-comments-section h3 { color: var(--accent-color); margin-top: 0; border-bottom: 1px solid var(--primary-accent-color); padding-bottom: 10px; margin-bottom: 20px; }
+#comment-form .form-group { margin-bottom: 15px; }
+#comment-form label { display: block; margin-bottom: 5px; color: var(--text-muted-color); font-size: 0.9em; }
+#comment-form input[type="text"], #comment-form textarea { width: 100%; padding: 10px; background-color: var(--primary-bg); border: 1px solid var(--border-color); border-radius: 5px; color: var(--text-color); font-family: var(--font-primary); box-sizing: border-box; transition: border-color 0.3s ease, box-shadow 0.3s ease; }
+#comment-form input[type="text"]:focus, #comment-form textarea:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 8px var(--accent-color); }
+#comment-form textarea { resize: vertical; min-height: 80px; }
+.btn-submit-comment { background-color: var(--accent-color); color: var(--primary-bg); border: none; padding: 10px 20px; border-radius: 5px; font-family: var(--font-primary); font-weight: 500; cursor: pointer; transition: background-color 0.3s ease, transform 0.2s ease; text-transform: uppercase; letter-spacing: 1px; }
+.btn-submit-comment:hover { background-color: var(--primary-accent-color); transform: translateY(-2px); }
+#comments-display-area { margin-top: 30px; }
+.comment-item { background-color: var(--secondary-bg); padding: 15px; margin-bottom: 15px; border-radius: 5px; border-left: 3px solid var(--accent-color); box-shadow: 2px 2px 5px rgba(0,0,0,0.2); }
+.comment-item strong { color: var(--accent-color); display: block; margin-bottom: 5px; }
+.comment-item p { margin: 0 0 8px 0; color: var(--text-color); word-wrap: break-word; }
+.comment-item .comment-timestamp { font-size: 0.8em; color: var(--text-muted-color); display: block; text-align: right; }
+
+/* AI CHAT */
+#ai-chat-view { display: flex; flex-direction: column; height: calc(100vh - var(--top-bar-height) - 30px); padding:0; box-sizing: border-box; } /* Adjusted for main-content padding */
+#chat-messages-area { flex-grow: 1; overflow-y: auto; padding: 15px; background-color: var(--primary-bg); border-bottom: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 10px; }
+
+.chat-message-wrapper {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px; /* More space */
+    align-items: flex-end; /* Align avatar with bottom of bubble */
+    margin-bottom: 10px;
+    max-width: 85%; /* Wrapper takes less space than full width */
 }
 
-.comment-name {
-    font-weight: bold;
-    color: var(--accent-color);
-    font-size: 1.1em; /* Slightly larger name */
+.chat-message-wrapper.user {
+    align-self: flex-end; /* Message wrapper to the right */
+    flex-direction: row-reverse; /* Avatar on the right of bubble */
 }
 
-.comment-date {
-    font-size: 0.75em; /* Smaller date */
-    color: var(--text-color);
-    opacity: 0.6;
+.chat-message-wrapper.ai {
+    align-self: flex-start; /* Message wrapper to the left */
+    flex-direction: row; /* Avatar on the left of bubble */
 }
 
-.comment-text {
-    font-size: 0.95em;
-    line-height: 1.6; /* Better readability */
-    color: var(--text-color);
-    white-space: pre-wrap;
-    margin: 0;
-    word-wrap: break-word; /* Ensure long words break */
-}
-
-/* === History Generator Interface Styling === */
-#history-generator-view h3 {
-    text-align: center;
-    color: var(--accent-color);
-    margin-bottom: 20px;
-    border-bottom: 1px solid var(--accent-color);
-    padding-bottom: 10px;
-}
-
-#history-gen-input-area {
+.chat-avatar-container {
+    width: 32px; /* Avatar size */
+    height: 32px;
+    border-radius: 50%;
+    background-color: var(--surface-color); /* Placeholder bg */
     display: flex;
     align-items: center;
-    margin-bottom: 20px;
+    justify-content: center;
+    margin: 0 8px; /* Space between avatar and bubble */
+    flex-shrink: 0; /* Prevent avatar from shrinking */
 }
 
-#history-topic-input {
-    flex-grow: 1;
-    padding: 10px 12px;
-    border: 1px solid var(--border-color);
-    border-radius: 20px; /* Pill shape */
-    background-color: var(--primary-bg);
+.chat-avatar-container .icon { /* General icon styling for chat avatars */
+    width: 20px;
+    height: 20px;
+    fill: var(--accent-color);
+}
+.icon-chat-user { /* Specific user icon styling if needed */ }
+.icon-chat-ai { /* Specific AI icon styling if needed */ }
+
+
+.chat-bubble {
+    padding: 10px 15px;
+    border-radius: 18px;
+    /* margin-bottom removed, now on wrapper */
+    max-width: calc(100% - 40px - 16px); /* Max width of bubble within wrapper */
+    line-height: 1.5;
+    word-wrap: break-word;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+.user-message .chat-bubble { /* Applied to bubble if wrapper has .user */
+    background-color: var(--accent-color);
+    color: var(--primary-bg);
+    border-bottom-right-radius: 5px;
+}
+.chat-message-wrapper.user .chat-bubble { /* More specific selector for user bubble */
+    background-color: var(--accent-color);
+    color: var(--primary-bg);
+    border-bottom-right-radius: 5px;
+}
+
+.ai-message .chat-bubble { /* Applied to bubble if wrapper has .ai */
+    background-color: var(--surface-color);
     color: var(--text-color);
-    font-size: 1em;
-    margin-right: 8px;
+    border-bottom-left-radius: 5px;
 }
-#history-topic-input:focus {
-    outline: none;
-    border-color: var(--icon-hover-fill);
-}
-
-#generate-history-btn { /* Specific styling if needed */
-    padding: 10px;
-}
-#generate-history-btn .icon-history-generator { /* Size for this specific icon */
-    width: 22px;
-    height: 22px;
-}
-
-#generated-history-display-container h4 {
-    color: var(--accent-color);
-    margin-bottom: 10px;
-}
-
-#generated-history-display {
-    width: 100%;
-    min-height: 150px; /* Min height */
-    max-height: 50vh; /* Max height, then scroll */
-    overflow-y: auto;
-    background-color: var(--primary-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 15px;
-    box-sizing: border-box;
+.chat-message-wrapper.ai .chat-bubble { /* More specific selector for AI bubble */
+    background-color: var(--surface-color);
     color: var(--text-color);
-    line-height: 1.6;
-}
-#generated-history-display p {
-    margin-bottom: 1em;
-}
-#generated-history-display p:last-child {
-    margin-bottom: 0;
+    border-bottom-left-radius: 5px;
 }
 
 
-#story-history-log-display h4 {
-    color: var(--accent-color);
-    margin-bottom: 10px;
+/* Typing Indicator refined */
+.typing-indicator span {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin: 0 2px;
+    background-color: var(--text-muted-color); /* Muted color for typing dots */
+    border-radius: 50%;
+    animation: typing-bounce 1.4s infinite ease-in-out both;
 }
-#story-topic-history-list {
-    list-style: none;
-    padding-left: 0;
-    max-height: 150px; /* Scrollable history */
-    overflow-y: auto;
-    background-color: var(--primary-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    padding: 10px;
+.typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+.typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+/* .typing-indicator span:nth-child(3) is covered by 'both' */
+
+@keyframes typing-bounce {
+    0%, 80%, 100% { transform: scale(0); }
+    40% { transform: scale(1.0); }
 }
-#story-topic-history-list li {
-    padding: 5px 0;
-    border-bottom: 1px solid rgba(var(--primary-accent-color-rgb, 0, 194, 203), 0.2);
-    font-size: 0.9em;
-    opacity: 0.8;
-}
-#story-topic-history-list li:last-child {
-    border-bottom: none;
-}
+
+#chat-input-bar { display: flex; align-items: center; padding: 10px; background-color: var(--secondary-bg); border-top: 1px solid var(--border-color); }
+#chat-input-field { flex-grow: 1; padding: 10px 15px; border: 1px solid var(--border-color); border-radius: 20px; background-color: var(--primary-bg); color: var(--text-color); font-family: var(--font-primary); margin-right: 10px; outline: none; transition: border-color 0.3s ease, box-shadow 0.3s ease; }
+#chat-input-field:focus { border-color: var(--accent-color); box-shadow: 0 0 8px var(--accent-color); }
+/* #chat-send-button is an .icon-button, it will inherit base styles. Specific overrides: */
+#chat-send-button { background-color: var(--accent-color); border: none; width: 44px; height: 44px; padding:0; }
+#chat-send-button svg { fill: var(--primary-bg); width: 24px; height: 24px; margin-right: 0; }
+#chat-send-button:hover { background-color: var(--primary-accent-color); }
+#chat-send-button:disabled { background-color: var(--text-muted-color) !important; cursor: not-allowed; }
+.web-search-container { display: flex; align-items: center; margin-right: 15px; font-size: 0.9em; }
+.web-search-label { color: var(--text-muted-color); margin-right: 8px; }
+.switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--surface-color); transition: .4s; border-radius: 20px; border: 1px solid var(--border-color); }
+.slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 2px; bottom: 2px; background-color: var(--text-muted-color); transition: .4s; border-radius: 50%; }
+input:checked + .slider { background-color: var(--accent-color); border-color: var(--accent-color); }
+input:checked + .slider:before { transform: translateX(20px); background-color: var(--primary-bg); }
+
+/* IMAGE GENERATOR */
+#image-generator-view { padding: 20px; box-sizing: border-box; }
+#image-generator-view h2 { color: var(--accent-color); text-align: center; margin-top: 0; margin-bottom: 25px; }
+#image-prompt-area { display: flex; margin-bottom: 20px; gap: 10px; }
+#image-prompt-field { flex-grow: 1; padding: 12px 18px; background-color: var(--primary-bg); border: 1px solid var(--border-color); border-radius: 25px; color: var(--text-color); font-family: var(--font-primary); outline: none; transition: border-color 0.3s ease, box-shadow 0.3s ease; }
+#image-prompt-field:focus { border-color: var(--accent-color); box-shadow: 0 0 10px var(--accent-color); }
+/* #generate-image-button, #download-image-button are .icon-button. Specific overrides: */
+#generate-image-button, #download-image-button { padding: 10px 15px; background-color: var(--accent-color); color: var(--primary-bg); border-radius: 25px; border: none; font-weight: 500; }
+#generate-image-button .icon, #download-image-button .icon { fill: var(--primary-bg); } /* Ensure icon fill matches button text color */
+#generate-image-button:hover, #download-image-button:hover { background-color: var(--primary-accent-color); transform: translateY(-2px); }
+#generate-image-button:disabled { background-color: var(--text-muted-color) !important; cursor: not-allowed; }
+#image-display-area { display: flex; justify-content: center; align-items: center; min-height: 300px; max-height: 60vh; background-color: var(--surface-color); border: 1px dashed var(--border-color); border-radius: 10px; margin-bottom: 20px; padding: 15px; text-align: center; color: var(--text-muted-color); }
+#image-display-area img { max-width: 100%; max-height: calc(60vh - 30px); border-radius: 8px; object-fit: contain; box-shadow: 0 4px 15px rgba(0, 255, 255, 0.15); }
+.image-loading, .image-error { font-style: italic; }
+#download-image-button { display: none; margin: 0 auto 20px auto; } /* Initially hidden */
+#image-history-gallery { margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--surface-color); }
+#image-history-gallery h4 { color: var(--primary-accent-color); margin-bottom: 15px; text-align: center; }
+.image-history-list { list-style-type: none; padding: 0; max-height: 200px; overflow-y: auto; border: 1px solid var(--surface-color); border-radius: 5px; padding: 10px; }
+.image-history-item { background-color: var(--secondary-bg); padding: 8px 12px; margin-bottom: 8px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; font-size: 0.9em; color: var(--text-muted-color); }
+.image-history-item:last-child { margin-bottom: 0; }
+.image-history-item span { flex-grow: 1; margin-right: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.btn-history-regenerate { background-color: var(--accent-color); color: var(--primary-bg); border: none; padding: 5px 10px; border-radius: 4px; font-size: 0.8em; cursor: pointer; transition: background-color 0.2s ease; white-space: nowrap; }
+.btn-history-regenerate:hover { background-color: var(--primary-accent-color); }
+.history-empty-message { text-align: center; color: var(--text-muted-color); font-style: italic; }
+
+/* STORY GENERATOR */
+#story-generator-view { padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px; }
+#story-generator-view h2 { color: var(--accent-color); text-align: center; margin-top: 0; margin-bottom: 10px; }
+#story-prompt-area { display: flex; gap: 10px; }
+#story-theme-field { flex-grow: 1; padding: 12px 18px; background-color: var(--primary-bg); border: 1px solid var(--border-color); border-radius: 25px; color: var(--text-color); font-family: var(--font-primary); outline: none; transition: border-color 0.3s ease, box-shadow 0.3s ease; }
+#story-theme-field:focus { border-color: var(--accent-color); box-shadow: 0 0 10px var(--accent-color); }
+/* #generate-story-button is an .icon-button. Specific overrides: */
+#generate-story-button { padding: 10px 15px; background-color: var(--accent-color); color: var(--primary-bg); border-radius: 25px; border: none; font-weight: 500; }
+#generate-story-button .icon { fill: var(--primary-bg); }
+#generate-story-button:hover { background-color: var(--primary-accent-color); transform: translateY(-2px); }
+#generate-story-button:disabled { background-color: var(--text-muted-color) !important; cursor: not-allowed; }
+#generated-story-display { min-height: 200px; max-height: 40vh; background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; overflow-y: auto; white-space: pre-wrap; color: var(--text-color); line-height: 1.6; box-shadow: inset 0 0 10px rgba(0,0,0,0.2); }
+.story-loading, .story-error { font-style: italic; color: var(--text-muted-color); text-align: center; }
+#story-vip-controls { display: none; justify-content: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--surface-color); border-bottom: 1px solid var(--surface-color); margin-top: 10px; }
+/* #story-vip-controls button are .icon-button. Specific overrides: */
+#story-vip-controls button { padding: 8px 15px; background-color: var(--secondary-accent-color); border: 1px solid var(--secondary-accent-color); border-radius: 5px; font-weight: 500; color: var(--text-color); }
+#story-vip-controls button:hover { opacity: 0.85; transform: translateY(-1px); background-color: var(--secondary-accent-color); /* Keep bg on hover for these */ }
+#story-history-area { margin-top: 10px; }
+#story-history-area h4 { color: var(--primary-accent-color); margin-bottom: 10px; text-align: center; }
+#story-history-list { list-style-type: none; padding: 0; max-height: 150px; overflow-y: auto; border: 1px solid var(--surface-color); border-radius: 5px; padding: 10px; }
+.story-history-item { background-color: var(--secondary-bg); padding: 10px; margin-bottom: 8px; border-radius: 5px; cursor: pointer; transition: background-color 0.2s ease; font-size: 0.9em; color: var(--text-muted-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.story-history-item:last-child { margin-bottom: 0; }
+.story-history-item:hover { background-color: var(--surface-color); color: var(--text-color); }
+
+/* VIP AREA & TOOLS */
+#vip-view { padding: 20px; box-sizing: border-box; text-align: center; }
+#vip-view h2 { color: var(--accent-color); margin-top: 0; margin-bottom: 10px; }
+#vip-view > p { color: var(--text-muted-color); margin-bottom: 30px; font-size: 1.1em; }
+#vip-access-area { background-color: var(--surface-color); padding: 30px; border-radius: 10px; max-width: 400px; margin: 0 auto 30px auto; box-shadow: 0 0 20px rgba(0, 255, 255, 0.15); }
+#vip-access-area p { margin-top: 0; margin-bottom: 10px; color: var(--text-color); }
+#vip-code-input { width: calc(100% - 24px); padding: 12px; margin-bottom: 20px; background-color: var(--primary-bg); border: 1px solid var(--border-color); border-radius: 5px; color: var(--text-color); font-family: var(--font-primary); text-align: center; font-size: 1.1em; }
+#vip-code-input:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 8px var(--accent-color); }
+#vip-code-submit { background-color: var(--secondary-accent-color); color: var(--text-color); border: none; padding: 12px 25px; border-radius: 5px; font-family: var(--font-primary); font-weight: bold; cursor: pointer; transition: background-color 0.3s ease, transform 0.2s ease; text-transform: uppercase; letter-spacing: 1px; width: 100%; }
+#vip-code-submit:hover { background-color: #ff6b81; transform: translateY(-2px); }
+#vip-status-message { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: 500; }
+.vip-status-success { background-color: rgba(0, 255, 127, 0.1); color: #00ff7f; border: 1px solid #00ff7f; }
+.vip-status-error { background-color: rgba(255, 0, 0, 0.1); color: #ff4d4d; border: 1px solid #ff4d4d; }
+#vip-tools-container { text-align: left; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+#vip-tools-container h3 { color: var(--primary-accent-color); margin-top: 20px; margin-bottom: 15px; grid-column: 1 / -1; border-bottom: 1px solid var(--surface-color); padding-bottom: 10px; }
+#vip-tools-container h3:first-of-type { margin-top: 0; }
+.vip-tool { background-color: var(--surface-color); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 2px 10px rgba(0,0,0,0.2); transition: transform 0.3s ease, box-shadow 0.3s ease; display: flex; flex-direction: column; gap: 15px; }
+.vip-tool:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0, 255, 255, 0.2); }
+.vip-tool h4 { color: var(--accent-color); margin-top: 0; margin-bottom: 10px; }
+.vip-tool > p { color: var(--text-muted-color); font-size: 0.9em; line-height: 1.5; } /* Direct p child for description */
+.vip-tool p:first-of-type { margin-bottom: 5px; }
+.vip-ai-input { width: 100%; min-height: 100px; padding: 10px; background-color: var(--primary-bg); border: 1px solid var(--border-color); border-radius: 5px; color: var(--text-color); font-family: var(--font-primary); resize: vertical; box-sizing: border-box; }
+.vip-ai-input:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 8px var(--accent-color); }
+/* .vip-ai-send-btn is an .icon-button. Specific overrides: */
+.vip-ai-send-btn { padding: 10px 15px; background-color: var(--accent-color); color: var(--primary-bg); border-radius: 5px; border: none; font-weight: 500; align-self: flex-start; }
+.vip-ai-send-btn .icon { fill: var(--primary-bg); margin-right: 6px; width: 18px; height: 18px; }
+.vip-ai-send-btn:hover { background-color: var(--primary-accent-color); transform: translateY(-2px); }
+.vip-ai-send-btn:disabled { background-color: var(--text-muted-color) !important; cursor: not-allowed; transform: none; }
+.vip-ai-response { min-height: 80px; padding: 15px; background-color: var(--primary-bg); border: 1px dashed var(--border-color); border-radius: 5px; overflow-y: auto; white-space: pre-wrap; color: var(--text-color); font-size: 0.95em; line-height: 1.6; }
+.vip-ai-response p:first-child { margin-top: 0; color: var(--text-muted-color); font-style: italic; }
+.vip-ai-loading, .vip-ai-error { font-style: italic; text-align: center; padding: 20px; }
+.vip-ai-loading { color: var(--accent-color); }
+.vip-ai-error { color: var(--secondary-accent-color); }
+
+/* FILE READER specific within VIP */
+#file-reader-input { display: block; width: 100%; padding: 10px; margin-bottom: 10px; background-color: var(--primary-bg); border: 1px dashed var(--border-color); color: var(--text-muted-color); border-radius: 5px; box-sizing: border-box; cursor: pointer; transition: background-color 0.3s ease, border-color 0.3s ease; }
+#file-reader-input:hover { background-color: var(--secondary-bg); border-color: var(--accent-color); }
+#file-reader-input::file-selector-button { background-color: var(--accent-color); color: var(--primary-bg); border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; margin-right: 10px; font-family: var(--font-primary); transition: background-color 0.2s ease; }
+#file-reader-input::file-selector-button:hover { background-color: var(--primary-accent-color); }
+/* #file-reader-process-btn is an .icon-button. Specific overrides: */
+#file-reader-process-btn { background-color: var(--primary-accent-color); color: var(--primary-bg); border: none; border-radius: 5px; padding: 10px 15px; margin-bottom: 15px; align-self: flex-start; }
+#file-reader-process-btn .icon { fill: var(--primary-bg); }
+#file-reader-process-btn:hover { background-color: var(--accent-color); transform: translateY(-1px); }
+#file-reader-content-display { border-style: solid; background-color: var(--secondary-bg); font-size: 0.9em; }
+#file-reader-qa-area { border-top: 1px solid var(--surface-color); padding-top: 15px; margin-top: 20px; }
+#file-reader-qa-area #file-reader-question { min-height: 60px; }
+/* #file-reader-ask-btn uses .vip-ai-send-btn styling */
+#file-reader-qa-area #file-reader-answer { margin-top: 10px; /* Adjusted from 0 if button has margin */ }

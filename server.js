@@ -1,7 +1,7 @@
 const express = require('express');
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const path = require('path');
-const { MongoClient, ObjectId } = require('mongodb');
+const { MongoClient, ObjectId, ServerApiVersion } = require('mongodb'); // Added ServerApiVersion
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,21 +13,42 @@ const IMAGE_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
 
 // MongoDB Connection
 const mongoUri = "mongodb+srv://rtmtafita:tafitaniaina1206@rtmchat.pzebpqh.mongodb.net/?retryWrites=true&w=majority&appName=rtmchat";
-const client = new MongoClient(mongoUri);
+const dbName = 'futuristicPortfolioDb'; // Defined dbName
+// Updated MongoClient instantiation with recommended options
+const client = new MongoClient(mongoUri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverApi: ServerApiVersion.v1
+});
 
-let portfolioDb;
-let commentsCollection;
+let db; // Renamed from portfolioDb for consistency with prompt, will hold the db instance
+let commentsCollection; // This can be initialized after db is set
 
 async function connectDB() {
     try {
         await client.connect();
-        portfolioDb = client.db("portfolioDb");
-        commentsCollection = portfolioDb.collection("comments");
-        console.log("Successfully connected to MongoDB Atlas!");
-        await commentsCollection.createIndex({ createdAt: -1 });
-        console.log("Indexes ensured for comments collection.");
+        console.log("Successfully connected to MongoDB client!");
+        db = client.db(dbName); // Use the defined dbName
+
+        // Optional: Ping to confirm connection
+        await db.command({ ping: 1 });
+        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+
+        // Initialize collections after db is confirmed
+        commentsCollection = db.collection("comments");
+        // Ensure indexes if needed (example for comments)
+        // It's good practice to move index creation to a more dedicated setup spot or ensure it runs once
+        const existingIndexes = await commentsCollection.listIndexes().toArray();
+        const indexExists = existingIndexes.some(idx => idx.name === "createdAt_-1");
+        if (!indexExists) {
+            await commentsCollection.createIndex({ createdAt: -1 });
+            console.log("Index on createdAt ensured for comments collection.");
+        } else {
+            console.log("Index on createdAt already exists for comments collection.");
+        }
+
     } catch (err) {
-        console.error("Failed to connect to MongoDB Atlas or ensure indexes", err);
+        console.error("Failed to connect to MongoDB or ensure setup:", err);
         process.exit(1);
     }
 }

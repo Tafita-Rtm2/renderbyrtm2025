@@ -44,6 +44,23 @@ async function connectDB() {
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
+// Admin Code
+const ADMIN_VERIFICATION_CODE = '2201018280';
+
+// --- Admin Verification API Route ---
+app.post('/api/verify-admin', (req, res) => {
+    const { adminCode } = req.body;
+
+    if (!adminCode) {
+        return res.status(400).json({ success: false, message: "Admin code is required" });
+    }
+
+    if (adminCode === ADMIN_VERIFICATION_CODE) {
+        return res.json({ success: true });
+    } else {
+        return res.status(401).json({ success: false, message: "Invalid admin code" });
+    }
+});
 
 // --- Weather API Route ---
 app.get('/api/weather', async (req, res) => { /* ... existing unchanged code ... */

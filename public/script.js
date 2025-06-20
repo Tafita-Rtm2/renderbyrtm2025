@@ -61,11 +61,45 @@ document.addEventListener('DOMContentLoaded', () => {
     const homeMenuTriggerIcon = document.getElementById('home-menu-trigger-icon');
 
     // --- Centralized showView Function ---
-    window.showView = function(viewIdToShow) {
+    window.showView = function(viewIdToShow, bypassAdminCheck = false) {
+        if (viewIdToShow === 'admin-panel-view' && !bypassAdminCheck) {
+            const enteredCode = prompt('Enter admin code:');
+            if (enteredCode === '121206') {
+                // Call showView again, but this time bypass the check
+                window.showView('admin-panel-view', true);
+            } else if (enteredCode !== null && enteredCode !== "") {
+                alert('Invalid admin code.');
+            }
+            return; // Stop further execution in this call
+        }
+
+        // --- Existing showView logic starts here ---
         allViewElements.forEach(view => {
             view.classList.remove('active');
             view.style.display = 'none';
         });
+
+        // Explicitly hide or manage AI chat components when not the target view
+        const aiChatView = document.getElementById('ai-chat-view');
+        const chatInputBar = document.getElementById('chat-input-bar'); // Assuming this is the correct ID
+
+        if (viewIdToShow !== 'ai-chat-view') {
+            if (aiChatView && aiChatView.style.display !== 'none') { // Check if it's not already none
+                // This is a safeguard; the main loop should handle hiding aiChatView itself.
+                // aiChatView.style.display = 'none'; // Redundant if main loop is effective
+            }
+            if (chatInputBar) {
+                // Specifically target the chat input bar to ensure it's hidden
+                chatInputBar.style.display = 'none';
+            }
+        } else { // When 'ai-chat-view' IS being shown
+            // Ensure chatInputBar is visible. Its display is part of aiChatView's flex layout.
+            // If aiChatView is set to display:flex, child elements with default display (block/flex) will show.
+            // If chatInputBar was explicitly set to display:none, it needs to be reset.
+            if (chatInputBar) {
+                 chatInputBar.style.display = 'flex'; // Or 'block' if that's its natural state in the layout
+            }
+        }
 
         const viewToShow = document.getElementById(viewIdToShow);
         if (viewToShow) {
@@ -118,9 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
             currentGeneratedStoryContent = "";
             currentGeneratedStoryTheme = "";
             if(typeof updateStoryVipControlsVisibility === 'function') updateStoryVipControlsVisibility();
-        } else if (viewIdToShow === 'vip-view') {
-            if (typeof checkInitialVipStatus === 'function') checkInitialVipStatus();
-        } else if (viewIdToShow === 'weather-view') {
+        } else if (viewIdToShow === 'weather-view') { // VIP view logic removed from here
             const weatherView = document.getElementById('weather-view');
             if (currentWeatherData) { // If data is already fetched
                 displayDetailedWeather(currentWeatherData);
@@ -170,7 +202,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (homeBottomAppIcons) {
         homeBottomAppIcons.querySelectorAll('.home-app-btn').forEach(button => {
             button.addEventListener('click', (e) => {
-                e.preventDefault(); const viewId = button.dataset.view; if (viewId) window.showView(viewId);
+                e.preventDefault();
+                const viewId = button.dataset.view;
+                if (viewId === 'vip-view') {
+                    window.location.href = 'https://sitebymegg.onrender.com/';
+                } else if (viewId) {
+                    window.showView(viewId);
+                }
             });
         });
     }
@@ -180,8 +218,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (sideMenu) {
         sideMenu.querySelectorAll('ul li a').forEach(link => {
             link.addEventListener('click', (event) => {
-                event.preventDefault(); const viewId = link.dataset.view;
-                if (viewId) { window.showView(viewId); sideMenu.classList.remove('visible');}
+                event.preventDefault();
+                const viewId = link.dataset.view;
+                if (viewId === 'vip-view') {
+                    window.location.href = 'https://sitebymegg.onrender.com/';
+                    // sideMenu.classList.remove('visible'); // Optional: remove if redirecting anyway
+                } else if (viewId) {
+                    window.showView(viewId);
+                    sideMenu.classList.remove('visible');
+                }
             });
         });
     }
@@ -821,11 +866,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateStoryVipControlsVisibility() {
         if (!storyVipControls) return;
-        if (checkVIPStatus() && currentGeneratedStoryContent) {
-            storyVipControls.style.display = 'flex';
-        } else {
-            storyVipControls.style.display = 'none';
-        }
+        // VIP status is no longer determined locally by 'isUserVIP' in localStorage
+        // For now, hide story VIP controls by default.
+        // If there's another mechanism to enable them, it would go here.
+        storyVipControls.style.display = 'none';
+
+        // Original logic that depended on checkVIPStatus() and currentGeneratedStoryContent:
+        // if (checkVIPStatus() && currentGeneratedStoryContent) {
+        //     storyVipControls.style.display = 'flex';
+        // } else {
+        //     storyVipControls.style.display = 'none';
+        // }
     }
 
     function formatTextContent(text) {
@@ -1018,89 +1069,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // --- END OF STORY GENERATOR INTERFACE LOGIC ---
 
-    // --- VIP AREA LOGIC ---
-    const vipAccessArea = document.getElementById('vip-access-area');
-    const vipCodeInput = document.getElementById('vip-code-input'); // Kept for selector if HTML isn't removed yet
-    const vipCodeSubmit = document.getElementById('vip-code-submit'); // Kept for selector
-    const vipStatusMessage = document.getElementById('vip-status-message'); // Kept for selector
-    const vipIframeContainer = document.getElementById('vip-iframe-container');
+    // --- VIP AREA LOGIC (REMOVED) ---
+    // const vipAccessArea = document.getElementById('vip-access-area'); // Element will be removed from HTML
+    // const vipCodeInput = document.getElementById('vip-code-input');
+    // const vipCodeSubmit = document.getElementById('vip-code-submit');
+    // const vipStatusMessage = document.getElementById('vip-status-message');
+    // const vipIframeContainer = document.getElementById('vip-iframe-container'); // Element will be removed
 
-    function handleVipAccess() { // This function is now simplified and might even be redundant if checkInitialVipStatus does all the work
-        if (!vipAccessArea || !vipIframeContainer) {
-            console.error("VIP access elements not found in handleVipAccess.");
-            return;
-        }
-
-        // Directly show iframe and hide access area
-        if (vipAccessArea) vipAccessArea.style.display = 'none';
-        vipIframeContainer.innerHTML = ''; // Clear previous iframe if any
-        const iframe = document.createElement('iframe');
-        iframe.src = 'https://sitebymegg.onrender.com';
-        iframe.style.width = '100%';
-        iframe.style.height = '100%'; // Container controls height
-        iframe.style.border = 'none';
-        vipIframeContainer.appendChild(iframe);
-        vipIframeContainer.style.display = 'block';
-
-        localStorage.setItem('isUserVIP', 'true'); // Set VIP status
-
-        if (vipStatusMessage) { // Briefly show loading, then hide
-            vipStatusMessage.textContent = 'Loading VIP area...';
-            vipStatusMessage.style.color = 'var(--text-color)'; // Use a neutral color
-            vipStatusMessage.style.display = 'block';
-            setTimeout(() => {
-                if (vipStatusMessage) vipStatusMessage.style.display = 'none';
-            }, 1500);
-        }
-
-        if (typeof updateStoryVipControlsVisibility === 'function') {
-            updateStoryVipControlsVisibility();
-        }
-    }
-
-    function checkInitialVipStatus() {
-        if (!vipAccessArea || !vipIframeContainer) {
-            console.error("VIP initial status elements not found in checkInitialVipStatus.");
-            return;
-        }
-
-        // Always assume user wants to see VIP content when this function is called.
-        // Hide the code input area and show the iframe container.
-        if (vipAccessArea) vipAccessArea.style.display = 'none';
-
-        vipIframeContainer.innerHTML = ''; // Clear previous iframe if any to ensure it reloads if necessary
-        const iframe = document.createElement('iframe');
-        iframe.src = 'https://sitebymegg.onrender.com';
-        iframe.style.width = '100%';
-        iframe.style.height = '100%';
-        iframe.style.border = 'none';
-        vipIframeContainer.appendChild(iframe);
-        vipIframeContainer.style.display = 'block';
-
-        localStorage.setItem('isUserVIP', 'true'); // Set VIP status
-
-        if (vipStatusMessage) vipStatusMessage.style.display = 'none'; // Clear any previous messages
-
-        if (typeof updateStoryVipControlsVisibility === 'function') {
-            updateStoryVipControlsVisibility();
-        }
-    }
-
-    // Remove event listeners for vipCodeSubmit and vipCodeInput as they are no longer primary
-    // The logic is now mostly handled by checkInitialVipStatus when showView('vip-view') is called.
-    // However, if the HTML elements for code input are not removed, clicking them might still call handleVipAccess.
-    // For a cleaner approach, if those HTML elements are removed, these listeners can also be removed.
-    // For now, handleVipAccess is modified to grant access directly.
-    if (vipCodeSubmit) {
-        vipCodeSubmit.addEventListener('click', handleVipAccess); // Will now grant access directly
-    }
-    if (vipCodeInput) {
-        vipCodeInput.addEventListener('keypress', (e) => { // Will now grant access directly
-            if (e.key === 'Enter') {
-                handleVipAccess();
-            }
-        });
-    }
+    // function handleVipAccess() { ... } // REMOVED
+    // function checkInitialVipStatus() { ... } // REMOVED
+    // Event listeners for vipCodeSubmit and vipCodeInput also removed as elements will be gone.
     // --- END OF VIP AREA LOGIC ---
 
 
@@ -1290,12 +1268,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const adminLoginTrigger = document.getElementById('admin-login-trigger-icon');
     if (adminLoginTrigger) {
         adminLoginTrigger.addEventListener('click', () => {
-            const enteredCode = prompt('Enter admin code:');
-            if (enteredCode === '121206') {
-                window.showView('admin-panel-view');
-            } else if (enteredCode !== null && enteredCode !== "") {
-                alert('Invalid admin code.');
-            }
+            window.showView('admin-panel-view'); // This will now use the updated showView with the prompt
         });
     }
 

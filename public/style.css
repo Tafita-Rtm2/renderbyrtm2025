@@ -1158,46 +1158,29 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
     color: var(--primary-bg);
 }
 
-/* VIP AREA & TOOLS */
+/* VIP AREA & TOOLS - REMOVED as #vip-view is deleted */
+/*
 #vip-view {
     display: flex !important;
     flex-direction: column !important;
-    padding: 5px !important; /* Minimal padding for the overall view */
+    padding: 5px !important;
     box-sizing: border-box !important;
-    overflow: hidden !important; /* Prevent potential scrollbars from view itself */
-    /* height: 100%; /* This might be tricky; rely on flex-grow of children and .view.active */
+    overflow: hidden !important;
 }
 
 #vip-view h2 {
-    color: var(--highlight-yellow, #ffd700) !important; /* Fallback for safety */
-    font-size: 1.5em !important; /* Or smaller if needed */
-    /* flex-shrink: 0; /* Already inline */
-    /* margin: 5px 0 10px 0 !important; /* Already inline, but CSS can reinforce */
-    /* text-align: center; /* Already inline */
+    color: var(--highlight-yellow, #ffd700) !important;
+    font-size: 1.5em !important;
 }
-
-/* Remove styles for the old vip-access-area as it's deleted from HTML */
-/*
-#vip-access-area { background-color: var(--surface-color); padding: 30px; border-radius: 10px; max-width: 400px; margin: 0 auto 30px auto; box-shadow: 0 0 20px var(--accent-color); }
-#vip-access-area p { margin-top: 0; margin-bottom: 10px; color: var(--text-color); }
-#vip-code-input { width: calc(100% - 24px); padding: 12px; margin-bottom: 20px; background-color: var(--primary-bg); border: 1px solid var(--border-color); border-radius: 5px; color: var(--text-color); font-family: var(--font-primary); text-align: center; font-size: 1.1em; }
-#vip-code-input:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 8px var(--accent-color); }
-#vip-code-submit { background-color: var(--secondary-accent-color); color: var(--text-color); border: none; padding: 12px 25px; border-radius: 5px; font-family: var(--font-primary); font-weight: bold; cursor: pointer; transition: background-color 0.3s ease, transform 0.2s ease; text-transform: uppercase; letter-spacing: 1px; width: 100%; }
-#vip-code-submit:hover { background-color: var(--action-color); transform: translateY(-2px); }
-#vip-status-message { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: 500; }
-.vip-status-success { background-color: var(--success-green); color: var(--primary-bg); border: 1px solid var(--success-green); }
-.vip-status-error { background-color: var(--secondary-accent-color); color: var(--secondary-bg); border: 1px solid var(--secondary-accent-color); }
 */
-
-/* Styles for the iframe container as per new plan */
+/* Styles for the iframe container are removed as the container is removed */
+/*
 #vip-iframe-container {
     width: 100%;
-    /* Adjust height as needed, perhaps relative to viewport or parent elements like header, title, access area */
-    height: calc(100vh - 200px); /* Example: (Full viewport height) - (approximate height of other elements like header, h2, p, vip-access-area) */
-    border: 1px solid var(--border-color); /* Optional border */
+    height: calc(100vh - 200px);
+    border: 1px solid var(--border-color);
     border-radius: 8px;
-    overflow: hidden; /* Ensures iframe corners are rounded if container has border-radius */
-    /* display: none; /* Initial state handled by JS, but CSS can default if needed */
+    overflow: hidden;
 }
 
 #vip-iframe-container iframe {
@@ -1205,8 +1188,9 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
     height: 100%;
     border: none;
 }
+*/
 
-/* Commenting out old #vip-tools-container and related styles */
+/* Commenting out old #vip-tools-container and related styles - REMOVED as parent is gone */
 /*
 #vip-tools-container { text-align: left; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
 */

@@ -1,7 +1,7 @@
 {
-  "name": "github-deployer",
+  "name": "rtm-site",
   "version": "1.0.0",
-  "description": "A service to deploy GitHub repositories",
+  "description": "site web cree par rtm tafitaniaina",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

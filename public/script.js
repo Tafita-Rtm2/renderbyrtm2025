@@ -64,11 +64,32 @@ document.addEventListener('DOMContentLoaded', () => {
     window.showView = function(viewIdToShow, bypassAdminCheck = false) {
         if (viewIdToShow === 'admin-panel-view' && !bypassAdminCheck) {
             const enteredCode = prompt('Enter admin code:');
-            if (enteredCode === '121206') {
-                // Call showView again, but this time bypass the check
-                window.showView('admin-panel-view', true);
-            } else if (enteredCode !== null && enteredCode !== "") {
-                alert('Invalid admin code.');
+            if (enteredCode) {
+                fetch('/api/verify-admin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ adminCode: enteredCode }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.showView('admin-panel-view', true);
+                    } else {
+                        alert(data.message || 'Invalid admin code.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error verifying admin code:', error);
+                    alert('Error verifying admin code. Please try again.');
+                });
+            } else if (enteredCode === null) {
+                // User cancelled the prompt, do nothing or show a message
+                // console.log('Admin code prompt cancelled.');
+            } else {
+                // User entered empty string
+                alert('Admin code is required to access this panel.');
             }
             return; // Stop further execution in this call
         }

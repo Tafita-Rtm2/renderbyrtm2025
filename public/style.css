@@ -330,11 +330,11 @@ body:not(.dark-mode) .theme-switch input:checked + .slider:before {
     padding: 0 !important; /* Chat view manages its own internal padding for messages area */
     border-radius: 10px !important;
     /* background-color already set by .view, if #ai-chat-view needs specific bg, set it here */
-    display: flex !important;
+    display: flex;
     flex-direction: column !important;
     height: calc(100vh - var(--top-bar-height) - 30px) !important;
-    visibility: visible !important;
-    opacity: 1 !important;
+    visibility: visible;
+    opacity: 1;
 }
 
 #home-view {
@@ -541,7 +541,7 @@ body:not(.dark-mode) .theme-switch input:checked + .slider:before {
 
 /* AI CHAT */
 #ai-chat-view {
-    display: flex !important;
+    display: flex;
     flex-direction: column !important;
     height: calc(100vh - var(--top-bar-height) - 30px) !important;
     padding:0 !important;
@@ -549,8 +549,8 @@ body:not(.dark-mode) .theme-switch input:checked + .slider:before {
     background-color: var(--secondary-bg) !important;
     border-radius: 10px !important;
     overflow: hidden !important;
-    visibility: visible !important;
-    opacity: 1 !important;
+    visibility: visible;
+    opacity: 1;
 }
 
 #chat-messages-area {
@@ -686,15 +686,15 @@ body:not(.dark-mode) .theme-switch input:checked + .slider:before {
 }
 
 #chat-input-bar {
-    display: flex !important;
+    display: flex;
     align-items: center !important;
     padding: 15px !important;
     background-color: var(--primary-bg) !important;
     border-top: 1px solid var(--surface-color) !important;
     width: 100% !important;
     box-sizing: border-box !important;
-    visibility: visible !important;
-    opacity: 1 !important;
+    visibility: visible;
+    opacity: 1;
     height: auto !important;
     min-height: 70px !important;
     position: relative !important;
@@ -703,25 +703,25 @@ body:not(.dark-mode) .theme-switch input:checked + .slider:before {
 }
 
 .web-search-container {
-    display: flex !important;
+    display: flex;
     align-items: center !important;
     margin-right: 15px !important;
     font-size: 0.9em !important;
-    visibility: visible !important;
-    opacity: 1 !important;
+    visibility: visible;
+    opacity: 1;
 }
 .web-search-container .web-search-label,
 .web-search-container .switch {
-    visibility: visible !important;
-    opacity: 1 !important;
-    display: inline-block !important;
+    visibility: visible;
+    opacity: 1;
+    display: inline-block;
 }
 .web-search-container .switch input {
-    opacity: 1 !important; /* Make the checkbox itself part of the visible logic if needed for interaction */
+    opacity: 1; /* Make the checkbox itself part of the visible logic if needed for interaction */
 }
  .web-search-container .slider { /* Ensure slider part of switch is visible */
-    visibility: visible !important;
-    opacity: 1 !important;
+    visibility: visible;
+    opacity: 1;
 }
 
 
@@ -735,10 +735,10 @@ body:not(.dark-mode) .theme-switch input:checked + .slider:before {
     font-family: var(--font-primary) !important;
     margin-right: 10px !important;
     outline: none !important;
-    display: block !important;
+    display: block;
     min-width: 50px !important;
-    visibility: visible !important;
-    opacity: 1 !important;
+    visibility: visible;
+    opacity: 1;
     min-height: 48px !important;
     height: 48px !important;
     position: relative !important;
@@ -753,12 +753,12 @@ body:not(.dark-mode) .theme-switch input:checked + .slider:before {
     width: 48px !important;
     height: 48px !important;
     border-radius: 50% !important;
-    display: flex !important;
+    display: flex;
     align-items: center !important;
     justify-content: center !important;
     cursor: pointer !important;
-    visibility: visible !important;
-    opacity: 1 !important;
+    visibility: visible;
+    opacity: 1;
     padding: 0 !important;
     flex-shrink: 0 !important;
     position: relative !important;

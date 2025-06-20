@@ -6,31 +6,56 @@
 }
 
 :root {
-    --primary-bg: #0a0f1e; /* Darker space blue */
-    --secondary-bg: #1a1a2e; /* Existing dark blue */
-    --surface-color: #1f1f38; /* For cards, modals */
-    --accent-color: #00ffff; /* Cyan */
-    --primary-accent-color: #00c2cb; /* Teal */
-    --secondary-accent-color: #e94560; /* Magenta/Red */
-    --action-color: #ff9900;  /* Vibrant Orange */
-    --highlight-yellow: #ffd700; /* Gold/Yellow for highlights */
-    --success-green: #39FF14; /* Neon Green for success/positive */
+    /* Light Theme Variables (Original Dark Theme Inverted for Light) */
+    --primary-bg: #F0F2F5; /* Light Gray */
+    --secondary-bg: #FFFFFF; /* White */
+    --surface-color: #FFFFFF; /* White for cards */
+    --text-color: #1C1E21; /* Dark Gray */
+    --text-muted-color: #606770; /* Medium Gray */
+    --border-color: #CED0D4; /* Light Border Gray */
+    --accent-color: #1877F2; /* Facebook Blue (example) */
+    --primary-accent-color: #166FE5; /* Darker Facebook Blue */
+
+    /* Shared accent colors (can be overridden in dark-mode if needed) */
+    --secondary-accent-color: #E94560; /* Magenta/Red */
+    --action-color: #FF9900;  /* Vibrant Orange */
+    --highlight-yellow: #FFD700; /* Gold/Yellow */
+    --success-green: #4CAF50; /* Softer Green for light mode success */
     --info-blue: #007bff; /* Standard Info Blue */
-    --text-color: #e0e0e0;
-    --text-muted-color: #a0a0a0;
-    --border-color: var(--accent-color); /* Default border, can be overridden */
+
     --icon-fill-default: var(--accent-color);
-    --icon-fill-hover: #ffffff;
+    --icon-fill-hover: var(--text-color); /* Icons on hover in light mode */
     --font-primary: 'Exo 2', sans-serif;
 
     --top-bar-height: 60px;
     --bottom-app-bar-height: 70px; /* For home page app icons */
 }
 
+body.dark-mode {
+    --primary-bg: #0a0f1e; /* Darker space blue */
+    --secondary-bg: #1a1a2e; /* Existing dark blue */
+    --surface-color: #1f1f38; /* For cards, modals */
+    --text-color: #e0e0e0; /* Light text for dark mode */
+    --text-muted-color: #a0a0a0; /* Muted light text */
+    --border-color: #00c2cb; /* Teal border for dark mode, distinct from accent */
+    --accent-color: #00ffff; /* Cyan */
+    --primary-accent-color: #00c2cb; /* Teal */
+
+    /* Dark mode specific accents if needed, or inherit from :root */
+    --secondary-accent-color: #e94560; /* Keep magenta/red */
+    --action-color: #ff9900; /* Keep orange */
+    --highlight-yellow: #ffd700; /* Keep gold */
+    --success-green: #39FF14; /* Neon Green for dark mode success */
+    --info-blue: #007bff; /* Keep info blue */
+
+    --icon-fill-default: var(--accent-color); /* Cyan icons in dark mode */
+    --icon-fill-hover: #ffffff; /* White icon hover in dark mode */
+}
+
 body {
     font-family: var(--font-primary);
-    background-color: var(--primary-bg);
-    color: var(--text-color);
+    background-color: var(--primary-bg); /* Use variable */
+    color: var(--text-color);           /* Use variable */
     margin: 0;
     padding-top: var(--top-bar-height); /* Space for fixed top bar */
     display: flex;
@@ -38,7 +63,7 @@ body {
     min-height: 100vh;
     box-sizing: border-box;
     overflow-x: hidden; /* Prevent horizontal scroll */
-    /* transition: background-color 0.3s ease; /* Example for theme changes if ever implemented */
+    transition: background-color 0.3s ease, color 0.3s ease; /* Add transition */
 }
 
 a {
@@ -176,6 +201,88 @@ h4 { font-size: 1.2em; } /* e.g., Sub-section titles or item titles */
     z-index: 1000;
     box-sizing: border-box;
 }
+
+#theme-toggle-container {
+    display: flex;
+    align-items: center;
+    margin-right: 20px; /* Adjust spacing as needed */
+}
+
+.theme-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px; /* Width of the switch */
+    height: 26px; /* Height of the switch */
+}
+
+.theme-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.theme-switch .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc; /* Default slider background for light mode */
+    transition: .4s;
+    border-radius: 26px; /* Rounded slider */
+}
+
+.theme-switch .slider:before {
+    position: absolute;
+    content: "";
+    height: 20px; /* Size of the knob */
+    width: 20px;  /* Size of the knob */
+    left: 3px;    /* Position of the knob */
+    bottom: 3px;  /* Position of the knob */
+    background-color: var(--surface-color); /* Knob color for light mode */
+    transition: .4s;
+    border-radius: 50%;
+}
+
+/* Styles for the switch when dark mode is active */
+body.dark-mode .theme-switch .slider {
+    background-color: #555; /* Slider background when dark mode is on, but toggle is for light */
+}
+body.dark-mode .theme-switch .slider:before {
+    background-color: #ccc; /* Knob color for dark mode's "light" setting */
+}
+body.dark-mode .theme-switch input:checked + .slider {
+    background-color: var(--accent-color); /* Slider background when dark mode is on AND toggle is for dark */
+}
+body.dark-mode .theme-switch input:checked + .slider:before {
+    background-color: var(--primary-bg); /* Knob color for dark mode's "dark" setting (e.g. matches dark bg) */
+}
+
+/* Styles for the switch when light mode is active (default) */
+body:not(.dark-mode) .theme-switch .slider {
+    background-color: #ccc; /* Slider background for light mode, "light" setting */
+}
+body:not(.dark-mode) .theme-switch .slider:before {
+    background-color: white; /* Knob color for light mode, "light" setting */
+}
+body:not(.dark-mode) .theme-switch input:checked + .slider {
+    background-color: var(--accent-color); /* This should not happen if JS is correct, dark mode is applied via class */
+                                         /* However, if checkbox is checked without JS, this is the visual */
+}
+body:not(.dark-mode) .theme-switch input:checked + .slider:before {
+    background-color: var(--primary-bg); /* Knob for "dark" setting in light mode context (if possible) */
+}
+
+
+.theme-switch input:focus + .slider {
+    box-shadow: 0 0 1px var(--accent-color); /* Focus outline using current accent color */
+}
+
+.theme-switch input:checked + .slider:before {
+    transform: translateX(24px); /* How far the knob moves */
+}
+
 #top-left-menu-icon-container .icon-menu-main {
     cursor: pointer;
 }
@@ -279,12 +386,12 @@ h4 { font-size: 1.2em; } /* e.g., Sub-section titles or item titles */
 }
 .home-app-btn:hover {
     transform: translateY(-3px);
-    box-shadow: 0 6px 12px rgba(0, 255, 255, 0.2);
+    box-shadow: 0 6px 12px var(--accent-color); /* Use accent color with alpha for shadow */
     background-color: var(--primary-accent-color);
-    color: var(--primary-bg);
+    color: var(--secondary-bg); /* Text color on hover, typically contrast to button bg */
 }
 .home-app-btn:hover .icon {
-    fill: var(--primary-bg);
+    fill: var(--secondary-bg); /* Icon color on hover */
 }
 
 
@@ -391,14 +498,14 @@ h4 { font-size: 1.2em; } /* e.g., Sub-section titles or item titles */
     border-color: var(--secondary-accent-color);
 }
 #private-message-float-btn:hover {
-    background-color: #ff6b81;
-    border-color: #ff6b81;
+    background-color: var(--action-color); /* Example: use action color for hover */
+    border-color: var(--action-color);
 }
 #private-message-float-btn .icon {
-    fill: var(--text-color);
+    fill: var(--secondary-bg); /* Icon color on non-hovered special button */
 }
 #private-message-float-btn:hover .icon {
-    fill: #ffffff;
+    fill: var(--secondary-bg); /* Icon color on hovered special button */
 }
 
 /* --- EXISTING FEATURE STYLES (MERGED) --- */
@@ -521,12 +628,12 @@ h4 { font-size: 1.2em; } /* e.g., Sub-section titles or item titles */
 
 .chat-message-wrapper.user .chat-bubble {
     background-color: var(--primary-accent-color) !important;
-    color: #ffffff !important;
+    color: var(--secondary-bg) !important; /* Text on user bubble (e.g. white) */
     border-bottom-right-radius: 6px !important;
 }
-.chat-message-wrapper.user .chat-bubble strong { color: #fff !important; }
+.chat-message-wrapper.user .chat-bubble strong { color: var(--secondary-bg) !important; }
 .chat-message-wrapper.user .chat-bubble h3,
-.chat-message-wrapper.user .chat-bubble h4 { color: #f0f0f0 !important; }
+.chat-message-wrapper.user .chat-bubble h4 { color: var(--secondary-bg) !important; }
 
 
 .chat-message-wrapper.ai .chat-bubble {
@@ -658,7 +765,7 @@ h4 { font-size: 1.2em; } /* e.g., Sub-section titles or item titles */
     border: none !important;
 }
 #chat-send-button:hover {
-    background-color: #ffad33 !important; /* Lighter orange for hover */
+    background-color: var(--primary-accent-color) !important; /* Example: Use primary accent for hover */
 }
 #chat-send-button:disabled {
     background-color: var(--text-muted-color) !important;
@@ -696,13 +803,13 @@ h4 { font-size: 1.2em; } /* e.g., Sub-section titles or item titles */
     fill: var(--primary-bg); /* For --accent-color or --action-color background */
 }
 .btn-admin-delete .icon {
-    fill: #ffffff; /* For --secondary-accent-color background */
+    fill: var(--secondary-bg); /* For --secondary-accent-color background */
 }
 
 #story-listen-button .icon,
 #story-translate-button .icon,
-#story-download-button-text .icon { /* Assuming these use default icon button styles or themed like VIP controls */
-    /* fill: var(--text-color); /* Or specific if their button bg changes */
+#story-download-button-text .icon {
+    fill: var(--secondary-bg); /* Assuming these buttons have a colored background */
 }
 
 
@@ -725,8 +832,8 @@ input[type="password"]:focus,
 input[type="email"]:focus,
 textarea:focus {
     outline: none;
-    border-color: var(--action-color); /* Orange border on focus */
-    box-shadow: 0 0 8px rgba(255, 153, 0, 0.6); /* Orange glow (using direct RGB for action-color #ff9900) */
+    border-color: var(--action-color);
+    box-shadow: 0 0 8px var(--action-color); /* Use variable for glow */
 }
 textarea {
     resize: vertical;
@@ -823,7 +930,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
     max-height: calc(65vh - 40px); /* Adjusted for padding */
     border-radius: 10px; /* Rounded corners for the image */
     object-fit: contain;
-    box-shadow: 0 5px 20px rgba(0, 255, 255, 0.25); /* More pronounced shadow */
+    box-shadow: 0 5px 20px var(--accent-color); /* Use variable with alpha for shadow */
 }
 .image-loading, .image-error {
     font-style: italic;
@@ -1013,7 +1120,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 #story-vip-controls button:hover {
     opacity: 0.85;
     transform: translateY(-1px);
-    background-color: var(--secondary-accent-color); /* Keep bg on hover for these */
+    background-color: var(--action-color); /* Example: use action color for hover */
 }
 
 #story-history-area {
@@ -1071,15 +1178,15 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 
 /* Remove styles for the old vip-access-area as it's deleted from HTML */
 /*
-#vip-access-area { background-color: var(--surface-color); padding: 30px; border-radius: 10px; max-width: 400px; margin: 0 auto 30px auto; box-shadow: 0 0 20px rgba(0, 255, 255, 0.15); }
+#vip-access-area { background-color: var(--surface-color); padding: 30px; border-radius: 10px; max-width: 400px; margin: 0 auto 30px auto; box-shadow: 0 0 20px var(--accent-color); }
 #vip-access-area p { margin-top: 0; margin-bottom: 10px; color: var(--text-color); }
 #vip-code-input { width: calc(100% - 24px); padding: 12px; margin-bottom: 20px; background-color: var(--primary-bg); border: 1px solid var(--border-color); border-radius: 5px; color: var(--text-color); font-family: var(--font-primary); text-align: center; font-size: 1.1em; }
 #vip-code-input:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 8px var(--accent-color); }
 #vip-code-submit { background-color: var(--secondary-accent-color); color: var(--text-color); border: none; padding: 12px 25px; border-radius: 5px; font-family: var(--font-primary); font-weight: bold; cursor: pointer; transition: background-color 0.3s ease, transform 0.2s ease; text-transform: uppercase; letter-spacing: 1px; width: 100%; }
-#vip-code-submit:hover { background-color: #ff6b81; transform: translateY(-2px); }
+#vip-code-submit:hover { background-color: var(--action-color); transform: translateY(-2px); }
 #vip-status-message { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: 500; }
-.vip-status-success { background-color: rgba(0, 255, 127, 0.1); color: #00ff7f; border: 1px solid #00ff7f; }
-.vip-status-error { background-color: rgba(255, 0, 0, 0.1); color: #ff4d4d; border: 1px solid #ff4d4d; }
+.vip-status-success { background-color: var(--success-green); color: var(--primary-bg); border: 1px solid var(--success-green); }
+.vip-status-error { background-color: var(--secondary-accent-color); color: var(--secondary-bg); border: 1px solid var(--secondary-accent-color); }
 */
 
 /* Styles for the iframe container as per new plan */
@@ -1203,7 +1310,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 #vip-tools-container h3 { color: var(--primary-accent-color); margin-top: 20px; margin-bottom: 15px; grid-column: 1 / -1; border-bottom: 1px solid var(--surface-color); padding-bottom: 10px; }
 #vip-tools-container h3:first-of-type { margin-top: 0; }
 .vip-tool { background-color: var(--surface-color); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 2px 10px rgba(0,0,0,0.2); transition: transform 0.3s ease, box-shadow 0.3s ease; display: flex; flex-direction: column; gap: 15px; }
-.vip-tool:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0, 255, 255, 0.2); }
+.vip-tool:hover { transform: translateY(-5px); box-shadow: 0 5px 15px var(--accent-color); } /* Use variable with alpha */
 .vip-tool h4 { color: var(--accent-color); margin-top: 0; margin-bottom: 10px; }
 .vip-tool > p { color: var(--text-muted-color); font-size: 0.9em; line-height: 1.5; }
 .vip-tool p:first-of-type { margin-bottom: 5px; }
@@ -1418,7 +1525,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 .admin-reply-input:focus {
     outline: none;
     border-color: var(--secondary-accent-color); /* Admin accent on focus */
-    box-shadow: 0 0 8px rgba(var(--secondary-accent-color), 0.5);
+    box-shadow: 0 0 8px var(--secondary-accent-color); /* Use variable with alpha */
 }
 
 .admin-actions button { /* Base for admin action buttons */
@@ -1442,10 +1549,10 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 
 .btn-admin-delete {
     background-color: var(--secondary-accent-color); /* Reddish for delete */
-    color: #ffffff;
+    color: var(--secondary-bg); /* Text on delete button */
 }
 .btn-admin-delete:hover {
-    background-color: #d0384f; /* Darker red */
+    background-color: var(--action-color); /* Darker red or action color for hover */
     transform: translateY(-1px);
 }
 
@@ -1487,7 +1594,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
     font-size: 0.9em;
     margin-top: 5px;
     padding: 8px;
-    background-color: rgba(233, 69, 96, 0.1); /* Light red background */
+    background-color: var(--surface-color); /* Use surface color for background */
     border: 1px dashed var(--secondary-accent-color);
     border-radius: 4px;
     display: block; /* Or inline-block depending on context */
@@ -1599,7 +1706,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 }
 .feature-highlight-item:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 15px rgba(0, 255, 255, 0.2); /* Using --accent-color (Cyan) with transparency */
+    box-shadow: 0 8px 15px var(--accent-color); /* Using --accent-color (Cyan) with transparency */
 }
 
 .feature-highlight-item .feature-icon {

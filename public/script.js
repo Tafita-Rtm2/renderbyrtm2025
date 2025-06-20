@@ -1,4 +1,45 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const themeCheckbox = document.getElementById('theme-checkbox');
+    const bodyElement = document.body;
+
+    function applyTheme(theme) {
+        if (theme === 'dark') {
+            bodyElement.classList.add('dark-mode');
+            if (themeCheckbox) themeCheckbox.checked = true;
+        } else {
+            bodyElement.classList.remove('dark-mode');
+            if (themeCheckbox) themeCheckbox.checked = false;
+        }
+    }
+
+    function toggleTheme() {
+        if (themeCheckbox && bodyElement) {
+            if (themeCheckbox.checked) {
+                applyTheme('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                applyTheme('light');
+                localStorage.setItem('theme', 'light');
+            }
+        }
+    }
+
+    if (themeCheckbox) {
+        themeCheckbox.addEventListener('change', toggleTheme);
+    }
+
+    // Load saved theme or set based on preference
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+        applyTheme(savedTheme);
+    } else {
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            applyTheme('dark');
+        } else {
+            applyTheme('light'); // Default to light if no preference or saved theme
+        }
+    }
+
     // AI CHAT ELEMENT SELECTION (CRITICAL DIAGNOSTIC LOGS)
     const chatInputBarForCheck = document.getElementById('chat-input-bar');
     const chatInputFieldForCheck = document.getElementById('chat-input-field');
@@ -977,45 +1018,41 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // --- END OF STORY GENERATOR INTERFACE LOGIC ---
 
-    // --- VIP AREA LOGIC (WITH ACCESS CODE) ---
-    const HARDCODED_VIP_CODE = "VIP123";
+    // --- VIP AREA LOGIC ---
     const vipAccessArea = document.getElementById('vip-access-area');
-    const vipCodeInput = document.getElementById('vip-code-input');
-    const vipCodeSubmit = document.getElementById('vip-code-submit');
-    const vipStatusMessage = document.getElementById('vip-status-message');
+    const vipCodeInput = document.getElementById('vip-code-input'); // Kept for selector if HTML isn't removed yet
+    const vipCodeSubmit = document.getElementById('vip-code-submit'); // Kept for selector
+    const vipStatusMessage = document.getElementById('vip-status-message'); // Kept for selector
     const vipIframeContainer = document.getElementById('vip-iframe-container');
 
-    function handleVipAccess() {
-        if (!vipCodeInput || !vipAccessArea || !vipIframeContainer || !vipStatusMessage) {
-            console.error("VIP access elements not found.");
+    function handleVipAccess() { // This function is now simplified and might even be redundant if checkInitialVipStatus does all the work
+        if (!vipAccessArea || !vipIframeContainer) {
+            console.error("VIP access elements not found in handleVipAccess.");
             return;
         }
-        const enteredCode = vipCodeInput.value;
-        if (enteredCode === HARDCODED_VIP_CODE) {
-            vipAccessArea.style.display = 'none';
-            vipIframeContainer.innerHTML = ''; // Clear previous iframe if any
-            const iframe = document.createElement('iframe');
-            iframe.src = 'https://sitebymegg.onrender.com';
-            iframe.style.width = '100%';
-            iframe.style.height = '100%'; // Container controls height
-            iframe.style.border = 'none';
-            vipIframeContainer.appendChild(iframe);
-            vipIframeContainer.style.display = 'block';
 
-            localStorage.setItem('isUserVIP', 'true');
-            vipStatusMessage.textContent = 'Access granted! Entering VIP Lounge...';
-            vipStatusMessage.style.color = 'var(--success-green)';
+        // Directly show iframe and hide access area
+        if (vipAccessArea) vipAccessArea.style.display = 'none';
+        vipIframeContainer.innerHTML = ''; // Clear previous iframe if any
+        const iframe = document.createElement('iframe');
+        iframe.src = 'https://sitebymegg.onrender.com';
+        iframe.style.width = '100%';
+        iframe.style.height = '100%'; // Container controls height
+        iframe.style.border = 'none';
+        vipIframeContainer.appendChild(iframe);
+        vipIframeContainer.style.display = 'block';
+
+        localStorage.setItem('isUserVIP', 'true'); // Set VIP status
+
+        if (vipStatusMessage) { // Briefly show loading, then hide
+            vipStatusMessage.textContent = 'Loading VIP area...';
+            vipStatusMessage.style.color = 'var(--text-color)'; // Use a neutral color
             vipStatusMessage.style.display = 'block';
-            setTimeout(() => { vipStatusMessage.style.display = 'none'; }, 3000);
-        } else {
-            vipIframeContainer.innerHTML = '';
-            vipIframeContainer.style.display = 'none';
-            localStorage.setItem('isUserVIP', 'false');
-            vipStatusMessage.textContent = 'Invalid VIP Code. Please try again.';
-            vipStatusMessage.style.color = 'var(--error-red)';
-            vipStatusMessage.style.display = 'block';
-            vipCodeInput.focus();
+            setTimeout(() => {
+                if (vipStatusMessage) vipStatusMessage.style.display = 'none';
+            }, 1500);
         }
+
         if (typeof updateStoryVipControlsVisibility === 'function') {
             updateStoryVipControlsVisibility();
         }
@@ -1023,36 +1060,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function checkInitialVipStatus() {
         if (!vipAccessArea || !vipIframeContainer) {
-            console.error("VIP initial status elements not found.");
+            console.error("VIP initial status elements not found in checkInitialVipStatus.");
             return;
         }
-        const isUserVIP = localStorage.getItem('isUserVIP') === 'true';
-        if (isUserVIP) {
-            vipAccessArea.style.display = 'none';
-            vipIframeContainer.innerHTML = ''; // Clear previous iframe
-            const iframe = document.createElement('iframe');
-            iframe.src = 'https://sitebymegg.onrender.com';
-            iframe.style.width = '100%';
-            iframe.style.height = '100%';
-            iframe.style.border = 'none';
-            vipIframeContainer.appendChild(iframe);
-            vipIframeContainer.style.display = 'block';
-        } else {
-            vipAccessArea.style.display = 'block'; // Or 'flex' if it's a flex container
-            vipIframeContainer.innerHTML = '';
-            vipIframeContainer.style.display = 'none';
-        }
+
+        // Always assume user wants to see VIP content when this function is called.
+        // Hide the code input area and show the iframe container.
+        if (vipAccessArea) vipAccessArea.style.display = 'none';
+
+        vipIframeContainer.innerHTML = ''; // Clear previous iframe if any to ensure it reloads if necessary
+        const iframe = document.createElement('iframe');
+        iframe.src = 'https://sitebymegg.onrender.com';
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.style.border = 'none';
+        vipIframeContainer.appendChild(iframe);
+        vipIframeContainer.style.display = 'block';
+
+        localStorage.setItem('isUserVIP', 'true'); // Set VIP status
+
         if (vipStatusMessage) vipStatusMessage.style.display = 'none'; // Clear any previous messages
+
         if (typeof updateStoryVipControlsVisibility === 'function') {
             updateStoryVipControlsVisibility();
         }
     }
 
+    // Remove event listeners for vipCodeSubmit and vipCodeInput as they are no longer primary
+    // The logic is now mostly handled by checkInitialVipStatus when showView('vip-view') is called.
+    // However, if the HTML elements for code input are not removed, clicking them might still call handleVipAccess.
+    // For a cleaner approach, if those HTML elements are removed, these listeners can also be removed.
+    // For now, handleVipAccess is modified to grant access directly.
     if (vipCodeSubmit) {
-        vipCodeSubmit.addEventListener('click', handleVipAccess);
+        vipCodeSubmit.addEventListener('click', handleVipAccess); // Will now grant access directly
     }
     if (vipCodeInput) {
-        vipCodeInput.addEventListener('keypress', (e) => {
+        vipCodeInput.addEventListener('keypress', (e) => { // Will now grant access directly
             if (e.key === 'Enter') {
                 handleVipAccess();
             }

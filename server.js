@@ -23,82 +23,6 @@ const storage = multer.diskStorage({
     }
 });
 
-// --- GPT-4o Latest Chat API Route (similar to Gemini for file handling) ---
-app.post('/api/gpt4o-chat', upload.single('imageFile'), async (req, res) => {
-    const { q, uid } = req.body;
-    let tempImagePath = null;
-    let publicImageUrl = null;
-
-    if (req.file) {
-        tempImagePath = req.file.path;
-        // Construct public URL for the temporarily saved image
-        const APP_BASE_URL = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
-        publicImageUrl = new URL(`/uploads/gemini_temp/${req.file.filename}`, APP_BASE_URL).toString();
-        console.log(`GPT-4o: Image temporarily saved at ${tempImagePath}, accessible via ${publicImageUrl}`);
-    }
-
-    if (!uid) {
-        if (tempImagePath) fs.unlinkSync(tempImagePath); // Clean up
-        return res.status(400).json({ error: 'Parameter "uid" is required.' });
-    }
-
-    const questionText = q ? q.trim() : "";
-    if (questionText === "" && !publicImageUrl) {
-        if (tempImagePath) fs.unlinkSync(tempImagePath); // Clean up
-        return res.status(400).json({ error: 'Either a question ("q") or an image file is required for GPT-4o chat.' });
-    }
-
-    let fullApiUrl = `${GPT4O_LATEST_API_URL}?uid=${encodeURIComponent(uid)}&apikey=${GPT4O_LATEST_API_KEY}`;
-    if (questionText) {
-        fullApiUrl += `&ask=${encodeURIComponent(questionText)}`; // API uses 'ask' not 'q'
-    }
-    if (publicImageUrl) {
-        fullApiUrl += `&imageUrl=${encodeURIComponent(publicImageUrl)}`;
-    }
-    // console.log("Calling GPT-4o API with URL (first 200 chars):", fullApiUrl.substring(0, 200));
-
-
-    try {
-        const apiResponse = await fetch(fullApiUrl);
-        const responseText = await apiResponse.text();
-
-        if (tempImagePath) {
-            fs.unlink(tempImagePath, (err) => {
-                if (err) console.error("Error deleting temporary image file for GPT-4o:", err);
-                else console.log("Temporary image file for GPT-4o deleted:", tempImagePath);
-            });
-        }
-
-        if (!apiResponse.ok) {
-            let errorJson = { error: `External GPT-4o API Error: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
-            try { errorJson = JSON.parse(responseText); if(!errorJson.error && !errorJson.message) { errorJson.error = `External GPT-4o API Error: ${apiResponse.status} ${apiResponse.statusText}`; } } catch (e) { /* Not JSON */ }
-            return res.status(apiResponse.status).json(errorJson);
-        }
-
-        let data;
-        try { data = JSON.parse(responseText); }
-        catch (e) {
-            console.warn('GPT-4o API response was not JSON, but status was OK. Response text:', responseText);
-            return res.status(500).json({ error: 'Failed to parse response from GPT-4o API.', details: responseText });
-        }
-
-        if (data && data.response) { // Expecting { "author": "Kaizenji", "response": "..." }
-            res.json({ author: data.author || "GPT-4o (Kaizenji)", response: data.response });
-        } else {
-            return res.status(500).json({ error: 'Unexpected response structure from GPT-4o API.', details: data });
-        }
-
-    } catch (error) {
-        console.error('Server error while calling GPT-4o API:', error);
-        if (tempImagePath && fs.existsSync(tempImagePath)) {
-            fs.unlink(tempImagePath, (err) => {
-                if (err) console.error("Error deleting temporary image file for GPT-4o on error:", err);
-            });
-        }
-        return res.status(500).json({ error: 'Server error while processing GPT-4o chat request.' });
-    }
-});
-
 const upload = multer({
     storage: storage,
     limits: { fileSize: 10 * 1024 * 1024 } // Limit file size to 10MB
@@ -116,8 +40,6 @@ const CHAT_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
 const IMAGE_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
 const GEMINI_API_URL = 'https://kaiz-apis.gleeze.com/api/gemini-vision';
 const GEMINI_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6'; // Votre clé API fournie
-const GPT4O_LATEST_API_URL = 'https://kaiz-apis.gleeze.com/api/gpt4o-latest';
-const GPT4O_LATEST_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6'; // Même clé API
 
 // MongoDB Connection
 const mongoUri = "mongodb+srv://rtmtafita:tafitaniaina1206@rtmchat.pzebpqh.mongodb.net/?retryWrites=true&w=majority&appName=rtmchat";

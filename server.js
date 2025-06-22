@@ -10,6 +10,8 @@ const PORT = process.env.PORT || 3000;
 const WEATHER_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
 const CHAT_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
 const IMAGE_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
+const GEMINI_API_URL = 'https://kaiz-apis.gleeze.com/api/gemini-vision';
+const GEMINI_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6'; // Votre clé API fournie
 
 // MongoDB Connection
 const mongoUri = "mongodb+srv://rtmtafita:tafitaniaina1206@rtmchat.pzebpqh.mongodb.net/?retryWrites=true&w=majority&appName=rtmchat";
@@ -224,6 +226,67 @@ app.post('/api/chat', async (req, res) => {
         }
     }
 });
+
+// --- Gemini Chat API Route ---
+app.post('/api/gemini-chat', async (req, res) => {
+    const { q, uid, imageUrl } = req.body;
+
+    if (!q || !uid) {
+        return res.status(400).json({ error: 'Parameters "q" (question) and "uid" are required.' });
+    }
+
+    // Construct the API URL for Gemini
+    // imageUrl is optional
+    let fullApiUrl = `${GEMINI_API_URL}?q=${encodeURIComponent(q)}&uid=${encodeURIComponent(uid)}&apikey=${GEMINI_API_KEY}`;
+    if (imageUrl) {
+        fullApiUrl += `&imageUrl=${encodeURIComponent(imageUrl)}`;
+    }
+
+    try {
+        const apiResponse = await fetch(fullApiUrl);
+        const responseText = await apiResponse.text(); // Get text first for better error handling
+
+        if (!apiResponse.ok) {
+            let errorJson = {
+                error: `External Gemini API Error: ${apiResponse.status} ${apiResponse.statusText}`,
+                details: responseText
+            };
+            try {
+                errorJson = JSON.parse(responseText);
+                if(!errorJson.error && !errorJson.message) {
+                    errorJson.error = `External Gemini API Error: ${apiResponse.status} ${apiResponse.statusText}`;
+                }
+            } catch (e) { /* Not JSON, use the text as detail */ }
+            return res.status(apiResponse.status).json(errorJson);
+        }
+
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (e) {
+            // If the response is not JSON but was successful (e.g. plain text success message)
+            // This case might not be expected for this specific API but is a safeguard.
+            // Based on the example, a JSON response is expected.
+            console.warn('Gemini API response was not JSON, but status was OK. Response text:', responseText);
+            return res.status(500).json({ error: 'Failed to parse response from Gemini API.', details: responseText });
+        }
+
+        // Based on the provided example: { "author": "Kaizenji", "response": "Bonjour, Melchior ! ..." }
+        if (data && data.response) {
+            res.json({
+                author: data.author || "Gemini (Kaizenji)", // Default author if not provided
+                response: data.response
+            });
+        } else {
+            return res.status(500).json({ error: 'Unexpected response structure from Gemini API.', details: data });
+        }
+
+    } catch (error) {
+        console.error('Server error while calling Gemini API:', error);
+        return res.status(500).json({ error: 'Server error while processing Gemini chat request.' });
+    }
+});
+
 
 // --- Image Generation API Route ---
 app.post('/api/generate-image', async (req, res) => { /* ... existing unchanged code ... */

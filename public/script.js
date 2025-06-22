@@ -215,6 +215,23 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (viewIdToShow === 'comments-view') { // Added for dedicated comments page
             if (typeof loadAllCommentsPage === 'function') loadAllCommentsPage();
         }
+        else if (viewIdToShow === 'gemini-chat-view') {
+            // Initialize Gemini Chat specific elements or load history if needed
+            console.log('[GEMINI CHAT DIAGNOSTIC] showView called for gemini-chat-view.');
+            if (typeof loadGeminiChatHistory === "function") { // Will be defined later
+                loadGeminiChatHistory();
+            }
+            // Ensure input bar elements are correctly displayed for Gemini chat
+            const geminiChatInputBar = document.getElementById('gemini-chat-input-bar');
+            if (geminiChatInputBar) {
+                geminiChatInputBar.style.display = 'flex'; // Or its default display style
+            }
+            const geminiChatView = document.getElementById('gemini-chat-view');
+             if (geminiChatView) { // Ensure the view itself is flex if it needs to be
+                geminiChatView.style.display = 'flex';
+            }
+        }
+
         // Track view visit at the end of showView, after all specific view logic
         if(typeof trackActivity === 'function') trackActivity('view_visit', { view: viewIdToShow });
     };
@@ -881,6 +898,17 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentGeneratedStoryContent = "";
     let currentGeneratedStoryTheme = "";
 
+    // --- GEMINI CHAT ELEMENTS ---
+    const geminiChatMessagesArea = document.getElementById('gemini-chat-messages-area');
+    const geminiChatInputField = document.getElementById('gemini-chat-input-field');
+    const geminiChatSendButton = document.getElementById('gemini-chat-send-button');
+    const geminiChatImageUpload = document.getElementById('gemini-chat-image-upload');
+    const geminiChatAttachImageButton = document.getElementById('gemini-chat-attach-image-button');
+    const geminiImagePreviewContainer = document.getElementById('gemini-image-preview-container');
+    const geminiChatImageUrlField = document.getElementById('gemini-chat-image-url-field'); // Temporary field for image URL
+    let currentGeminiSelectedFile = null; // To hold the selected file object
+    let currentGeminiSelectedImageUrl = ""; // To hold the URL provided by the user or from upload service
+
     function checkVIPStatus() { // This function now checks localStorage
         return localStorage.getItem('isUserVIP') === 'true';
     }
@@ -1089,6 +1117,242 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     // --- END OF STORY GENERATOR INTERFACE LOGIC ---
+
+    // --- GEMINI CHAT LOGIC (Initialisation Part) ---
+    if (geminiChatAttachImageButton && geminiChatImageUpload) {
+        geminiChatAttachImageButton.addEventListener('click', () => {
+            geminiChatImageUpload.click(); // Trigger the hidden file input
+        });
+
+        geminiChatImageUpload.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                currentGeminiSelectedFile = file;
+                // Display image preview
+                if (geminiImagePreviewContainer) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        geminiImagePreviewContainer.innerHTML = `<img src="${e.target.result}" alt="Preview" style="max-width: 100px; max-height: 50px; border-radius: 4px;">`;
+                    };
+                    reader.readAsDataURL(file);
+                }
+                // For now, we make the URL input field visible to ask the user for a URL.
+                // Later, this part would be replaced by an actual image upload service call.
+                if (geminiChatImageUrlField) {
+                    geminiChatImageUrlField.style.display = 'block';
+                    geminiChatImageUrlField.value = ''; // Clear previous URL
+                    geminiChatImageUrlField.placeholder = "Please upload to a host and paste URL here";
+                    alert("Image selected. Please upload it to a service like Imgur/postimages.org and paste the direct image URL into the newly appeared field.");
+                }
+                currentGeminiSelectedImageUrl = ""; // Reset any previously set URL
+            } else {
+                currentGeminiSelectedFile = null;
+                if (geminiImagePreviewContainer) geminiImagePreviewContainer.innerHTML = "";
+                if (geminiChatImageUrlField) geminiChatImageUrlField.style.display = 'none';
+            }
+        });
+    }
+    // Further Gemini chat logic (sending messages, history) will be in Part 2 & 3.
+
+    let geminiTypingIndicator = null;
+
+    function addGeminiMessageToChat(message, sender, imageUrl = null, isTyping = false) {
+        if (!geminiChatMessagesArea) return;
+
+        // Remove existing typing indicator before adding a new message or indicator
+        if (geminiTypingIndicator && geminiTypingIndicator.parentNode) {
+            geminiTypingIndicator.remove();
+            geminiTypingIndicator = null;
+        }
+
+        const messageWrapper = document.createElement('div');
+        messageWrapper.classList.add('chat-message-wrapper', sender === 'user' ? 'user' : 'ai'); // Re-use existing chat-message-wrapper styles
+
+        const avatarContainer = document.createElement('div');
+        avatarContainer.classList.add('chat-avatar-container'); // Re-use
+        avatarContainer.innerHTML = sender === 'user' ? userAvatarSvg : aiAvatarSvg; // Re-use existing SVGs
+
+        const messageBubble = document.createElement('div');
+        messageBubble.classList.add('chat-bubble'); // Re-use
+
+        if (isTyping) {
+            messageBubble.innerHTML = typingIndicatorHTML; // Re-use existing typing_indicator HTML
+            messageWrapper.id = 'gemini-typing-indicator-message'; // Unique ID if needed
+            geminiTypingIndicator = messageWrapper;
+        } else {
+            // Sanitize and format message text
+            let formattedMessage = message ? formatTextContent(message) : ''; // formatTextContent from existing chat
+
+            if (imageUrl) {
+                // Simple image display, can be enhanced with CSS
+                formattedMessage += `<br><img src="${escapeHTML(imageUrl)}" alt="Chat Image" style="max-width: 100%; border-radius: 8px; margin-top: 8px;">`;
+            }
+            messageBubble.innerHTML = formattedMessage;
+        }
+
+        messageWrapper.append(avatarContainer, messageBubble);
+        geminiChatMessagesArea.appendChild(messageWrapper);
+        geminiChatMessagesArea.scrollTop = geminiChatMessagesArea.scrollHeight;
+    }
+
+
+    async function handleGeminiSendMessage() {
+        if (!geminiChatInputField || !chatUID) return; // chatUID is the global UID
+
+        const messageText = geminiChatInputField.value.trim();
+        // Get the image URL from the temporary field
+        currentGeminiSelectedImageUrl = geminiChatImageUrlField.value.trim();
+
+        if (!messageText && !currentGeminiSelectedImageUrl) {
+            // Require at least text or an image URL
+            alert("Please type a message or provide an image URL.");
+            return;
+        }
+
+        // Add user's message to chat
+        // For now, if there's an image URL, we pass it. If only text, imageUrl is null.
+        addGeminiMessageToChat(messageText, 'user', currentGeminiSelectedImageUrl || null);
+        saveGeminiMessageToHistory(messageText, 'user', currentGeminiSelectedImageUrl || null); // Save user message
+
+        // Track activity
+        trackActivity('gemini_chat_message_sent', {
+            messageLength: messageText.length,
+            hasImage: !!currentGeminiSelectedImageUrl
+        });
+
+        // Clear inputs
+        geminiChatInputField.value = '';
+        geminiChatImageUrlField.value = '';
+        geminiChatImageUrlField.style.display = 'none'; // Hide URL field after sending
+        if (geminiImagePreviewContainer) geminiImagePreviewContainer.innerHTML = ""; // Clear preview
+        currentGeminiSelectedFile = null;
+        // currentGeminiSelectedImageUrl is already captured, will be reset after API call or if new image selected
+
+        // Disable input while waiting for response
+        geminiChatInputField.disabled = true;
+        if (geminiChatSendButton) geminiChatSendButton.disabled = true;
+        if (geminiChatAttachImageButton) geminiChatAttachImageButton.disabled = true;
+
+        addGeminiMessageToChat(null, 'gemini', null, true); // Show typing indicator for Gemini
+
+        try {
+            const payload = {
+                q: messageText, // Can be empty if only image is sent
+                uid: chatUID,
+            };
+            if (currentGeminiSelectedImageUrl) {
+                payload.imageUrl = currentGeminiSelectedImageUrl;
+            }
+
+            const response = await fetch('/api/gemini-chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (geminiTypingIndicator) geminiTypingIndicator.remove(); // Remove typing indicator
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: `Server error: ${response.status}` }));
+                throw new Error(errorData.error || `API request failed: ${response.status}`);
+            }
+
+            const aiResponse = await response.json();
+            if (aiResponse && aiResponse.response) {
+                addGeminiMessageToChat(aiResponse.response, 'gemini');
+                // Assuming Gemini response does not contain an image URL to save with its own message
+                saveGeminiMessageToHistory(aiResponse.response, 'gemini', null); // Save AI message
+            } else {
+                throw new Error("Invalid response structure from Gemini AI.");
+            }
+
+        } catch (error) {
+            console.error('Error sending Gemini message:', error);
+            if (geminiTypingIndicator) geminiTypingIndicator.remove();
+            addGeminiMessageToChat(`Error: ${error.message || 'Could not connect to Gemini.'}`, 'gemini');
+        } finally {
+            geminiChatInputField.disabled = false;
+            if (geminiChatSendButton) geminiChatSendButton.disabled = false;
+            if (geminiChatAttachImageButton) geminiChatAttachImageButton.disabled = false;
+            if (geminiChatInputField) geminiChatInputField.focus();
+            currentGeminiSelectedImageUrl = ""; // Reset for the next message
+        }
+    }
+
+    if (geminiChatSendButton) {
+        geminiChatSendButton.addEventListener('click', handleGeminiSendMessage);
+    }
+    if (geminiChatInputField) {
+        geminiChatInputField.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleGeminiSendMessage();
+            }
+        });
+    }
+
+    // --- END OF GEMINI CHAT LOGIC (Initialisation Part) ---
+
+    // --- GEMINI CHAT LOGIC (Part 3: History) ---
+    const geminiHistoryKeyPrefix = 'geminiChatHistory_';
+
+    function saveGeminiMessageToHistory(message, sender, imageUrl = null) {
+        if (!chatUID) return; // Ensure UID is available
+        const historyKey = `${geminiHistoryKeyPrefix}${chatUID}`;
+        let history = [];
+        try {
+            const stored = localStorage.getItem(historyKey);
+            if (stored) history = JSON.parse(stored);
+        } catch (e) {
+            console.error("Error parsing Gemini chat history from localStorage:", e);
+            // Potentially clear corrupted history: localStorage.removeItem(historyKey);
+        }
+
+        history.push({ message, sender, imageUrl, timestamp: new Date().toISOString() });
+
+        // Limit history size (e.g., to last 50 messages)
+        if (history.length > 50) {
+            history = history.slice(history.length - 50);
+        }
+
+        try {
+            localStorage.setItem(historyKey, JSON.stringify(history));
+        } catch (e) {
+            console.error("Error saving Gemini chat history to localStorage:", e);
+            // This can happen if localStorage is full
+        }
+    }
+
+    function loadGeminiChatHistory() {
+        if (!geminiChatMessagesArea || !chatUID) return;
+        geminiChatMessagesArea.innerHTML = ""; // Clear current messages
+
+        const historyKey = `${geminiHistoryKeyPrefix}${chatUID}`;
+        let history = [];
+        try {
+            const stored = localStorage.getItem(historyKey);
+            if (stored) history = JSON.parse(stored);
+        } catch (e) {
+            console.error("Error parsing Gemini chat history from localStorage on load:", e);
+            // localStorage.removeItem(historyKey); // Option: Clear corrupted history
+        }
+
+        if (history.length === 0) {
+            // Display a welcome message if history is empty
+            addGeminiMessageToChat("Welcome to Gemini Chat! Ask me anything or send an image.", 'gemini');
+        } else {
+            history.forEach(item => {
+                addGeminiMessageToChat(item.message, item.sender, item.imageUrl);
+            });
+        }
+        if (geminiChatMessagesArea) geminiChatMessagesArea.scrollTop = geminiChatMessagesArea.scrollHeight;
+    }
+
+    // Integrate history saving into handleGeminiSendMessage
+    // (This requires modifying the existing handleGeminiSendMessage function)
+
+    // --- END OF GEMINI CHAT LOGIC (Part 3: History) ---
+
 
     // --- VIP AREA LOGIC (REMOVED) ---
     // const vipAccessArea = document.getElementById('vip-access-area'); // Element will be removed from HTML

@@ -779,6 +779,180 @@ body:not(.dark-mode) .theme-switch input:checked + .slider:before {
     display: inline-block !important;
 }
 
+/* --- GEMINI CHAT VIEW STYLES (Part 1: Layout & Input Bar) --- */
+#gemini-chat-view {
+    display: flex;
+    flex-direction: column !important; /* Important to override .view if it's not flex column by default */
+    height: calc(100vh - var(--top-bar-height) - 30px) !important; /* Full height minus top bar and some padding */
+    padding: 0 !important; /* View itself has no padding, internal elements will */
+    box-sizing: border-box !important;
+    background-color: var(--secondary-bg) !important; /* Consistent background */
+    border-radius: 10px !important; /* Consistent radius */
+    overflow: hidden !important; /* Prevent content spill */
+}
+
+#gemini-chat-messages-area {
+    flex-grow: 1 !important;
+    overflow-y: auto !important;
+    padding: 20px !important;
+    background-color: var(--primary-bg) !important; /* Background for messages */
+    border-bottom: 1px solid var(--border-color) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 15px !important;
+}
+
+#gemini-chat-messages-area::-webkit-scrollbar { width: 8px; }
+#gemini-chat-messages-area::-webkit-scrollbar-track { background: var(--primary-bg); }
+#gemini-chat-messages-area::-webkit-scrollbar-thumb { background-color: var(--accent-color); border-radius: 4px; }
+#gemini-chat-messages-area::-webkit-scrollbar-thumb:hover { background-color: var(--primary-accent-color); }
+
+#gemini-chat-input-bar {
+    display: flex;
+    align-items: center !important;
+    padding: 15px !important;
+    background-color: var(--primary-bg) !important; /* Match messages area bg or slightly different */
+    border-top: 1px solid var(--surface-color) !important; /* Separator */
+    width: 100% !important;
+    box-sizing: border-box !important;
+    min-height: 70px !important; /* Ensure enough height */
+    flex-shrink: 0 !important; /* Prevent shrinking */
+}
+
+#gemini-chat-attach-image-button {
+    background-color: var(--surface-color); /* A neutral background */
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 50% !important;
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+#gemini-chat-attach-image-button .icon {
+    fill: var(--accent-color); /* Icon color */
+}
+#gemini-chat-attach-image-button:hover {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+#gemini-chat-attach-image-button:hover .icon {
+    fill: var(--primary-bg);
+}
+
+
+#gemini-image-preview-container img {
+    display: block; /* Remove extra space below img */
+    border: 1px solid var(--border-color);
+}
+#gemini-chat-image-url-field { /* Styles for the temporary image URL field */
+    padding: 12px 15px !important; /* Adjusted padding */
+    border: 1px solid var(--border-color) !important;
+    border-radius: 20px !important; /* Rounded to match main input */
+    background-color: var(--surface-color) !important;
+    color: var(--text-color) !important;
+    font-family: var(--font-primary) !important;
+    margin-right: 10px !important; /* Space before main input */
+    outline: none !important;
+    font-size: 0.9em; /* Slightly smaller than main input */
+    height: 48px !important; /* Match other buttons/input height */
+    box-sizing: border-box;
+}
+#gemini-chat-image-url-field:focus {
+    border-color: var(--action-color) !important;
+    box-shadow: 0 0 6px rgba(255, 153, 0, 0.5) !important;
+}
+
+
+#gemini-chat-input-field {
+    flex-grow: 1 !important;
+    padding: 14px 20px !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 25px !important;
+    background-color: var(--surface-color) !important;
+    color: var(--text-color) !important;
+    font-family: var(--font-primary) !important;
+    margin-right: 10px !important;
+    outline: none !important;
+    min-height: 48px !important; /* Ensure height */
+    height: 48px !important;
+    box-sizing: border-box;
+}
+#gemini-chat-input-field:focus {
+    border-color: var(--action-color) !important; /* Use a vibrant color for focus */
+    box-shadow: 0 0 8px rgba(255, 153, 0, 0.6) !important;
+}
+
+#gemini-chat-send-button {
+    background-color: var(--action-color) !important; /* Vibrant send button */
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    border: none !important;
+    flex-shrink: 0 !important; /* Prevent shrinking */
+}
+#gemini-chat-send-button:hover {
+    background-color: var(--primary-accent-color) !important; /* Darker shade on hover */
+}
+#gemini-chat-send-button:disabled {
+    background-color: var(--text-muted-color) !important;
+    cursor: not-allowed !important;
+}
+#gemini-chat-send-button .icon {
+    fill: var(--primary-bg) !important; /* Icon color on button */
+    width: 26px !important;
+    height: 26px !important;
+}
+/* End of Gemini Chat View Styles Part 1 */
+
+/* --- GEMINI CHAT VIEW STYLES (Part 2: Messages Display) --- */
+/* Leveraging existing .chat-message-wrapper, .chat-avatar-container, .chat-bubble styles */
+
+#gemini-chat-messages-area .chat-message-wrapper {
+    /* Styles are inherited, explicitly define if overrides are needed */
+    /* e.g., max-width if different from AI chat */
+}
+
+#gemini-chat-messages-area .chat-message-wrapper.user .chat-bubble {
+    /* Styles inherited, e.g., background-color: var(--primary-accent-color) */
+    /* border-bottom-right-radius: 6px; */
+}
+
+#gemini-chat-messages-area .chat-message-wrapper.ai .chat-bubble {
+    /* Styles inherited, e.g., background-color: var(--surface-color) */
+    /* border-bottom-left-radius: 6px; */
+}
+
+/* Styling for images within chat bubbles in Gemini chat */
+#gemini-chat-messages-area .chat-bubble img {
+    max-width: 100%; /* Ensure image is responsive within the bubble */
+    max-height: 300px; /* Limit height to prevent overly large images */
+    border-radius: 6px; /* Rounded corners for the image */
+    margin-top: 10px; /* Space above the image if there's text */
+    display: block; /* Ensure it behaves as a block element for margin */
+    border: 1px solid var(--border-color); /* Subtle border for the image */
+}
+
+/* Specific styling for Gemini's typing indicator if needed, though it reuses .typing-indicator */
+#gemini-chat-messages-area .chat-bubble .typing-indicator span {
+    /* Inherits from general .typing-indicator span */
+    /* If Gemini needs different colors: */
+    /* background-color: var(--secondary-accent-color); */ /* Example */
+}
+
+/* Ensure text formatting (bold, headings from formatTextContent) looks good */
+#gemini-chat-messages-area .chat-bubble h3,
+#gemini-chat-messages-area .chat-bubble h4,
+#gemini-chat-messages-area .chat-bubble strong {
+    /* These will inherit from the general .chat-bubble h3, h4, strong styles if they exist */
+    /* Add specific overrides for Gemini if necessary */
+}
+/* End of Gemini Chat View Styles Part 2 */
+
 
 /* General Input and Textarea Styling */
 /* Ensure .icon-button is suitable for icon-only buttons */

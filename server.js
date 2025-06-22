@@ -216,7 +216,7 @@ app.post('/api/chat', async (req, res) => {
     const isStoryRequest = isStoryRequestFlag || storyKeywords.some(keyword => ask.toLowerCase().startsWith(keyword));
 
     if (isStoryRequest) {
-        const storyApiUrl = `https://kaiz-apis.gleeze.com/api/gpt-4o-pro?ask=${encodeURIComponent(ask)}&uid=${encodeURIComponent(uid)}&imageUrl=&apikey=${CHAT_API_KEY}`;
+        const storyApiUrl = `https://kaiz-apis.gleeze.com/api/gpt4o-latest?ask=${encodeURIComponent(ask)}&uid=${encodeURIComponent(uid)}&imageUrl=&apikey=${CHAT_API_KEY}`;
         try {
             const apiResponse = await fetch(storyApiUrl);
             const responseText = await apiResponse.text(); // Get text first for better error handling

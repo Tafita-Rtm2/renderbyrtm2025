@@ -425,44 +425,6 @@ app.post('/api/gpt4o-chat', upload.single('imageFile'), async (req, res) => {
     }
 });
 
-// API Keys
-const WEATHER_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
-const CHAT_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
-const IMAGE_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
-const GEMINI_API_URL = 'https://kaiz-apis.gleeze.com/api/gemini-vision';
-const GEMINI_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6'; // Votre clé API fournie
-const GPT4O_LATEST_API_URL = 'https://kaiz-apis.gleeze.com/api/gpt4o-latest';
-const GPT4O_LATEST_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6'; // Même clé API
-
-// MongoDB Connection
-const mongoUri = "mongodb+srv://rtmtafita:tafitaniaina1206@rtmchat.pzebpqh.mongodb.net/?retryWrites=true&w=majority&appName=rtmchat";
-const client = new MongoClient(mongoUri);
-
-let portfolioDb;
-let commentsCollection;
-let userActivitiesCollection; // Added for user activity tracking
-
-async function connectDB() {
-    try {
-        await client.connect();
-        portfolioDb = client.db("portfolioDb");
-        commentsCollection = portfolioDb.collection("comments");
-        userActivitiesCollection = portfolioDb.collection("userActivities"); // Initialize collection
-        console.log("Successfully connected to MongoDB Atlas!");
-
-        await commentsCollection.createIndex({ createdAt: -1 });
-        console.log("Indexes ensured for comments collection.");
-
-        await userActivitiesCollection.createIndex({ uid: 1 });
-        await userActivitiesCollection.createIndex({ timestamp: -1 });
-        await userActivitiesCollection.createIndex({ activityType: 1 });
-        console.log("Indexes ensured for userActivities collection.");
-    } catch (err) {
-        console.error("Failed to connect to MongoDB Atlas or ensure indexes", err);
-        process.exit(1);
-    }
-}
-
 // Middleware
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());

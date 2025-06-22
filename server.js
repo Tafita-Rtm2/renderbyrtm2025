@@ -425,56 +425,6 @@ app.post('/api/gpt4o-chat', upload.single('imageFile'), async (req, res) => {
     }
 });
 
-// MongoDB Connection
-const mongoUri = "mongodb+srv://rtmtafita:tafitaniaina1206@rtmchat.pzebpqh.mongodb.net/?retryWrites=true&w=majority&appName=rtmchat";
-const client = new MongoClient(mongoUri);
-
-let portfolioDb;
-let commentsCollection;
-let userActivitiesCollection; // Added for user activity tracking
-
-async function connectDB() {
-    try {
-        await client.connect();
-        portfolioDb = client.db("portfolioDb");
-        commentsCollection = portfolioDb.collection("comments");
-        userActivitiesCollection = portfolioDb.collection("userActivities"); // Initialize collection
-        console.log("Successfully connected to MongoDB Atlas!");
-
-        await commentsCollection.createIndex({ createdAt: -1 });
-        console.log("Indexes ensured for comments collection.");
-
-        await userActivitiesCollection.createIndex({ uid: 1 });
-        await userActivitiesCollection.createIndex({ timestamp: -1 });
-        await userActivitiesCollection.createIndex({ activityType: 1 });
-        console.log("Indexes ensured for userActivities collection.");
-    } catch (err) {
-        console.error("Failed to connect to MongoDB Atlas or ensure indexes", err);
-        process.exit(1);
-    }
-}
-
-// Middleware
-app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.json());
-
-// Admin Code
-const ADMIN_VERIFICATION_CODE = '2201018280';
-
-// --- Admin Verification API Route ---
-app.post('/api/verify-admin', (req, res) => {
-    const { adminCode } = req.body;
-
-    if (!adminCode) {
-        return res.status(400).json({ success: false, message: "Admin code is required" });
-    }
-
-    if (adminCode === ADMIN_VERIFICATION_CODE) {
-        return res.json({ success: true });
-    } else {
-        return res.status(401).json({ success: false, message: "Invalid admin code" });
-    }
-});
 
 // --- Weather API Route ---
 app.get('/api/weather', async (req, res) => { /* ... existing unchanged code ... */

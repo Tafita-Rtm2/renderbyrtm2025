@@ -227,8 +227,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 geminiChatInputBar.style.display = 'flex'; // Or its default display style
             }
             const geminiChatView = document.getElementById('gemini-chat-view');
-             if (geminiChatView) { // Ensure the view itself is flex if it needs to be
+             if (geminiChatView) {
                 geminiChatView.style.display = 'flex';
+            }
+        } else if (viewIdToShow === 'gpt4o-chat-view') {
+            console.log('[GPT4O CHAT DIAGNOSTIC] showView called for gpt4o-chat-view.');
+            if (typeof loadGpt4oChatHistory === "function") { // Will be defined later
+                loadGpt4oChatHistory();
+            }
+            const gpt4oChatInputBar = document.getElementById('gpt4o-chat-input-bar');
+            if (gpt4oChatInputBar) {
+                gpt4oChatInputBar.style.display = 'flex';
+            }
+            const gpt4oChatView = document.getElementById('gpt4o-chat-view');
+            if (gpt4oChatView) {
+                gpt4oChatView.style.display = 'flex';
             }
         }
 
@@ -905,9 +918,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const geminiChatImageUpload = document.getElementById('gemini-chat-image-upload');
     const geminiChatAttachImageButton = document.getElementById('gemini-chat-attach-image-button');
     const geminiImagePreviewContainer = document.getElementById('gemini-image-preview-container');
-    const geminiChatImageUrlField = document.getElementById('gemini-chat-image-url-field'); // Temporary field for image URL
-    let currentGeminiSelectedFile = null; // To hold the selected file object
-    let currentGeminiSelectedImageUrl = ""; // To hold the URL provided by the user or from upload service
+    const geminiChatImageUrlField = document.getElementById('gemini-chat-image-url-field');
+    let currentGeminiSelectedFile = null;
+    // let currentGeminiSelectedImageUrl = ""; // This variable is less relevant now with direct file upload for Gemini
+
+    // --- GPT-4o CHAT ELEMENTS ---
+    const gpt4oChatMessagesArea = document.getElementById('gpt4o-chat-messages-area');
+    const gpt4oChatInputField = document.getElementById('gpt4o-chat-input-field');
+    const gpt4oChatSendButton = document.getElementById('gpt4o-chat-send-button');
+    const gpt4oChatImageUpload = document.getElementById('gpt4o-chat-image-upload');
+    const gpt4oChatAttachImageButton = document.getElementById('gpt4o-chat-attach-image-button');
+    const gpt4oImagePreviewContainer = document.getElementById('gpt4o-image-preview-container');
+    let currentGpt4oSelectedFile = null; // To hold the selected file object for GPT-4o
 
     function checkVIPStatus() { // This function now checks localStorage
         return localStorage.getItem('isUserVIP') === 'true';
@@ -1380,6 +1402,188 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- END OF GEMINI CHAT LOGIC (Part 3: History) ---
 
+    // --- GPT-4o CHAT LOGIC ---
+    let gpt4oTypingIndicator = null;
+    const gpt4oHistoryKeyPrefix = 'gpt4oChatHistory_';
+
+    // Placeholder SVG for GPT icon (until gpt.jpg is used)
+    const gptAvatarSvg = `<svg viewBox="0 0 24 24" class="icon icon-chat-ai"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c1.85 0 3.57-.5 5.07-1.34L20.67 22l-1.41-1.41L17.66 19.07A9.932 9.932 0 0022 12c0-5.52-4.48-10-10-10zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zM9.5 13.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm5 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM12 9c-.83 0-1.5-.67-1.5-1.5S11.17 6 12 6s1.5.67 1.5 1.5S12.83 9 12 9z"/></svg>`;
+
+
+    function addGpt4oMessageToChat(message, sender, imageUrl = null, isTyping = false) {
+        if (!gpt4oChatMessagesArea) return;
+
+        if (gpt4oTypingIndicator && gpt4oTypingIndicator.parentNode) {
+            gpt4oTypingIndicator.remove();
+            gpt4oTypingIndicator = null;
+        }
+
+        const messageWrapper = document.createElement('div');
+        messageWrapper.classList.add('chat-message-wrapper', sender === 'user' ? 'user' : 'ai');
+
+        const avatarContainer = document.createElement('div');
+        avatarContainer.classList.add('chat-avatar-container');
+        if (sender === 'user') {
+            avatarContainer.innerHTML = userAvatarSvg;
+        } else { // AI (GPT-4o)
+            // Replace with <img src="/gpt.jpg" alt="GPT" class="gpt4o-avatar-logo"> when gpt.jpg is available
+            avatarContainer.innerHTML = `<img src="/gpt.jpg" alt="GPT" class="gpt4o-avatar-logo" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" onerror="this.style.display='none'; this.parentElement.innerHTML = '${gptAvatarSvg}'">`;
+        }
+
+        const messageBubble = document.createElement('div');
+        messageBubble.classList.add('chat-bubble');
+
+        if (isTyping) {
+            messageBubble.innerHTML = typingIndicatorHTML;
+            messageWrapper.id = 'gpt4o-typing-indicator-message';
+            gpt4oTypingIndicator = messageWrapper;
+        } else {
+            let formattedMessage = message ? formatTextContent(message) : '';
+            if (imageUrl) {
+                formattedMessage += `<br><img src="${escapeHTML(imageUrl)}" alt="Chat Image" style="max-width: 100%; border-radius: 8px; margin-top: 8px;">`;
+            }
+            messageBubble.innerHTML = formattedMessage;
+        }
+
+        messageWrapper.append(avatarContainer, messageBubble);
+        gpt4oChatMessagesArea.appendChild(messageWrapper);
+        gpt4oChatMessagesArea.scrollTop = gpt4oChatMessagesArea.scrollHeight;
+    }
+
+    async function handleGpt4oSendMessage() {
+        if (!gpt4oChatInputField || !chatUID) return;
+
+        const messageText = gpt4oChatInputField.value.trim();
+        if (!messageText && !currentGpt4oSelectedFile) {
+            alert("Please type a message or select an image for GPT-4o chat.");
+            return;
+        }
+
+        let tempPreviewUrl = null;
+        if (currentGpt4oSelectedFile) {
+            tempPreviewUrl = URL.createObjectURL(currentGpt4oSelectedFile);
+        }
+        addGpt4oMessageToChat(messageText, 'user', tempPreviewUrl);
+        saveGpt4oMessageToHistory(messageText, 'user', tempPreviewUrl);
+
+        trackActivity('gpt4o_chat_message_sent', {
+            messageLength: messageText.length,
+            hasImage: !!currentGpt4oSelectedFile
+        });
+
+        const formData = new FormData();
+        formData.append('uid', chatUID);
+        if (messageText) formData.append('q', messageText); // API uses 'ask', but backend route /api/gpt4o-chat expects 'q' from form for consistency with Gemini route
+        if (currentGpt4oSelectedFile) {
+            formData.append('imageFile', currentGpt4oSelectedFile, currentGpt4oSelectedFile.name);
+        }
+
+        gpt4oChatInputField.value = '';
+        if (gpt4oImagePreviewContainer) gpt4oImagePreviewContainer.innerHTML = "";
+        currentGpt4oSelectedFile = null;
+
+        gpt4oChatInputField.disabled = true;
+        if (gpt4oChatSendButton) gpt4oChatSendButton.disabled = true;
+        if (gpt4oChatAttachImageButton) gpt4oChatAttachImageButton.disabled = true;
+
+        addGpt4oMessageToChat(null, 'ai', null, true); // Show typing indicator for GPT-4o
+
+        try {
+            const response = await fetch('/api/gpt4o-chat', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (gpt4oTypingIndicator) gpt4oTypingIndicator.remove();
+            if (tempPreviewUrl) URL.revokeObjectURL(tempPreviewUrl);
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: `Server error: ${response.status}` }));
+                throw new Error(errorData.error || `GPT-4o API request failed: ${response.status}`);
+            }
+
+            const aiResponse = await response.json();
+            if (aiResponse && aiResponse.response) {
+                addGpt4oMessageToChat(aiResponse.response, 'ai');
+                saveGpt4oMessageToHistory(aiResponse.response, 'ai', null);
+            } else {
+                throw new Error("Invalid response structure from GPT-4o AI.");
+            }
+        } catch (error) {
+            console.error('Error sending GPT-4o message:', error);
+            if (gpt4oTypingIndicator) gpt4oTypingIndicator.remove();
+            addGpt4oMessageToChat(`Error: ${error.message || 'Could not connect to GPT-4o.'}`, 'ai');
+        } finally {
+            gpt4oChatInputField.disabled = false;
+            if (gpt4oChatSendButton) gpt4oChatSendButton.disabled = false;
+            if (gpt4oChatAttachImageButton) gpt4oChatAttachImageButton.disabled = false;
+            if (gpt4oChatInputField) gpt4oChatInputField.focus();
+        }
+    }
+
+    if (gpt4oChatAttachImageButton && gpt4oChatImageUpload) {
+        gpt4oChatAttachImageButton.addEventListener('click', () => gpt4oChatImageUpload.click());
+        gpt4oChatImageUpload.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                currentGpt4oSelectedFile = file;
+                if (gpt4oImagePreviewContainer) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        gpt4oImagePreviewContainer.innerHTML = `<img src="${e.target.result}" alt="Preview" style="max-width: 100px; max-height: 50px; border-radius: 4px;">`;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            } else {
+                currentGpt4oSelectedFile = null;
+                if (gpt4oImagePreviewContainer) gpt4oImagePreviewContainer.innerHTML = "";
+            }
+        });
+    }
+
+    if (gpt4oChatSendButton) gpt4oChatSendButton.addEventListener('click', handleGpt4oSendMessage);
+    if (gpt4oChatInputField) {
+        gpt4oChatInputField.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleGpt4oSendMessage();
+            }
+        });
+    }
+
+    function saveGpt4oMessageToHistory(message, sender, imageUrl = null) {
+        if (!chatUID) return;
+        const historyKey = `${gpt4oHistoryKeyPrefix}${chatUID}`;
+        let history = [];
+        try {
+            const stored = localStorage.getItem(historyKey);
+            if (stored) history = JSON.parse(stored);
+        } catch (e) { console.error("Error parsing GPT-4o chat history:", e); }
+        history.push({ message, sender, imageUrl, timestamp: new Date().toISOString() });
+        if (history.length > 50) history = history.slice(history.length - 50);
+        try {
+            localStorage.setItem(historyKey, JSON.stringify(history));
+        } catch (e) { console.error("Error saving GPT-4o chat history:", e); }
+    }
+
+    function loadGpt4oChatHistory() {
+        if (!gpt4oChatMessagesArea || !chatUID) return;
+        gpt4oChatMessagesArea.innerHTML = "";
+        const historyKey = `${gpt4oHistoryKeyPrefix}${chatUID}`;
+        let history = [];
+        try {
+            const stored = localStorage.getItem(historyKey);
+            if (stored) history = JSON.parse(stored);
+        } catch (e) { console.error("Error parsing GPT-4o history on load:", e); }
+
+        if (history.length === 0) {
+            addGpt4oMessageToChat("Welcome to GPT-4o Chat! How can I assist you today?", 'ai');
+        } else {
+            history.forEach(item => addGpt4oMessageToChat(item.message, item.sender, item.imageUrl));
+        }
+        if (gpt4oChatMessagesArea) gpt4oChatMessagesArea.scrollTop = gpt4oChatMessagesArea.scrollHeight;
+    }
+    // --- END OF GPT-4o CHAT LOGIC ---
 
     // --- VIP AREA LOGIC (REMOVED) ---
     // const vipAccessArea = document.getElementById('vip-access-area'); // Element will be removed from HTML

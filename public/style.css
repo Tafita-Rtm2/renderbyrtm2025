@@ -999,6 +999,134 @@ body:not(.dark-mode) .theme-switch input:checked + .slider:before {
     /* No fill property for <img> */
 }
 
+/* --- GPT-4o CHAT VIEW STYLES --- */
+/* Basic structure and input bar will largely mimic Gemini's styles */
+#gpt4o-chat-view {
+    display: flex;
+    flex-direction: column !important;
+    height: calc(100vh - var(--top-bar-height) - 30px) !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+    background-color: var(--secondary-bg) !important;
+    border-radius: 10px !important;
+    overflow: hidden !important;
+}
+
+#gpt4o-chat-messages-area {
+    flex-grow: 1 !important;
+    overflow-y: auto !important;
+    padding: 20px !important;
+    background-color: var(--primary-bg) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 15px !important;
+}
+
+#gpt4o-chat-messages-area::-webkit-scrollbar { width: 8px; }
+#gpt4o-chat-messages-area::-webkit-scrollbar-track { background: var(--primary-bg); }
+#gpt4o-chat-messages-area::-webkit-scrollbar-thumb { background-color: var(--accent-color); border-radius: 4px; }
+#gpt4o-chat-messages-area::-webkit-scrollbar-thumb:hover { background-color: var(--primary-accent-color); }
+
+#gpt4o-chat-input-bar {
+    display: flex;
+    align-items: center !important;
+    padding: 15px !important;
+    background-color: var(--primary-bg) !important;
+    border-top: 1px solid var(--surface-color) !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    min-height: 70px !important;
+    flex-shrink: 0 !important;
+}
+
+#gpt4o-chat-attach-image-button { /* Assuming similar styling to Gemini's attach button */
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 50% !important;
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+#gpt4o-chat-attach-image-button .icon { fill: var(--accent-color); }
+#gpt4o-chat-attach-image-button:hover { background-color: var(--accent-color); border-color: var(--accent-color); }
+#gpt4o-chat-attach-image-button:hover .icon { fill: var(--primary-bg); }
+
+#gpt4o-image-preview-container img {
+    display: block;
+    border: 1px solid var(--border-color);
+}
+
+#gpt4o-chat-input-field { /* Assuming similar styling to Gemini's input field */
+    flex-grow: 1 !important;
+    padding: 14px 20px !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 25px !important;
+    background-color: var(--surface-color) !important;
+    color: var(--text-color) !important;
+    font-family: var(--font-primary) !important;
+    margin-right: 10px !important;
+    outline: none !important;
+    min-height: 48px !important;
+    height: 48px !important;
+    box-sizing: border-box;
+}
+#gpt4o-chat-input-field:focus {
+    border-color: var(--action-color) !important;
+    box-shadow: 0 0 8px rgba(255, 153, 0, 0.6) !important;
+}
+
+#gpt4o-chat-send-button { /* Assuming similar styling to Gemini's send button */
+    background-color: var(--action-color) !important;
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 50% !important;
+    border: none !important;
+    flex-shrink: 0 !important;
+}
+#gpt4o-chat-send-button:hover { background-color: var(--primary-accent-color) !important; }
+#gpt4o-chat-send-button:disabled { background-color: var(--text-muted-color) !important; cursor: not-allowed !important; }
+#gpt4o-chat-send-button .icon { fill: var(--primary-bg) !important; width: 26px !important; height: 26px !important; }
+
+/* GPT-4o Chat Message Styling */
+/* Avatar for GPT-4o (using gpt.jpg or placeholder) */
+#gpt4o-chat-messages-area .chat-avatar-container .gpt4o-avatar-logo { /* Class for the <img> tag */
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+/* Fallback for SVG if image fails to load and onerror handler injects SVG with .icon */
+#gpt4o-chat-messages-area .chat-avatar-container .icon-chat-ai {
+    fill: var(--accent-color); /* Or a specific color for GPT-4o placeholder */
+}
+
+
+/* User message bubble background color in GPT-4o chat */
+#gpt4o-chat-messages-area .chat-message-wrapper.user .chat-bubble {
+    background-color: #d9534f !important; /* Red color - Bootstrap's btn-danger red */
+    color: #FFFFFF !important;
+}
+#gpt4o-chat-messages-area .chat-message-wrapper.user .chat-bubble a {
+    color: #f0f0f0 !important; /* Lighter color for links on red background */
+}
+#gpt4o-chat-messages-area .chat-message-wrapper.user .chat-bubble strong {
+    color: #FFFFFF !important;
+}
+
+/* Images within GPT-4o chat bubbles */
+#gpt4o-chat-messages-area .chat-bubble img {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 6px;
+    margin-top: 10px;
+    display: block;
+    border: 1px solid var(--border-color);
+}
+/* End of GPT-4o Chat View Styles */
+
 
 /* General Input and Textarea Styling */
 /* Ensure .icon-button is suitable for icon-only buttons */

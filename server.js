@@ -425,17 +425,6 @@ app.post('/api/gpt4o-chat', upload.single('imageFile'), async (req, res) => {
     }
 });
 
-const upload = multer({
-    storage: storage,
-    limits: { fileSize: 10 * 1024 * 1024 } // Limit file size to 10MB
-});
-
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Serve static files from the upload directory
-app.use('/uploads/gemini_temp', express.static(path.join(__dirname, UPLOAD_PATH)));
-
 // API Keys
 const WEATHER_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
 const CHAT_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';

@@ -3,18 +3,36 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
 const path = require('path');
 const { MongoClient, ObjectId } = require('mongodb');
 const multer = require('multer'); // For handling file uploads
+const fs = require('fs'); // For file system operations like deleting files
 
-// Configure Multer
-// Using memoryStorage to avoid saving files to disk on the server temporarily
-// The image will be converted to base64 directly from the buffer.
-const storage = multer.memoryStorage();
+// Configure Multer for disk storage
+const UPLOAD_PATH = 'public/uploads/gemini_temp/';
+
+// Ensure upload directory exists
+if (!fs.existsSync(UPLOAD_PATH)){
+    fs.mkdirSync(UPLOAD_PATH, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, UPLOAD_PATH);
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
 const upload = multer({
     storage: storage,
-    limits: { fileSize: 10 * 1024 * 1024 } // Limit file size to 10MB, for example
+    limits: { fileSize: 10 * 1024 * 1024 } // Limit file size to 10MB
 });
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Serve static files from the upload directory
+app.use('/uploads/gemini_temp', express.static(path.join(__dirname, UPLOAD_PATH)));
 
 // API Keys
 const WEATHER_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
@@ -241,85 +259,86 @@ app.post('/api/chat', async (req, res) => {
 // Apply multer middleware for single file upload, field name 'imageFile'
 app.post('/api/gemini-chat', upload.single('imageFile'), async (req, res) => {
     // 'imageFile' should match the name attribute in FormData on the client-side
-    const { q, uid } = req.body; // q and uid are now part of FormData (sent along with the file)
-    let imageUrlFromUpload = null;
+    const { q, uid } = req.body;
+    let tempImagePath = null; // To store path of temporarily saved file
+    let publicImageUrl = null;
 
     if (req.file) {
-        // Convert image buffer to base64 Data URL
-        const MimeType = req.file.mimetype; // e.g. "image/png"
-        const Base64Data = req.file.buffer.toString('base64');
-        imageUrlFromUpload = `data:${MimeType};base64,${Base64Data}`;
-        // console.log(`Generated Data URL for uploaded image (first 100 chars): ${imageUrlFromUpload.substring(0,100)}...`); // For debugging
+        tempImagePath = req.file.path;
+        // Construct the public URL. This assumes the server is running at the root.
+        // For a robust solution, req.protocol and req.get('host') should be used if the app is behind a proxy or has a complex setup.
+        // For simplicity here, we'll use a relative path which the client might need to resolve, or an assumed absolute if deployed.
+        // The API likely needs an absolute public URL.
+        // NOTE: This URL will only be valid if the server is publicly accessible.
+        // And the path must match the one configured in app.use(express.static(...))
+        publicImageUrl = `/uploads/gemini_temp/${req.file.filename}`;
+        console.log(`Image temporarily saved at ${tempImagePath}, accessible via ${publicImageUrl}`);
     }
 
-    // q can be optional if an image is provided
-    if (!uid) { // UID is always required
+    if (!uid) {
+        if (tempImagePath) fs.unlinkSync(tempImagePath); // Clean up uploaded file if UID is missing
         return res.status(400).json({ error: 'Parameter "uid" is required.' });
     }
-    // If 'q' is not provided in form data, it might be undefined or an empty string.
-    // The API might handle empty 'q' if an image is present.
-    // We must have at least a question or an image.
+
     const questionText = q ? q.trim() : "";
-    if (questionText === "" && !imageUrlFromUpload) {
+    if (questionText === "" && !publicImageUrl) {
+        if (tempImagePath) fs.unlinkSync(tempImagePath); // Clean up
         return res.status(400).json({ error: 'Either a question ("q") or an image file is required.' });
     }
 
-    // Construct the API URL for Gemini
-    const finalImageUrl = imageUrlFromUpload; // Prioritize uploaded file's Data URL
-    const questionQuery = questionText ? encodeURIComponent(questionText) : '';
-
     let fullApiUrl = `${GEMINI_API_URL}?uid=${encodeURIComponent(uid)}&apikey=${GEMINI_API_KEY}`;
-    if (questionQuery) {
-        fullApiUrl += `&q=${questionQuery}`;
+    if (questionText) {
+        fullApiUrl += `&q=${encodeURIComponent(questionText)}`;
     }
-    if (finalImageUrl) {
-        // Important: Ensure the Data URL is properly encoded.
-        // encodeURIComponent should handle base64 Data URLs correctly.
-        fullApiUrl += `&imageUrl=${encodeURIComponent(finalImageUrl)}`;
+    if (publicImageUrl) {
+        // IMPORTANT: The API needs an ABSOLUTE URL.
+        // For now, sending the relative one. This will likely fail if the API is external
+        // unless the API client (this server) resolves it to its own public absolute URL.
+        // This needs to be adjusted based on actual deployment.
+        // A placeholder for where the app's public base URL would be.
+        const APP_BASE_URL = process.env.APP_URL || `${req.protocol}://${req.get('host')}`; // Attempt to get base URL
+        const absolutePublicImageUrl = new URL(publicImageUrl, APP_BASE_URL).toString();
+        fullApiUrl += `&imageUrl=${encodeURIComponent(absolutePublicImageUrl)}`;
+        console.log("Attempting to use absolute image URL for API:", absolutePublicImageUrl);
     }
-    // console.log("Calling Gemini API with URL (first 200 chars):", fullApiUrl.substring(0, 200)); // For debugging, can be very long with Data URL
 
     try {
         const apiResponse = await fetch(fullApiUrl);
-        const responseText = await apiResponse.text(); // Get text first for better error handling
+        const responseText = await apiResponse.text();
+
+        if (tempImagePath) { // Clean up the uploaded file after the API call
+            fs.unlink(tempImagePath, (err) => {
+                if (err) console.error("Error deleting temporary image file:", err);
+                else console.log("Temporary image file deleted:", tempImagePath);
+            });
+        }
 
         if (!apiResponse.ok) {
-            let errorJson = {
-                error: `External Gemini API Error: ${apiResponse.status} ${apiResponse.statusText}`,
-                details: responseText
-            };
-            try {
-                errorJson = JSON.parse(responseText);
-                if(!errorJson.error && !errorJson.message) {
-                    errorJson.error = `External Gemini API Error: ${apiResponse.status} ${apiResponse.statusText}`;
-                }
-            } catch (e) { /* Not JSON, use the text as detail */ }
+            let errorJson = { error: `External Gemini API Error: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
+            try { errorJson = JSON.parse(responseText); if(!errorJson.error && !errorJson.message) { errorJson.error = `External Gemini API Error: ${apiResponse.status} ${apiResponse.statusText}`; } } catch (e) { /* Not JSON */ }
             return res.status(apiResponse.status).json(errorJson);
         }
 
         let data;
-        try {
-            data = JSON.parse(responseText);
-        } catch (e) {
-            // If the response is not JSON but was successful (e.g. plain text success message)
-            // This case might not be expected for this specific API but is a safeguard.
-            // Based on the example, a JSON response is expected.
+        try { data = JSON.parse(responseText); }
+        catch (e) {
             console.warn('Gemini API response was not JSON, but status was OK. Response text:', responseText);
             return res.status(500).json({ error: 'Failed to parse response from Gemini API.', details: responseText });
         }
 
-        // Based on the provided example: { "author": "Kaizenji", "response": "Bonjour, Melchior ! ..." }
         if (data && data.response) {
-            res.json({
-                author: data.author || "Gemini (Kaizenji)", // Default author if not provided
-                response: data.response
-            });
+            res.json({ author: data.author || "Gemini (Kaizenji)", response: data.response });
         } else {
             return res.status(500).json({ error: 'Unexpected response structure from Gemini API.', details: data });
         }
 
     } catch (error) {
         console.error('Server error while calling Gemini API:', error);
+        if (tempImagePath && fs.existsSync(tempImagePath)) { // Ensure cleanup on error too
+            fs.unlink(tempImagePath, (err) => {
+                if (err) console.error("Error deleting temporary image file on error:", err);
+            });
+        }
         return res.status(500).json({ error: 'Server error while processing Gemini chat request.' });
     }
 });

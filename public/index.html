@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Futuristic Portfolio</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header id="top-bar">
+        <div id="top-left-menu-icon-container">
+            <!-- Placeholder SVG for Main Menu Icon (visible on Home, or if side menu is primary nav) -->
+            <svg viewBox="0 0 24 24" class="icon icon-menu-main" id="home-menu-trigger-icon">
+                <path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"></path>
+            </svg>
+        </div>
+        <!-- Add Theme Toggle Here -->
+        <div id="theme-toggle-container">
+            <label class="theme-switch" for="theme-checkbox">
+                <input type="checkbox" id="theme-checkbox" />
+                <div class="slider round"></div>
+            </label>
+        </div>
+        <div id="weather-display-container">
+            <!-- Weather data will be injected here by script.js -->
+        </div>
+    </header>
+
+    <button id="sub-view-menu-trigger" class="icon-button" style="display:none;">
+        <!-- Placeholder SVG for Sub-View Menu Trigger (e.g., back arrow or different menu icon) -->
+        <svg viewBox="0 0 24 24" class="icon icon-menu-sub">
+            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"></path>
+        </svg>
+    </button>
+
+    <nav id="side-menu">
+        <ul>
+            <li><a href="#" data-view="home-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"></path></svg> <span>Accueil</span></a></li>
+            <li><a href="#" data-view="ai-chat-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"></path></svg> <span>Chat IA</span></a></li>
+            <li><a href="#" data-view="gemini-chat-view"><img src="https://www.gstatic.com/images/branding/product/2x/gemini_48dp.png" alt="Gemini" class="icon icon-side-menu-item gemini-logo-icon"> <span>Chat Gemini</span></a></li>
+            <li><a href="#" data-view="gpt4o-chat-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"></path></svg> <span>Chat GPT-4V</span></a></li> {/* Placeholder Icon for GPT-4V */}
+            <li><a href="#" data-view="image-generator-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"></path></svg> <span>Générateur d'Images</span></a></li>
+            <li><a href="#" data-view="story-generator-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"></path></svg> <span>Générateur d'Histoires</span></a></li>
+            <li><a href="#" data-view="vip-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path></svg> <span>Zone VIP</span></a></li>
+            <li><a href="#" data-view="weather-view"> <svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"></path></svg> <span>Météo</span></a></li>
+            <li><a href="#" data-view="about-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"></path></svg> <span>À Propos</span></a></li>
+            <li><a href="#" data-view="contact-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"></path></svg> <span>Contact</span></a></li>
+            <li><a href="#" data-view="comments-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18zM18 14H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"></path></svg> <span>Commentaires</span></a></li>
+            <li><a href="#" data-view="user-history-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7v-3l-4.89-4.89-.07-.14L2 15h3c0 4.97 4.03 9 9 9s9-4.03 9-9-4.03-9-9-9z"></path></svg> <span>Historique Utilisateur</span></a></li>
+            <li><a href="#" data-view="gallery-view-main"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M22 16V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2zm-11-4l2.03 2.71L16 11l4 5H8l3-4zM2 6v14c0 1.1.9 2 2 2h14v-2H4V6H2z"></path></svg> <span>Galerie d'Images</span></a></li>
+            <li><a href="#" data-view="ads-partners-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M16.5 12c1.38 0 2.5-1.12 2.5-2.5S17.88 7 16.5 7C15.12 7 14 8.12 14 9.5s1.12 2.5 2.5 2.5zM9 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm7.5 3c-1.83 0-5.5.92-5.5 2.75V18h11v-1.25c0-1.83-3.67-2.75-5.5-2.75zM9 13c-2.33 0-7 1.17-7 3.5V18h7v-1.5c0-.83.24-1.58.62-2.26-.44-.07-.9-.14-1.37-.14z"></path></svg> <span>🎯 Publicités & Partenaires</span></a></li>
+            <li><a href="#" data-view="admin-panel-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.34 8.42c-.11.2-.06.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54c.59-.24 1.13-.57 1.62-.94l2.39.96c.22.08.47 0 .59.22l1.92-3.32c.12-.22.06-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"></path></svg> <span>Panneau Admin</span></a></li>
+        </ul>
+    </nav>
+
+    <main id="main-content">
+        <div id="home-view" class="view active">
+            <!-- Existing #home-bottom-app-icons are fixed, so content flows above/around it -->
+
+            <section id="welcome-description-section">
+                <h2>Welcome to Your Enhanced Digital Hub!</h2>
+                <p class="site-tagline">Explore a suite of AI-powered tools and creative utilities designed to inspire and assist you. Here's what you can do:</p>
+
+                <div class="feature-highlights-grid">
+                    <div class="feature-highlight-item">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" class="icon"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"></path></svg> <!-- AI Chat Icon -->
+                        </div>
+                        <h3>AI Chat</h3>
+                        <p>Engage in intelligent conversations, ask questions, get assistance, and enable web search for up-to-date information. Your creative partner for ideas and problem-solving.</p>
+                    </div>
+
+                    <div class="feature-highlight-item">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" class="icon"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"></path></svg> <!-- Image Gen Icon -->
+                        </div>
+                        <h3>Image Generator</h3>
+                        <p>Unleash your creativity by generating unique images from text prompts. Describe your vision and watch it come to life. Save your favorite creations!</p>
+                    </div>
+
+                    <div class="feature-highlight-item">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" class="icon"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"></path></svg> <!-- Story Gen Icon -->
+                        </div>
+                        <h3>Story Generator</h3>
+                        <p>Craft compelling narratives and short stories from a simple theme or title. Explore different genres and let the AI weave engaging tales for you.</p>
+                    </div>
+
+                    <div class="feature-highlight-item"> {/* New Feature: Gemini Chat */}
+                        <div class="feature-icon">
+                            {/* Using a similar chat icon, or a new one if available */}
+                            <svg viewBox="0 0 24 24" class="icon"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"></path></svg>
+                        </div>
+                        <h3>Gemini Vision Chat</h3>
+                        <p>Engage with the Gemini model for text and image-based conversations. Get answers to your questions about images or simply chat with a cutting-edge AI.</p>
+                    </div>
+
+                    <div class="feature-highlight-item">
+                         <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" class="icon"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path></svg> <!-- VIP Icon -->
+                        </div>
+                        <h3>VIP Zone</h3>
+                        <p>Access an exclusive embedded experience from our partner site. (Direct access, no code needed!).</p>
+                    </div>
+
+                    <div class="feature-highlight-item">
+                         <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" class="icon"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"></path></svg> <!-- Weather Icon -->
+                        </div>
+                        <h3>Weather Details</h3>
+                        <p>Get the latest weather updates for your location or any city, including current conditions and a 5-day forecast, presented in a clear and detailed view.</p>
+                    </div>
+                     <div class="feature-highlight-item">
+                         <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" class="icon"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7v-3l-4.89-4.89-.07-.14L2 15h3c0 4.97 4.03 9 9 9s9-4.03 9-9-4.03-9-9-9z"></path></svg> <!-- User History Icon -->
+                        </div>
+                        <h3>Activity History</h3>
+                        <p>Keep track of your interactions and activities within the site. Review your journey and easily revisit your favorite features.</p>
+                    </div>
+
+                    <div class="feature-highlight-item"> {/* New Feature: GPT-4o Vision Chat */}
+                        <div class="feature-icon">
+                            {/* Placeholder SVG Icon, to be replaced by gpt.jpg */}
+                            <svg viewBox="0 0 24 24" class="icon"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"></path></svg>
+                        </div>
+                        <h3>GPT-4 Vision Chat</h3>
+                        <p>Interact with the advanced GPT-4o model. Ask questions, get text-based assistance, and analyze images with this powerful AI chat.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Home Page App Icons -->
+            <nav id="home-bottom-app-icons">
+                <button class="home-app-btn" data-view="ai-chat-view">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"></path></svg>
+                    <span>AI Chat</span>
+                </button>
+                <button class="home-app-btn" data-view="image-generator-view">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"></path></svg>
+                    <span>Image Gen</span>
+                </button>
+                <button class="home-app-btn" data-view="story-generator-view">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"></path></svg>
+                    <span>Story Gen</span>
+                </button>
+                <button class="home-app-btn" data-view="vip-view">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path></svg>
+                    <span>VIP Zone</span>
+                </button>
+                <button class="home-app-btn" data-view="gemini-chat-view">
+                    <img src="https://www.gstatic.com/images/branding/product/2x/gemini_48dp.png" alt="Gemini Chat" class="icon gemini-logo-icon">
+                    <span>Gemini Chat</span>
+                </button>
+                <button class="home-app-btn" data-view="gpt4o-chat-view"> {/* Placeholder Icon for GPT-4V */}
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"></path></svg>
+                    <span>GPT-4V Chat</span>
+                </button>
+            </nav>
+            <section id="public-comments-section">
+                <!-- Content from existing comments section -->
+                 <h3>Leave a Comment</h3>
+                <form id="comment-form">
+                    <div class="form-group">
+                        <label for="comment-name">Name:</label>
+                        <input type="text" id="comment-name" name="comment-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="comment-text">Comment:</label>
+                        <textarea id="comment-text" name="comment-text" rows="4" required></textarea>
+                    </div>
+                    <button type="submit" class="btn-submit-comment">Submit Comment</button>
+                </form>
+                <div id="comments-display-area">
+                    <p>Loading comments...</p>
+                </div>
+            </section>
+            <div id="admin-login-trigger-icon">
+                <svg viewBox="0 0 24 24" class="icon icon-admin-login"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path></svg>
+            </div>
+        </div>
+
+        <div id="ai-chat-view" class="view" style="display: none;">
+             <div id="chat-messages-area"></div>
+            <div id="chat-input-bar">
+                <div class="web-search-container">
+                    <label for="web-search-toggle" class="web-search-label">Web Search:</label>
+                    <label class="switch">
+                        <input type="checkbox" id="web-search-toggle" name="web-search-toggle">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <input type="text" id="chat-input-field" placeholder="Type your message...">
+                <button id="chat-send-button" class="icon-button">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <div id="gemini-chat-view" class="view" style="display: none;">
+            <div id="gemini-chat-messages-area"></div>
+            <div id="gemini-chat-input-bar">
+                <input type="file" id="gemini-chat-image-upload" accept="image/*" style="display:none;">
+                <button id="gemini-chat-attach-image-button" class="icon-button" title="Attach Image">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M21.586 10.414l-7.071-7.071A.996.996 0 0013.828 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V11.121a.996.996 0 00-.414-.707zM15 5.414L18.586 9H15V5.414zM19 19H5V5h8v4a2 2 0 002 2h4v8z"></path></svg>
+                </button>
+                <div id="gemini-image-preview-container" style="margin-right: 10px; max-height: 50px; overflow: hidden;">
+                    {/* Image preview will be shown here if one is selected */}
+                </div>
+                <input type="text" id="gemini-chat-image-url-field" placeholder="Or paste image URL here" style="display: none; flex-grow: 0.5; margin-right:5px;"> {/* Hidden by default */}
+                <input type="text" id="gemini-chat-input-field" placeholder="Ask Gemini anything...">
+                <button id="gemini-chat-send-button" class="icon-button" title="Send">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <div id="gpt4o-chat-view" class="view" style="display: none;"> {/* New GPT-4o Chat View */}
+            <div id="gpt4o-chat-messages-area"></div>
+            <div id="gpt4o-chat-input-bar">
+                <input type="file" id="gpt4o-chat-image-upload" accept="image/*" style="display:none;">
+                <button id="gpt4o-chat-attach-image-button" class="icon-button" title="Attach Image">
+                    {/* Placeholder SVG, to be replaced by gpt.jpg or specific icon if different from Gemini's attach */}
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M21.586 10.414l-7.071-7.071A.996.996 0 0013.828 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V11.121a.996.996 0 00-.414-.707zM15 5.414L18.586 9H15V5.414zM19 19H5V5h8v4a2 2 0 002 2h4v8z"></path></svg>
+                </button>
+                <div id="gpt4o-image-preview-container" style="margin-right: 10px; max-height: 50px; overflow: hidden;">
+                    {/* Image preview for GPT-4o */}
+                </div>
+                <input type="text" id="gpt4o-chat-input-field" placeholder="Ask GPT-4o anything...">
+                <button id="gpt4o-chat-send-button" class="icon-button" title="Send">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <div id="image-generator-view" class="view" style="display: none;">
+            <h2>Image Generator</h2>
+            <div id="image-prompt-area">
+                <input type="text" id="image-prompt-field" placeholder="Enter image description...">
+                <button id="generate-image-button" class="icon-button" title="Generate Image">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"></path></svg> <!-- Simple "add/create" icon, changed from original plan's complex one -->
+                </button>
+            </div>
+            <div id="image-display-area"><p>Generated image will appear here.</p></div>
+            <button id="download-image-button" class="icon-button" title="Download Image" style="display: none;">
+                 <svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>
+            </button>
+            <div id="image-history-gallery"><h4>History</h4></div>
+        </div>
+        <div id="story-generator-view" class="view" style="display: none;">
+            <h2>Story Generator</h2>
+            <div id="story-prompt-area">
+                <input type="text" id="story-theme-field" placeholder="Enter story title or theme...">
+                <button id="generate-story-button" class="icon-button" title="Generate Story">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"></path></svg>
+                </button>
+            </div>
+            <div id="generated-story-display"><p>Your generated story will appear here.</p></div>
+            <div id="story-vip-controls" style="display:none;">
+                <button id="story-listen-button" class="icon-button" title="Listen to Story">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"></path></svg>
+                </button>
+                <button id="story-stop-speech-button" class="icon-button" title="Stop Speech" style="display: none;">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M6 6h12v12H6z"></path></svg>
+                </button>
+                <button id="story-translate-button" class="icon-button" title="Translate Story">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4.84 19l5.05-5.05.03.03 2.5 2.5.03.03 2.54 2.51zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"></path></svg>
+                </button>
+                <button id="story-download-button-text" class="icon-button" title="Download Story Text">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>
+                    <span>TXT</span>
+                </button>
+            </div>
+            <div id="story-history-area"><h4>My Stories</h4><div id="story-history-list"></div></div>
+        </div>
+    <div id="admin-panel-view" class="view" style="display: none;">
+        <h2>Admin Panel</h2>
+
+        <div class="admin-panel-tabs">
+            <button class="admin-tab-button active" data-tab="comments-admin">Manage Comments</button>
+            <button class="admin-tab-button" data-tab="analytics-admin">Site Analytics</button>
+        </div>
+
+        <div id="comments-admin-tab" class="admin-tab-content active">
+            <h3>Manage Comments</h3>
+            <div id="admin-comments-list">
+                <p>Loading comments...</p>
+            </div>
+        </div>
+
+        <div id="analytics-admin-tab" class="admin-tab-content">
+            <h3>Site Analytics</h3>
+            <div id="admin-analytics-summary">
+                <p>Loading analytics...</p>
+            </div>
+            <h4>Recent Activities:</h4>
+            <div id="admin-recent-activities">
+                <p>Loading recent activities...</p>
+            </div>
+        </div>
+    </div>
+        <div id="about-view" class="view" style="display: none;"><p>About Page - Content TBD</p></div>
+    <div id="contact-view" class="view" style="display: none;">
+        <h2>Contact Me</h2>
+        <div class="contact-details">
+            <div class="contact-item">
+                <span class="contact-label">
+                    <svg viewBox="0 0 24 24" class="icon contact-icon"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg> <!-- Basic Phone Icon -->
+                    Phone:
+                </span>
+                <a href="tel:0336177772" class="contact-value">033 61 777 72</a>
+            </div>
+            <div class="contact-item">
+                <span class="contact-label">
+                    <svg viewBox="0 0 24 24" class="icon contact-icon"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.79.45 3.49 1.28 4.99L2.06 22l5.26-1.35c1.44.74 3.06 1.15 4.72 1.15h.01c5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2zm.01 1.63c4.51 0 8.18 3.68 8.18 8.18s-3.68 8.18-8.18 8.18h-.01c-1.55 0-3.04-.42-4.33-1.18l-.31-.19-3.21.82.84-3.12-.21-.33c-.83-1.32-1.32-2.85-1.32-4.48 0-4.51 3.68-8.18 8.18-8.18zm-1.02 2.62c-.28-.14-.59-.14-.88-.14h-.29c-.29 0-.73.1-.88.44-.14.29-.59.73-.59 1.78s.59 2.07.73 2.22c.14.14 1.2.92 2.88 1.61s1.41.48 1.78.44c.59-.07 1.03-.48 1.18-.73s.14-.44.1-.73c-.07-.14-.29-.29-.44-.44s-1.03-.52-1.18-.59c-.14-.07-.44-.07-.59.22s-.59.73-.73.88c-.14.14-.29.14-.44.07s-1.03-.36-1.92-.99c-.7-.48-1.18-1.07-1.32-1.25s-.14-.29 0-.44l.22-.29c.14-.14.22-.29.36-.44s.07-.22 0-.29c-.07-.14-.59-1.41-.73-1.92z"/></svg> <!-- WhatsApp Icon -->
+                    WhatsApp:
+                </span>
+                <a href="https://wa.me/261385858330" target="_blank" class="contact-value">+261 38 58 583 30</a>
+            </div>
+            <div class="contact-item">
+                <span class="contact-label">
+                    <svg viewBox="0 0 24 24" class="icon contact-icon"><path d="M22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6zm-2 0l-8 5-8-5h16zm0 12H4V8l8 5 8-5v10z"/></svg> <!-- Email Icon -->
+                    Email:
+                </span>
+                <a href="mailto:niainatafita85@gmail.com" class="contact-value">niainatafita85@gmail.com</a>
+            </div>
+            <div class="contact-item">
+                <span class="contact-label">
+                    <svg viewBox="0 0 24 24" class="icon contact-icon"><path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2m13 2h-2.5a3.5 3.5 0 0 0-3.5 3.5V10H9v3h2.5v7h3v-7H17v-3h-2.5V7a.5.5 0 0 1 .5-.5H18V5z"/></svg> <!-- Facebook Icon -->
+                    Facebook:
+                </span>
+                <a href="https://www.facebook.com/manarintso.niaina" target="_blank" class="contact-value">RTM Tafitaniaina</a>
+            </div>
+        </div>
+        <div class="contact-map">
+            <p>Find me in Antananarivo, Madagascar!</p>
+             <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d120077.70880567693!2d47.46434084863282!3d-18.89750799999999!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x21f07e0034298787%3A0x4a71d53e0abbc919!2sAntananarivo%2C%20Madagascar!5e0!3m2!1sen!2sus!4v1700000000000!5m2!1sen!2sus" width="100%" height="300" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+    </div>
+    <div id="comments-view" class="view" style="display: none;">
+        <h2>All User Comments</h2>
+        <div id="all-comments-list-container">
+            <p>Loading all comments...</p>
+            <!-- Comments will be listed here -->
+        </div>
+    </div>
+    <div id="user-history-view" class="view" style="display: none;">
+        <h2>Your Activity History</h2>
+        <div id="user-activity-list-container">
+            <p>Loading your activity...</p>
+            <!-- Activities will be listed here -->
+        </div>
+    </div>
+        <div id="gallery-view-main" class="view" style="display: none;"><p>Main Image Gallery - Content TBD</p></div>
+        <div id="ads-partners-view" class="view" style="display: none;"><p>Ads & Partners - Content TBD</p></div>
+         <div id="weather-view" class="view" style="display: none;"><p>Detailed Weather View - Content TBD</p></div>
+    </main>
+
+    <div id="private-message-trigger-container">
+        <button id="private-message-float-btn" class="icon-button">
+            <svg viewBox="0 0 24 24" class="icon icon-private-message"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8l8 5 8-5v10zm-8-7L4 6h16l-8 5z"></path></svg>
+        </button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+                                                                                                                                                                                                                                                                                                                </html>

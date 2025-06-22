@@ -953,6 +953,34 @@ body:not(.dark-mode) .theme-switch input:checked + .slider:before {
 }
 /* End of Gemini Chat View Styles Part 2 */
 
+/* --- GEMINI CHAT VIEW STYLES (Part 3: Customizations) --- */
+
+/* Styling for Gemini Logo as avatar */
+#gemini-chat-messages-area .chat-avatar-container .gemini-avatar-logo {
+    width: 100%; /* Make image fill the container */
+    height: 100%; /* Make image fill the container */
+    border-radius: 50%; /* Ensure it's circular if the container is */
+    object-fit: cover; /* Cover the area, might crop if aspect ratio differs */
+}
+
+/* User message bubble background color in Gemini chat */
+#gemini-chat-messages-area .chat-message-wrapper.user .chat-bubble {
+    background-color: #008000 !important; /* Vert */
+    /* Ensure text color contrasts well with green, e.g., white */
+    color: #FFFFFF !important;
+}
+
+/* If the green background makes links or other elements hard to see, add specific styles */
+#gemini-chat-messages-area .chat-message-wrapper.user .chat-bubble a {
+    color: #ADD8E6 !important; /* Light blue for links on green background, for example */
+}
+#gemini-chat-messages-area .chat-message-wrapper.user .chat-bubble strong {
+    color: #FFFFFF !important; /* Ensure strong text is also white or a light contrast */
+}
+
+
+/* End of Gemini Chat View Styles Part 3 */
+
 
 /* General Input and Textarea Styling */
 /* Ensure .icon-button is suitable for icon-only buttons */

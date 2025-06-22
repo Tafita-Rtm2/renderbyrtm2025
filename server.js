@@ -2,6 +2,16 @@ const express = require('express');
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const path = require('path');
 const { MongoClient, ObjectId } = require('mongodb');
+const multer = require('multer'); // For handling file uploads
+
+// Configure Multer
+// Using memoryStorage to avoid saving files to disk on the server temporarily
+// The image will be converted to base64 directly from the buffer.
+const storage = multer.memoryStorage();
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 10 * 1024 * 1024 } // Limit file size to 10MB, for example
+});
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -228,19 +238,46 @@ app.post('/api/chat', async (req, res) => {
 });
 
 // --- Gemini Chat API Route ---
-app.post('/api/gemini-chat', async (req, res) => {
-    const { q, uid, imageUrl } = req.body;
+// Apply multer middleware for single file upload, field name 'imageFile'
+app.post('/api/gemini-chat', upload.single('imageFile'), async (req, res) => {
+    // 'imageFile' should match the name attribute in FormData on the client-side
+    const { q, uid } = req.body; // q and uid are now part of FormData (sent along with the file)
+    let imageUrlFromUpload = null;
 
-    if (!q || !uid) {
-        return res.status(400).json({ error: 'Parameters "q" (question) and "uid" are required.' });
+    if (req.file) {
+        // Convert image buffer to base64 Data URL
+        const MimeType = req.file.mimetype; // e.g. "image/png"
+        const Base64Data = req.file.buffer.toString('base64');
+        imageUrlFromUpload = `data:${MimeType};base64,${Base64Data}`;
+        // console.log(`Generated Data URL for uploaded image (first 100 chars): ${imageUrlFromUpload.substring(0,100)}...`); // For debugging
+    }
+
+    // q can be optional if an image is provided
+    if (!uid) { // UID is always required
+        return res.status(400).json({ error: 'Parameter "uid" is required.' });
+    }
+    // If 'q' is not provided in form data, it might be undefined or an empty string.
+    // The API might handle empty 'q' if an image is present.
+    // We must have at least a question or an image.
+    const questionText = q ? q.trim() : "";
+    if (questionText === "" && !imageUrlFromUpload) {
+        return res.status(400).json({ error: 'Either a question ("q") or an image file is required.' });
     }
 
     // Construct the API URL for Gemini
-    // imageUrl is optional
-    let fullApiUrl = `${GEMINI_API_URL}?q=${encodeURIComponent(q)}&uid=${encodeURIComponent(uid)}&apikey=${GEMINI_API_KEY}`;
-    if (imageUrl) {
-        fullApiUrl += `&imageUrl=${encodeURIComponent(imageUrl)}`;
+    const finalImageUrl = imageUrlFromUpload; // Prioritize uploaded file's Data URL
+    const questionQuery = questionText ? encodeURIComponent(questionText) : '';
+
+    let fullApiUrl = `${GEMINI_API_URL}?uid=${encodeURIComponent(uid)}&apikey=${GEMINI_API_KEY}`;
+    if (questionQuery) {
+        fullApiUrl += `&q=${questionQuery}`;
     }
+    if (finalImageUrl) {
+        // Important: Ensure the Data URL is properly encoded.
+        // encodeURIComponent should handle base64 Data URLs correctly.
+        fullApiUrl += `&imageUrl=${encodeURIComponent(finalImageUrl)}`;
+    }
+    // console.log("Calling Gemini API with URL (first 200 chars):", fullApiUrl.substring(0, 200)); // For debugging, can be very long with Data URL
 
     try {
         const apiResponse = await fetch(fullApiUrl);

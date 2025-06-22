@@ -1139,12 +1139,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 // For now, we make the URL input field visible to ask the user for a URL.
                 // Later, this part would be replaced by an actual image upload service call.
                 if (geminiChatImageUrlField) {
-                    geminiChatImageUrlField.style.display = 'block';
-                    geminiChatImageUrlField.value = ''; // Clear previous URL
-                    geminiChatImageUrlField.placeholder = "Please upload to a host and paste URL here";
-                    alert("Image selected. Please upload it to a service like Imgur/postimages.org and paste the direct image URL into the newly appeared field.");
+                    // This field is now being phased out for input, ensure it's hidden or remove from HTML later
+                    geminiChatImageUrlField.style.display = 'none';
                 }
-                currentGeminiSelectedImageUrl = ""; // Reset any previously set URL
+                // currentGeminiSelectedImageUrl = ""; // Not needed as we send the file directly
             } else {
                 currentGeminiSelectedFile = null;
                 if (geminiImagePreviewContainer) geminiImagePreviewContainer.innerHTML = "";
@@ -1152,7 +1150,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-    // Further Gemini chat logic (sending messages, history) will be in Part 2 & 3.
+
+    // Remove or comment out the logic that shows geminiChatImageUrlField on image selection,
+    // as it's not the primary way to send images anymore.
+    // The alert asking user to paste URL is also removed.
 
     let geminiTypingIndicator = null;
 
@@ -1169,8 +1170,12 @@ document.addEventListener('DOMContentLoaded', () => {
         messageWrapper.classList.add('chat-message-wrapper', sender === 'user' ? 'user' : 'ai'); // Re-use existing chat-message-wrapper styles
 
         const avatarContainer = document.createElement('div');
-        avatarContainer.classList.add('chat-avatar-container'); // Re-use
-        avatarContainer.innerHTML = sender === 'user' ? userAvatarSvg : aiAvatarSvg; // Re-use existing SVGs
+        avatarContainer.classList.add('chat-avatar-container');
+        if (sender === 'user') {
+            avatarContainer.innerHTML = userAvatarSvg;
+        } else { // AI (Gemini)
+            avatarContainer.innerHTML = `<img src="https://www.gstatic.com/images/branding/product/2x/gemini_48dp.png" alt="Gemini" class="gemini-avatar-logo">`;
+        }
 
         const messageBubble = document.createElement('div');
         messageBubble.classList.add('chat-bubble'); // Re-use
@@ -1197,36 +1202,49 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     async function handleGeminiSendMessage() {
-        if (!geminiChatInputField || !chatUID) return; // chatUID is the global UID
+        if (!geminiChatInputField || !chatUID) return;
 
         const messageText = geminiChatInputField.value.trim();
-        // Get the image URL from the temporary field
-        currentGeminiSelectedImageUrl = geminiChatImageUrlField.value.trim();
+        // currentGeminiSelectedFile holds the File object if one was selected
 
-        if (!messageText && !currentGeminiSelectedImageUrl) {
-            // Require at least text or an image URL
-            alert("Please type a message or provide an image URL.");
+        if (!messageText && !currentGeminiSelectedFile) {
+            alert("Please type a message or select an image.");
             return;
         }
 
-        // Add user's message to chat
-        // For now, if there's an image URL, we pass it. If only text, imageUrl is null.
-        addGeminiMessageToChat(messageText, 'user', currentGeminiSelectedImageUrl || null);
-        saveGeminiMessageToHistory(messageText, 'user', currentGeminiSelectedImageUrl || null); // Save user message
+        // Display user's message in chat - if image selected, create a temporary object URL for display
+        let tempPreviewUrl = null;
+        if (currentGeminiSelectedFile) {
+            tempPreviewUrl = URL.createObjectURL(currentGeminiSelectedFile);
+        }
+        addGeminiMessageToChat(messageText, 'user', tempPreviewUrl);
+        // Note: We save tempPreviewUrl to history for local display. The actual image data is sent to backend.
+        saveGeminiMessageToHistory(messageText, 'user', tempPreviewUrl);
+
 
         // Track activity
         trackActivity('gemini_chat_message_sent', {
             messageLength: messageText.length,
-            hasImage: !!currentGeminiSelectedImageUrl
+            hasImage: !!currentGeminiSelectedFile
         });
+
+        const formData = new FormData();
+        formData.append('uid', chatUID);
+        if (messageText) {
+            formData.append('q', messageText);
+        }
+        if (currentGeminiSelectedFile) {
+            formData.append('imageFile', currentGeminiSelectedFile, currentGeminiSelectedFile.name);
+        }
 
         // Clear inputs
         geminiChatInputField.value = '';
-        geminiChatImageUrlField.value = '';
-        geminiChatImageUrlField.style.display = 'none'; // Hide URL field after sending
-        if (geminiImagePreviewContainer) geminiImagePreviewContainer.innerHTML = ""; // Clear preview
+        // geminiChatImageUrlField is no longer used for input, so no need to clear or hide it if it's removed from HTML or permanently hidden
+        if (geminiChatImageUrlField) geminiChatImageUrlField.style.display = 'none'; // Ensure it's hidden
+        if (geminiImagePreviewContainer) geminiImagePreviewContainer.innerHTML = "";
+        const oldSelectedFile = currentGeminiSelectedFile; // Keep reference for potential revokeObjectURL
         currentGeminiSelectedFile = null;
-        // currentGeminiSelectedImageUrl is already captured, will be reset after API call or if new image selected
+
 
         // Disable input while waiting for response
         geminiChatInputField.disabled = true;
@@ -1236,21 +1254,30 @@ document.addEventListener('DOMContentLoaded', () => {
         addGeminiMessageToChat(null, 'gemini', null, true); // Show typing indicator for Gemini
 
         try {
-            const payload = {
-                q: messageText, // Can be empty if only image is sent
-                uid: chatUID,
-            };
-            if (currentGeminiSelectedImageUrl) {
-                payload.imageUrl = currentGeminiSelectedImageUrl;
-            }
+            // const payload = { // Payload is now FormData
+            //     q: messageText,
+            //     uid: chatUID,
+            // };
+            // if (currentGeminiSelectedImageUrl) { // This logic is now part of FormData
+            //     payload.imageUrl = currentGeminiSelectedImageUrl;
+            // }
 
             const response = await fetch('/api/gemini-chat', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                // headers: { 'Content-Type': 'application/json' }, // Not for FormData
+                body: formData // Send FormData directly
             });
 
-            if (geminiTypingIndicator) geminiTypingIndicator.remove(); // Remove typing indicator
+            if (geminiTypingIndicator) geminiTypingIndicator.remove();
+
+            // Revoke the object URL for the displayed user image after sending, if one was created
+            if (tempPreviewUrl) {
+                URL.revokeObjectURL(tempPreviewUrl);
+            }
+            if (oldSelectedFile && tempPreviewUrl) { // Double check, oldSelectedFile might be more reliable here
+                 // URL.revokeObjectURL(URL.createObjectURL(oldSelectedFile)); // This would create a new one
+            }
+
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({ error: `Server error: ${response.status}` }));

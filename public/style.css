@@ -981,6 +981,24 @@ body:not(.dark-mode) .theme-switch input:checked + .slider:before {
 
 /* End of Gemini Chat View Styles Part 3 */
 
+/* Styles for Gemini Logo used as general icons (menu, home button) */
+.gemini-logo-icon { /* This class is added to the <img> tags in HTML */
+    object-fit: contain; /* Ensures the logo scales nicely without distortion */
+    /* The .icon class already provides width, height, and vertical-align for side menu */
+    /* For home-app-btn, the .icon class within it also sets size */
+}
+
+/* Specific adjustments if the .icon class defaults are not perfect for <img> */
+#side-menu li a .gemini-logo-icon.icon-side-menu-item {
+    /* width: 20px; height: 20px; are from .icon & .icon-side-menu-item */
+    /* No fill property for <img> */
+}
+
+.home-app-btn .gemini-logo-icon.icon {
+    /* width: 28px; height: 28px; are from .home-app-btn .icon */
+    /* No fill property for <img> */
+}
+
 
 /* General Input and Textarea Styling */
 /* Ensure .icon-button is suitable for icon-only buttons */

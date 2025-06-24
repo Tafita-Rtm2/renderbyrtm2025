@@ -919,22 +919,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- TRAILER MODAL Functions ---
     function openTrailerModal(youtubeVideoId) {
+        console.log('[TrailerModal] Attempting to open. Video ID:', youtubeVideoId);
         if (!trailerModal || !trailerIframe) {
-            console.error('Trailer modal elements not found!');
-            // Fallback to new tab if modal elements are missing for some reason
+            console.error('[TrailerModal] ERROR: Modal elements #trailer-modal or #trailer-iframe not found in DOM!');
+            // Fallback to new tab if modal elements are missing
             window.open(`https://www.youtube.com/watch?v=${youtubeVideoId}`, '_blank');
             return;
         }
-        trailerIframe.src = `https://www.youtube.com/embed/${youtubeVideoId}?autoplay=1&rel=0`; // Added autoplay & rel=0
+        console.log('[TrailerModal] Modal elements found. Setting iframe src.');
+        trailerIframe.src = `https://www.youtube.com/embed/${youtubeVideoId}?autoplay=1&rel=0&modestbranding=1`;
         trailerModal.classList.add('visible');
-        // Consider focusing on the modal or iframe for accessibility, though iframe focus can be tricky.
-        // For now, the visual cue is the primary feedback.
+        console.log('[TrailerModal] Modal classList after add:', trailerModal.classList);
+        // Forcing a reflow might help in some edge cases with CSS transitions
+        // void trailerModal.offsetWidth;
     }
 
     function closeTrailerModal() {
-        if (!trailerModal || !trailerIframe) return;
+        console.log('[TrailerModal] Attempting to close.');
+        if (!trailerModal || !trailerIframe) {
+            console.error('[TrailerModal] ERROR: Modal elements not found on close attempt.');
+            return;
+        }
         trailerIframe.src = ''; // Clear src to stop video playback
         trailerModal.classList.remove('visible');
+        console.log('[TrailerModal] Modal classList after remove:', trailerModal.classList);
     }
 
     if (modalCloseButton) {
@@ -1147,11 +1155,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function fetchAndDisplayTrailer(movieId) {
-        if (!movieId) return;
-        console.log(`Fetching trailer for movie ID: ${movieId}`);
+        if (!movieId) {
+            console.log('[TrailerModal] fetchAndDisplayTrailer called with no movieId.');
+            return;
+        }
+        console.log(`[TrailerModal] Fetching trailer for movie ID: ${movieId}`);
         try {
-            // Note: The backend endpoint should be /api/movies/:id/videos or similar
-            const videoData = await fetchFromTMDB(`/details/${movieId}/videos`); // Adjusted to match typical RESTful collection/item/subcollection
+            const videoData = await fetchFromTMDB(`/details/${movieId}/videos`);
+            console.log('[TrailerModal] Fetched video data:', videoData);
+
             if (videoData && videoData.results && videoData.results.length > 0) {
                 const officialTrailer = videoData.results.find(video =>
                     video.type === 'Trailer' && video.site === 'YouTube' && video.official === true
@@ -1164,23 +1176,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     videoToPlay = trailer;
                 } else if (teaser) {
                     videoToPlay = teaser;
-                } else if (videoData.results[0] && videoData.results[0].site === 'YouTube') { // Fallback to first YouTube video
-                    videoToPlay = videoData.results[0];
+                } else if (videoData.results.find(video => video.site === 'YouTube')) { // Find first available YouTube video if no trailer/teaser
+                    videoToPlay = videoData.results.find(video => video.site === 'YouTube');
                 }
 
-                if (videoToPlay && videoToPlay.site === 'YouTube') {
-                    // const youtubeUrl = `https://www.youtube.com/watch?v=${videoToPlay.key}`;
-                    // window.open(youtubeUrl, '_blank'); // Old method
-                    openTrailerModal(videoToPlay.key); // New method: open in modal
+                console.log('[TrailerModal] Chosen video to play:', videoToPlay);
+
+                if (videoToPlay && videoToPlay.site === 'YouTube' && videoToPlay.key) {
+                    openTrailerModal(videoToPlay.key);
                 } else {
-                    alert('No suitable YouTube trailer found for this movie.');
-                    console.log('Available videos:', videoData.results);
+                    alert('No suitable YouTube video found for this movie.');
+                    console.log('[TrailerModal] No suitable YouTube video. Available videos:', videoData.results);
                 }
             } else {
                 alert('No trailers or video information found for this movie.');
+                console.log('[TrailerModal] No video results in data.');
             }
         } catch (error) {
-            console.error('Error fetching or displaying trailer:', error);
+            console.error('[TrailerModal] Error fetching or displaying trailer:', error);
             alert(`Could not fetch trailer information: ${error.message}`);
         }
     }
@@ -1860,6 +1873,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // --- END OF GPT-4o CHAT LOGIC ---
 
+    function formatActivityUrl(url) {
+        if (!url) return 'N/A';
+        try {
+            const currentOrigin = window.location.origin;
+            if (url.startsWith(currentOrigin)) {
+                const path = url.substring(currentOrigin.length);
+                return `Site: ${escapeHTML(path || '/')}`;
+            } else {
+                const urlObj = new URL(url);
+                return `External: ${escapeHTML(urlObj.hostname)}`;
+            }
+        } catch (e) {
+            // If URL parsing fails, return the escaped original URL (truncated if too long)
+            const maxLength = 50;
+            return escapeHTML(url.length > maxLength ? url.substring(0, maxLength - 3) + '...' : url);
+        }
+    }
+
     // --- VIP AREA LOGIC (REMOVED) ---
     // const vipAccessArea = document.getElementById('vip-access-area'); // Element will be removed from HTML
     // const vipCodeInput = document.getElementById('vip-code-input');
@@ -1933,7 +1964,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <strong>${escapeHTML(activity.activityType)}</strong> by user <span class="activity-uid">${escapeHTML(activity.uid.slice(0,8))}...</span>
                             <br><span class="activity-details">Details: ${escapeHTML(JSON.stringify(activity.details))}</span>
                             <br><span class="activity-time">${new Date(activity.timestamp).toLocaleString()}</span>
-                            <br><span class="activity-time">URL: ${escapeHTML(activity.url)}</span>
+                            <br><span class="activity-url-styled">Source: ${formatActivityUrl(activity.url)}</span>
                         </li>`;
                 });
                 activitiesHTML += '</ul>';

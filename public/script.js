@@ -1049,13 +1049,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 <p><strong>Revenue:</strong> ${movie.revenue ? '$' + movie.revenue.toLocaleString() : 'N/A'}</p>
                 <p><strong>Production Companies:</strong> ${productionCompanies || 'N/A'}</p>
             </div>
-            ${movie.homepage ? `<a href="${escapeHTML(movie.homepage)}" target="_blank" class="btn-movie-homepage">Visit Homepage</a>` : ''}
+
             <div class="movie-actions">
-                <button class="btn-action-movie" title="Functionality not yet implemented" disabled>Watch Trailer</button>
-                <button class="btn-action-movie" title="Functionality not yet implemented" disabled>Download Movie</button>
+                <button id="watch-trailer-button-${movie.id}" class="btn-action-movie watch-trailer-btn" data-movie-id="${movie.id}">Watch Trailer</button>
+                <button class="btn-action-movie download-movie-btn" title="Functionality not yet implemented" disabled>Download Movie</button>
             </div>
         `;
         const backButton = detailElement.querySelector('#box-movie-back-button');
+        const watchTrailerButton = detailElement.querySelector(`#watch-trailer-button-${movie.id}`);
+
+        if (watchTrailerButton) {
+            watchTrailerButton.addEventListener('click', (e) => {
+                const movieId = e.currentTarget.dataset.movieId;
+                fetchAndDisplayTrailer(movieId);
+            });
+        }
         if (backButton) {
             backButton.addEventListener('click', () => {
                 detailElement.style.display = 'none';
@@ -1091,6 +1099,44 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
+    }
+
+    async function fetchAndDisplayTrailer(movieId) {
+        if (!movieId) return;
+        console.log(`Fetching trailer for movie ID: ${movieId}`);
+        try {
+            // Note: The backend endpoint should be /api/movies/:id/videos or similar
+            const videoData = await fetchFromTMDB(`/details/${movieId}/videos`); // Adjusted to match typical RESTful collection/item/subcollection
+            if (videoData && videoData.results && videoData.results.length > 0) {
+                const officialTrailer = videoData.results.find(video =>
+                    video.type === 'Trailer' && video.site === 'YouTube' && video.official === true
+                );
+                const trailer = officialTrailer || videoData.results.find(video => video.type === 'Trailer' && video.site === 'YouTube');
+                const teaser = videoData.results.find(video => video.type === 'Teaser' && video.site === 'YouTube');
+
+                let videoToPlay = null;
+                if (trailer) {
+                    videoToPlay = trailer;
+                } else if (teaser) {
+                    videoToPlay = teaser;
+                } else if (videoData.results[0] && videoData.results[0].site === 'YouTube') { // Fallback to first YouTube video
+                    videoToPlay = videoData.results[0];
+                }
+
+                if (videoToPlay && videoToPlay.site === 'YouTube') {
+                    const youtubeUrl = `https://www.youtube.com/watch?v=${videoToPlay.key}`;
+                    window.open(youtubeUrl, '_blank');
+                } else {
+                    alert('No suitable YouTube trailer found for this movie.');
+                    console.log('Available videos:', videoData.results);
+                }
+            } else {
+                alert('No trailers or video information found for this movie.');
+            }
+        } catch (error) {
+            console.error('Error fetching or displaying trailer:', error);
+            alert(`Could not fetch trailer information: ${error.message}`);
+        }
     }
     // --- END OF BOX MOVIE ---
 

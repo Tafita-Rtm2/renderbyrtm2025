@@ -925,6 +925,20 @@ app.get('/api/movies/details/:id', async (req, res) => {
         res.status(error.status || 500).json({ message: error.message || 'Failed to fetch movie details.' });
     }
 });
+
+// GET /api/movies/details/:id/videos - Fetch videos for a movie
+app.get('/api/movies/details/:id/videos', async (req, res) => {
+    const { id } = req.params;
+    if (!id) {
+        return res.status(400).json({ message: 'Movie ID is required.' });
+    }
+    try {
+        const videoData = await fetchTMDB(`/movie/${id}/videos`);
+        res.json(videoData); // TMDB already returns {id, results: [...]}
+    } catch (error) {
+        res.status(error.status || 500).json({ message: error.message || 'Failed to fetch movie videos.' });
+    }
+});
 // --- END OF TMDB API Routes ---
 
 

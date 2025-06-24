@@ -394,6 +394,94 @@ body:not(.dark-mode) .theme-switch input:checked + .slider:before {
     fill: var(--secondary-bg); /* Icon color on hover */
 }
 
+/* --- TRAILER MODAL STYLES --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85); /* Darker overlay for more focus */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2500;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease-in-out, visibility 0s linear 0.3s; /* Delay visibility transition */
+}
+
+.modal-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.modal-content {
+    background-color: var(--secondary-bg);
+    padding: 20px; /* Slightly less padding */
+    border-radius: 8px; /* Consistent with other cards */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    position: relative;
+    width: 90vw; /* Use viewport width */
+    max-width: 880px; /* Max width for very large screens */
+    transform: translateY(-50px) scale(0.95); /* Initial state for animation */
+    opacity: 0;
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s ease-out; /* Smoother animation */
+}
+
+.modal-overlay.visible .modal-content {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+}
+
+.modal-close-button {
+    position: absolute;
+    top: -15px;
+    right: -15px;
+    font-size: 1.8em;
+    font-weight: bold;
+    color: var(--primary-bg);
+    background-color: var(--accent-color);
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    line-height: 1; /* Better centering for × */
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    border: 2px solid var(--primary-bg);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    z-index: 10; /* Ensure close button is above video container if overlapping */
+}
+.modal-close-button:hover {
+    transform: rotate(90deg) scale(1.1);
+    background-color: var(--secondary-accent-color);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+}
+
+.video-responsive-container {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    padding-top: 56.25%; /* 16:9 Aspect Ratio */
+    background-color: #000;
+    border-radius: 5px;
+}
+
+.video-responsive-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+/* --- END OF TRAILER MODAL STYLES --- */
 
 #public-comments-section { /* This is within #home-view */
     margin-top: 20px;

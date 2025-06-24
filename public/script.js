@@ -912,6 +912,51 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentGeneratedStoryContent = "";
     let currentGeneratedStoryTheme = "";
 
+    // --- TRAILER MODAL Elements ---
+    const trailerModal = document.getElementById('trailer-modal');
+    const trailerIframe = document.getElementById('trailer-iframe');
+    const modalCloseButton = document.querySelector('#trailer-modal .modal-close-button');
+
+    // --- TRAILER MODAL Functions ---
+    function openTrailerModal(youtubeVideoId) {
+        if (!trailerModal || !trailerIframe) {
+            console.error('Trailer modal elements not found!');
+            // Fallback to new tab if modal elements are missing for some reason
+            window.open(`https://www.youtube.com/watch?v=${youtubeVideoId}`, '_blank');
+            return;
+        }
+        trailerIframe.src = `https://www.youtube.com/embed/${youtubeVideoId}?autoplay=1&rel=0`; // Added autoplay & rel=0
+        trailerModal.classList.add('visible');
+        // Consider focusing on the modal or iframe for accessibility, though iframe focus can be tricky.
+        // For now, the visual cue is the primary feedback.
+    }
+
+    function closeTrailerModal() {
+        if (!trailerModal || !trailerIframe) return;
+        trailerIframe.src = ''; // Clear src to stop video playback
+        trailerModal.classList.remove('visible');
+    }
+
+    if (modalCloseButton) {
+        modalCloseButton.addEventListener('click', closeTrailerModal);
+    }
+
+    if (trailerModal) {
+        // Close modal if user clicks on the overlay (outside the modal-content)
+        trailerModal.addEventListener('click', (event) => {
+            if (event.target === trailerModal) { // Check if the click is directly on the overlay
+                closeTrailerModal();
+            }
+        });
+    }
+    // Add keyboard accessibility for closing modal (Escape key)
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && trailerModal && trailerModal.classList.contains('visible')) {
+            closeTrailerModal();
+        }
+    });
+    // --- END OF TRAILER MODAL ---
+
     // --- BOX MOVIE Elements ---
     const boxMovieSearchField = document.getElementById('box-movie-search-field');
     const boxMovieSearchButton = document.getElementById('box-movie-search-button');
@@ -1124,8 +1169,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 if (videoToPlay && videoToPlay.site === 'YouTube') {
-                    const youtubeUrl = `https://www.youtube.com/watch?v=${videoToPlay.key}`;
-                    window.open(youtubeUrl, '_blank');
+                    // const youtubeUrl = `https://www.youtube.com/watch?v=${videoToPlay.key}`;
+                    // window.open(youtubeUrl, '_blank'); // Old method
+                    openTrailerModal(videoToPlay.key); // New method: open in modal
                 } else {
                     alert('No suitable YouTube trailer found for this movie.');
                     console.log('Available videos:', videoData.results);

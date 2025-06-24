@@ -61,25 +61,42 @@ const client = new MongoClient(mongoUri);
 let portfolioDb;
 let commentsCollection;
 let userActivitiesCollection; // Added for user activity tracking
+let usersCollection; // For storing user names and UIDs
 
 async function connectDB() {
     try {
         await client.connect();
         portfolioDb = client.db("portfolioDb");
         commentsCollection = portfolioDb.collection("comments");
-        userActivitiesCollection = portfolioDb.collection("userActivities"); // Initialize collection
+        userActivitiesCollection = portfolioDb.collection("userActivities");
+        usersCollection = portfolioDb.collection("users"); // Initialize users collection
         console.log("Successfully connected to MongoDB Atlas!");
 
+        // Indexes for commentsCollection
         await commentsCollection.createIndex({ createdAt: -1 });
         console.log("Indexes ensured for comments collection.");
 
+        // Indexes for userActivitiesCollection
         await userActivitiesCollection.createIndex({ uid: 1 });
         await userActivitiesCollection.createIndex({ timestamp: -1 });
         await userActivitiesCollection.createIndex({ activityType: 1 });
         console.log("Indexes ensured for userActivities collection.");
+
+        // Indexes for usersCollection
+        await usersCollection.createIndex({ uid: 1 }, { unique: true });
+        await usersCollection.createIndex({ name: 1 }, { unique: true });
+        console.log("Unique indexes ensured for uid and name in users collection.");
+
     } catch (err) {
         console.error("Failed to connect to MongoDB Atlas or ensure indexes", err);
-        process.exit(1);
+        if (err.code === 11000 && err.keyPattern && err.keyPattern.name) {
+            console.warn("Warning: Duplicate name index error during setup. This might be okay if you are re-running after a partial setup, but ensure names are unique.");
+        } else if (err.code === 11000 && err.keyPattern && err.keyPattern.uid) {
+            console.warn("Warning: Duplicate UID index error during setup. This is highly unusual and might indicate a problem if UIDs are not unique from the client.");
+        }
+        // Decide if process should exit for all errors or just critical ones
+        // For now, let's keep process.exit(1) for general DB connection/setup failures
+        // process.exit(1); // Commenting out to allow server to start even if index creation has non-critical issues on re-run
     }
 }
 
@@ -852,6 +869,104 @@ app.post('/api/comments/:commentId/dislike', async (req, res) => {
         res.status(500).json({ error: "Server error while disliking comment." });
     }
 });
+
+// --- User Registration and Check API Routes ---
+
+// POST /api/users/register - Register a new user or log them in if UID exists with same name
+app.post('/api/users/register', async (req, res) => {
+    if (!usersCollection) {
+        return res.status(503).json({ message: "User service not available." });
+    }
+    try {
+        const { uid, name } = req.body;
+
+        if (!uid || typeof uid !== 'string' || uid.trim() === '') {
+            return res.status(400).json({ message: 'User ID (uid) is required.' });
+        }
+        if (!name || typeof name !== 'string' || name.trim() === '') {
+            return res.status(400).json({ message: 'Name is required.' });
+        }
+
+        const trimmedName = name.trim();
+        if (trimmedName.length < 3) {
+             return res.status(400).json({ message: 'Name must be at least 3 characters long.' });
+        }
+
+
+        // Check if UID already exists
+        const existingUserByUID = await usersCollection.findOne({ uid: uid });
+
+        if (existingUserByUID) {
+            // UID exists. Check if the name matches.
+            if (existingUserByUID.name === trimmedName) {
+                // Same UID, same name - consider it a login/re-confirmation.
+                return res.status(200).json({ uid: existingUserByUID.uid, name: existingUserByUID.name, message: "Welcome back!" });
+            } else {
+                // Same UID, different name. This is problematic.
+                // For now, let's prevent name changes via this route.
+                // A separate "update profile" route would be better for name changes.
+                return res.status(409).json({ message: "This User ID is already associated with a different name. Please contact support if you believe this is an error." });
+            }
+        }
+
+        // UID is new, now check if the name is already taken by another UID
+        const existingUserByName = await usersCollection.findOne({ name: trimmedName });
+        if (existingUserByName) {
+            // Name is taken by a different UID
+            return res.status(409).json({ message: "This name is already taken. Please choose a different name." });
+        }
+
+        // UID is new and Name is available, proceed to register
+        const newUser = {
+            uid: uid,
+            name: trimmedName,
+            createdAt: new Date()
+        };
+        const result = await usersCollection.insertOne(newUser);
+        // const createdUser = await usersCollection.findOne({ _id: result.insertedId }); // Re-fetch to confirm
+
+        // Return the newly created user data (or at least uid and name)
+        res.status(201).json({ uid: newUser.uid, name: newUser.name, message: "User registered successfully." });
+
+    } catch (error) {
+        console.error("Error during user registration:", error);
+        if (error.code === 11000) { // Duplicate key error (either uid or name from index)
+             if (error.message.includes('index: name_1')) { // Check if it's the name index
+                return res.status(409).json({ message: "This name is already taken. Please choose a different name." });
+            } else if (error.message.includes('index: uid_1')) { // Check if it's the uid index (should be caught by findOne earlier but as a safeguard)
+                 return res.status(409).json({ message: "This User ID is already registered." });
+            }
+        }
+        res.status(500).json({ message: "Server error during user registration." });
+    }
+});
+
+// GET /api/users/check/:uid - Check if a user is registered and get their name
+app.get('/api/users/check/:uid', async (req, res) => {
+    if (!usersCollection) {
+        return res.status(503).json({ message: "User service not available." });
+    }
+    try {
+        const { uid } = req.params;
+        if (!uid) {
+            return res.status(400).json({ message: 'User ID (uid) is required in path.' });
+        }
+
+        const user = await usersCollection.findOne({ uid: uid });
+
+        if (user) {
+            res.status(200).json({ uid: user.uid, name: user.name });
+        } else {
+            res.status(404).json({ message: "User not found or name not registered yet." });
+        }
+    } catch (error) {
+        console.error("Error checking user:", error);
+        res.status(500).json({ message: "Server error while checking user." });
+    }
+});
+
+// --- End of User Registration and Check API Routes ---
+
 
 // --- TMDB API Routes ---
 // Helper function to fetch data from TMDB

@@ -1,0 +1,5 @@
+Successfully connected to MongoDB Atlas!
+Indexes ensured for comments collection.
+Indexes ensured for userActivities collection.
+Unique indexes ensured for uid and name in users collection.
+Server is running on http://localhost:3000

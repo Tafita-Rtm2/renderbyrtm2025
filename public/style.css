@@ -706,6 +706,12 @@ body:not(.dark-mode) .theme-switch input:checked + .slider:before {
 #comment-form label { display: block; margin-bottom: 5px; color: var(--text-muted-color); font-size: 0.9em; }
 #comment-form input[type="text"], #comment-form textarea { width: 100%; padding: 10px; background-color: var(--primary-bg); border: 1px solid var(--border-color); border-radius: 5px; color: var(--text-color); font-family: var(--font-primary); box-sizing: border-box; transition: border-color 0.3s ease, box-shadow 0.3s ease; }
 #comment-form input[type="text"]:focus, #comment-form textarea:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 8px var(--accent-color); }
+#comment-form input[type="text"].prefilled {
+    background-color: var(--surface-color); /* Slightly different background */
+    color: var(--text-muted-color); /* Dimmer text color */
+    cursor: not-allowed;
+    /* border-style: dashed; Optional: make border look different */
+}
 #comment-form textarea { resize: vertical; min-height: 80px; }
 .btn-submit-comment { background-color: var(--accent-color); color: var(--primary-bg); border: none; padding: 10px 20px; border-radius: 5px; font-family: var(--font-primary); font-weight: 500; cursor: pointer; transition: background-color 0.3s ease, transform 0.2s ease; text-transform: uppercase; letter-spacing: 1px; }
 .btn-submit-comment:hover { background-color: var(--primary-accent-color); transform: translateY(-2px); }

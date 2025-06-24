@@ -41,7 +41,7 @@
             <li><a href="#" data-view="gpt4o-chat-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"></path></svg> <span>Chat GPT-4V</span></a></li>
             <li><a href="#" data-view="image-generator-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"></path></svg> <span>Générateur d'Images</span></a></li>
             <li><a href="#" data-view="story-generator-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"></path></svg> <span>Générateur d'Histoires</span></a></li>
-            <li><a href="#" data-view="vip-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path></svg> <span>Zone VIP</span></a></li>
+            <li><a href="#" data-view="box-movie-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M18 3v2h-2V3H8v2H6V3H4v18h2v-2h2v2h8v-2h2v2h2V3h-2zM8 17H6v-2h2v2zm0-4H6v-2h2v2zm0-4H6V7h2v2zm10 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2z"></path></svg> <span>Box Movie</span></a></li>
             <li><a href="#" data-view="weather-view"> <svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"></path></svg> <span>Météo</span></a></li>
             <li><a href="#" data-view="about-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"></path></svg> <span>À Propos</span></a></li>
             <li><a href="#" data-view="contact-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"></path></svg> <span>Contact</span></a></li>
@@ -96,11 +96,11 @@
                     </div>
 
                     <div class="feature-highlight-item">
-                         <div class="feature-icon">
-                            <svg viewBox="0 0 24 24" class="icon"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path></svg> <!-- VIP Icon -->
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" class="icon"><path d="M18 3v2h-2V3H8v2H6V3H4v18h2v-2h2v2h8v-2h2v2h2V3h-2zM8 17H6v-2h2v2zm0-4H6v-2h2v2zm0-4H6V7h2v2zm10 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2z"></path></svg> <!-- Box Movie Icon -->
                         </div>
-                        <h3>VIP Zone</h3>
-                        <p>Access an exclusive embedded experience from our partner site. (Direct access, no code needed!).</p>
+                        <h3>Box Movie</h3>
+                        <p>Explore, search, and discover a vast library of movies. Get details, watch trailers, and manage your watchlist all in one place.</p>
                     </div>
 
                     <div class="feature-highlight-item">
@@ -143,9 +143,9 @@
                     <svg viewBox="0 0 24 24" class="icon"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"></path></svg>
                     <span>Story Gen</span>
                 </button>
-                <button class="home-app-btn" data-view="vip-view">
-                    <svg viewBox="0 0 24 24" class="icon"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path></svg>
-                    <span>VIP Zone</span>
+                <button class="home-app-btn" data-view="box-movie-view">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M18 3v2h-2V3H8v2H6V3H4v18h2v-2h2v2h8v-2h2v2h2V3h-2zM8 17H6v-2h2v2zm0-4H6v-2h2v2zm0-4H6V7h2v2zm10 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2z"></path></svg>
+                    <span>Box Movie</span>
                 </button>
                 <button class="home-app-btn" data-view="gemini-chat-view">
                     <img src="https://www.gstatic.com/images/branding/product/2x/gemini_48dp.png" alt="Gemini Chat" class="icon gemini-logo-icon">
@@ -272,6 +272,34 @@
             </div>
             <div id="story-history-area"><h4>My Stories</h4><div id="story-history-list"></div></div>
         </div>
+
+        <div id="box-movie-view" class="view" style="display: none;">
+            <h2>Box Movie</h2>
+            <div id="box-movie-search-area">
+                <input type="text" id="box-movie-search-field" placeholder="Search for movies...">
+                <button id="box-movie-search-button" class="icon-button" title="Search Movies">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"></path></svg>
+                </button>
+            </div>
+            <div id="box-movie-content-area">
+                <section id="box-movie-popular-section">
+                    <h3>Popular Movies</h3>
+                    <div id="box-movie-popular-grid" class="movie-grid">
+                        <!-- Popular movies will be dynamically inserted here -->
+                    </div>
+                </section>
+                <section id="box-movie-search-results-section" style="display:none;">
+                    <h3>Search Results</h3>
+                    <div id="box-movie-search-grid" class="movie-grid">
+                        <!-- Search results will be dynamically inserted here -->
+                    </div>
+                </section>
+                <div id="box-movie-details-section" style="display:none;">
+                    <!-- Movie details will be dynamically inserted here -->
+                </div>
+            </div>
+        </div>
+
     <div id="admin-panel-view" class="view" style="display: none;">
         <h2>Admin Panel</h2>
 

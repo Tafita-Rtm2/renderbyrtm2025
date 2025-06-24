@@ -173,7 +173,13 @@ document.addEventListener('DOMContentLoaded', () => {
             currentGeneratedStoryContent = "";
             currentGeneratedStoryTheme = "";
             if(typeof updateStoryVipControlsVisibility === 'function') updateStoryVipControlsVisibility();
-        } else if (viewIdToShow === 'weather-view') { // VIP view logic removed from here
+        } else if (viewIdToShow === 'box-movie-view') {
+            // Placeholder for when Box Movie view is shown
+            // For example, load popular movies by default
+            if (typeof fetchPopularMovies === 'function') {
+                fetchPopularMovies();
+            }
+        } else if (viewIdToShow === 'weather-view') {
             const weatherView = document.getElementById('weather-view');
             if (currentWeatherData) { // If data is already fetched
                 displayDetailedWeather(currentWeatherData);
@@ -255,9 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
             button.addEventListener('click', (e) => {
                 e.preventDefault();
                 const viewId = button.dataset.view;
-                if (viewId === 'vip-view') {
-                    window.location.href = 'https://sitebymegg.onrender.com/';
-                } else if (viewId) {
+                if (viewId) { // Removed VIP direct redirect
                     window.showView(viewId);
                 }
             });
@@ -271,10 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
             link.addEventListener('click', (event) => {
                 event.preventDefault();
                 const viewId = link.dataset.view;
-                if (viewId === 'vip-view') {
-                    window.location.href = 'https://sitebymegg.onrender.com/';
-                    // sideMenu.classList.remove('visible'); // Optional: remove if redirecting anyway
-                } else if (viewId) {
+                if (viewId) { // Removed VIP direct redirect
                     window.showView(viewId);
                     sideMenu.classList.remove('visible');
                 }
@@ -910,6 +911,188 @@ document.addEventListener('DOMContentLoaded', () => {
     const storyHistoryKey = 'portfolioStoryHistory';
     let currentGeneratedStoryContent = "";
     let currentGeneratedStoryTheme = "";
+
+    // --- BOX MOVIE Elements ---
+    const boxMovieSearchField = document.getElementById('box-movie-search-field');
+    const boxMovieSearchButton = document.getElementById('box-movie-search-button');
+    const boxMoviePopularGrid = document.getElementById('box-movie-popular-grid');
+    const boxMovieSearchGrid = document.getElementById('box-movie-search-grid');
+    const boxMoviePopularSection = document.getElementById('box-movie-popular-section');
+    const boxMovieSearchResultsSection = document.getElementById('box-movie-search-results-section');
+    const boxMovieDetailsSection = document.getElementById('box-movie-details-section');
+    const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500'; // For posters
+
+    // --- BOX MOVIE Functions ---
+    async function fetchFromTMDB(endpoint, params = {}) {
+        const baseUrl = '/api/movies'; // Using our backend proxy
+        // Construct the full URL using window.location.origin to ensure it's absolute
+        const fullUrl = new URL(`${baseUrl}${endpoint}`, window.location.origin);
+        Object.keys(params).forEach(key => fullUrl.searchParams.append(key, params[key]));
+
+        try {
+            const response = await fetch(fullUrl); // Use the full URL
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ message: `HTTP error! status: ${response.status}` }));
+                console.error(`Error fetching ${endpoint}:`, errorData.message);
+                throw new Error(errorData.message || `Failed to fetch data for ${endpoint}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error(`Network or parsing error fetching ${endpoint}:`, error);
+            throw error; // Re-throw to be caught by caller
+        }
+    }
+
+    async function fetchPopularMovies() {
+        if (!boxMoviePopularGrid || !boxMoviePopularSection) return;
+        boxMoviePopularGrid.innerHTML = '<p class="loading-movies">Loading popular movies...</p>';
+        boxMoviePopularSection.style.display = 'block';
+        if (boxMovieSearchResultsSection) boxMovieSearchResultsSection.style.display = 'none';
+        if (boxMovieDetailsSection) boxMovieDetailsSection.style.display = 'none';
+
+        try {
+            const data = await fetchFromTMDB('/popular');
+            renderMovies(data.results, boxMoviePopularGrid);
+        } catch (error) {
+            boxMoviePopularGrid.innerHTML = `<p class="error-movies">Could not load popular movies: ${error.message}</p>`;
+        }
+    }
+
+    async function searchMovies(query) {
+        if (!query || !boxMovieSearchGrid || !boxMovieSearchResultsSection) return;
+        boxMovieSearchGrid.innerHTML = '<p class="loading-movies">Searching movies...</p>';
+        if (boxMoviePopularSection) boxMoviePopularSection.style.display = 'none';
+        boxMovieSearchResultsSection.style.display = 'block';
+        if (boxMovieDetailsSection) boxMovieDetailsSection.style.display = 'none';
+
+        try {
+            const data = await fetchFromTMDB('/search', { query });
+            renderMovies(data.results, boxMovieSearchGrid);
+             if (data.results && data.results.length === 0) {
+                boxMovieSearchGrid.innerHTML = `<p class="info-movies">No movies found for "${escapeHTML(query)}".</p>`;
+            }
+        } catch (error) {
+            boxMovieSearchGrid.innerHTML = `<p class="error-movies">Could not perform search: ${error.message}</p>`;
+        }
+    }
+
+    async function getMovieDetails(movieId) {
+        if (!movieId || !boxMovieDetailsSection) return;
+        boxMovieDetailsSection.innerHTML = '<p class="loading-movies">Loading movie details...</p>';
+        if (boxMoviePopularSection) boxMoviePopularSection.style.display = 'none';
+        if (boxMovieSearchResultsSection) boxMovieSearchResultsSection.style.display = 'none';
+        boxMovieDetailsSection.style.display = 'block';
+
+        try {
+            const movie = await fetchFromTMDB(`/details/${movieId}`);
+            renderMovieDetails(movie, boxMovieDetailsSection);
+        } catch (error) {
+            boxMovieDetailsSection.innerHTML = `<p class="error-movies">Could not load movie details: ${error.message}</p>`;
+        }
+    }
+
+    function renderMovies(movies, gridElement) {
+        if (!movies || !gridElement) return;
+        gridElement.innerHTML = ''; // Clear previous content or loading message
+        if (movies.length === 0 && gridElement.id === 'box-movie-search-grid') {
+            // This case is handled in searchMovies specifically for better message with query
+            return;
+        } else if (movies.length === 0) {
+            gridElement.innerHTML = '<p class="info-movies">No movies to display.</p>';
+            return;
+        }
+
+        movies.forEach(movie => {
+            if (!movie.poster_path) return; // Skip movies without posters for a cleaner look
+
+            const movieCard = document.createElement('div');
+            movieCard.className = 'movie-card';
+            movieCard.dataset.movieId = movie.id;
+            movieCard.innerHTML = `
+                <img src="${TMDB_IMAGE_BASE_URL}${movie.poster_path}" alt="${escapeHTML(movie.title)} Poster">
+                <div class="movie-card-info">
+                    <h4>${escapeHTML(movie.title)} ${movie.release_date ? '(' + movie.release_date.substring(0,4) + ')' : ''}</h4>
+                    <p class="movie-rating">Rating: ${movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A'} <span class="star-icon">★</span></p>
+                </div>
+            `;
+            movieCard.addEventListener('click', () => getMovieDetails(movie.id));
+            gridElement.appendChild(movieCard);
+        });
+    }
+
+    function renderMovieDetails(movie, detailElement) {
+        if (!movie || !detailElement) return;
+        const genres = movie.genres && movie.genres.map(g => escapeHTML(g.name)).join(', ');
+        const productionCompanies = movie.production_companies && movie.production_companies.slice(0, 3).map(pc => escapeHTML(pc.name)).join(', ');
+
+        detailElement.innerHTML = `
+            <button id="box-movie-back-button" class="icon-button box-movie-back-btn">&larr; Back to list</button>
+            <div class="movie-detail-header">
+                <img src="${movie.poster_path ? TMDB_IMAGE_BASE_URL + movie.poster_path : 'https://via.placeholder.com/500x750.png?text=No+Poster'}" alt="${escapeHTML(movie.title)} Poster" class="movie-detail-poster">
+                <div class="movie-detail-title-group">
+                    <h1>${escapeHTML(movie.title)}</h1>
+                    <p class="tagline"><em>${escapeHTML(movie.tagline || '')}</em></p>
+                    <p><strong>Release Date:</strong> ${escapeHTML(movie.release_date || 'N/A')}</p>
+                    <p><strong>Rating:</strong> ${movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A'} (${movie.vote_count} votes) <span class="star-icon">★</span></p>
+                    <p><strong>Runtime:</strong> ${movie.runtime ? movie.runtime + ' minutes' : 'N/A'}</p>
+                    <p><strong>Genres:</strong> ${genres || 'N/A'}</p>
+                </div>
+            </div>
+            <div class="movie-detail-overview">
+                <h3>Overview</h3>
+                <p>${escapeHTML(movie.overview || 'No overview available.')}</p>
+            </div>
+            <div class="movie-detail-meta">
+                <p><strong>Status:</strong> ${escapeHTML(movie.status || 'N/A')}</p>
+                <p><strong>Original Language:</strong> ${escapeHTML(movie.original_language ? movie.original_language.toUpperCase() : 'N/A')}</p>
+                <p><strong>Budget:</strong> ${movie.budget ? '$' + movie.budget.toLocaleString() : 'N/A'}</p>
+                <p><strong>Revenue:</strong> ${movie.revenue ? '$' + movie.revenue.toLocaleString() : 'N/A'}</p>
+                <p><strong>Production Companies:</strong> ${productionCompanies || 'N/A'}</p>
+            </div>
+            ${movie.homepage ? `<a href="${escapeHTML(movie.homepage)}" target="_blank" class="btn-movie-homepage">Visit Homepage</a>` : ''}
+            <div class="movie-actions">
+                <button class="btn-action-movie" title="Functionality not yet implemented" disabled>Watch Trailer</button>
+                <button class="btn-action-movie" title="Functionality not yet implemented" disabled>Download Movie</button>
+            </div>
+        `;
+        const backButton = detailElement.querySelector('#box-movie-back-button');
+        if (backButton) {
+            backButton.addEventListener('click', () => {
+                detailElement.style.display = 'none';
+                detailElement.innerHTML = '';
+                // Show the previously active list (popular or search)
+                if (boxMovieSearchGrid && boxMovieSearchGrid.innerHTML !== '' && boxMovieSearchResultsSection && boxMovieSearchResultsSection.style.display === 'block') {
+                    // Search results were visible, do nothing to explicitly re-show them as they are already block
+                } else if (boxMoviePopularGrid && boxMoviePopularGrid.innerHTML !== '' && boxMoviePopularSection) {
+                    boxMoviePopularSection.style.display = 'block';
+                } else { // Fallback if neither list has content or popular section isn't found
+                    fetchPopularMovies();
+                }
+            });
+        }
+    }
+
+    if (boxMovieSearchButton && boxMovieSearchField) {
+        boxMovieSearchButton.addEventListener('click', () => {
+            const query = boxMovieSearchField.value.trim();
+            if (query) {
+                searchMovies(query);
+            } else {
+                fetchPopularMovies(); // If search is empty, show popular movies
+            }
+        });
+        boxMovieSearchField.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const query = boxMovieSearchField.value.trim();
+                if (query) {
+                    searchMovies(query);
+                } else {
+                    fetchPopularMovies(); // If search is empty on Enter, show popular movies
+                }
+            }
+        });
+    }
+    // --- END OF BOX MOVIE ---
 
     // --- GEMINI CHAT ELEMENTS ---
     const geminiChatMessagesArea = document.getElementById('gemini-chat-messages-area');

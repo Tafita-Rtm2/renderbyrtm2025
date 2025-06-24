@@ -49,6 +49,11 @@ const GEMINI_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6'; // Votre clé API
 const GPT4O_LATEST_API_URL = 'https://kaiz-apis.gleeze.com/api/gpt4o-latest';
 const GPT4O_LATEST_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6'; // Même clé API
 
+// TMDB API Configuration
+const TMDB_API_KEY = '973515c7684f56d1472bba67b13d676b';
+const TMDB_ACCESS_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI5NzM1MTVjNzY4NGY1NmQxNDcyYmJhNjdiMTNkNjc2YiIsIm5iZiI6MTc1MDc1NDgwNy41OTksInN1YiI6IjY4NWE2NWY3OWM3M2UyMWMzYWU2NGJmNSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.qofUiAxiL4ed8ONCxljkTqbsddbvFyVB4_Jwp_HyDnM';
+const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
+
 // MongoDB Connection (can be here)
 const mongoUri = "mongodb+srv://rtmtafita:tafitaniaina1206@rtmchat.pzebpqh.mongodb.net/?retryWrites=true&w=majority&appName=rtmchat";
 const client = new MongoClient(mongoUri);
@@ -847,6 +852,81 @@ app.post('/api/comments/:commentId/dislike', async (req, res) => {
         res.status(500).json({ error: "Server error while disliking comment." });
     }
 });
+
+// --- TMDB API Routes ---
+// Helper function to fetch data from TMDB
+async function fetchTMDB(path, queryParams = {}) {
+    const url = new URL(`${TMDB_BASE_URL}${path}`);
+    url.searchParams.append('api_key', TMDB_API_KEY);
+    // Add any other default params, e.g., language=en-US
+    // url.searchParams.append('language', 'en-US'); // Or 'fr-FR' based on user preference
+    for (const key in queryParams) {
+        url.searchParams.append(key, queryParams[key]);
+    }
+
+    try {
+        const response = await fetch(url.toString(), {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${TMDB_ACCESS_TOKEN}`,
+                'Content-Type': 'application/json;charset=utf-8'
+            }
+        });
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ status_message: `TMDB API error: ${response.statusText}` }));
+            console.error(`TMDB API Error for path ${path}:`, errorData.status_message || response.statusText);
+            throw { status: response.status, message: errorData.status_message || `Failed to fetch from TMDB: ${path}` };
+        }
+        return await response.json();
+    } catch (error) {
+        console.error(`Error in fetchTMDB for ${path}:`, error);
+        throw error; // Re-throw to be handled by route
+    }
+}
+
+// GET /api/movies/popular
+app.get('/api/movies/popular', async (req, res) => {
+    try {
+        const data = await fetchTMDB('/movie/popular', { page: req.query.page || '1' });
+        res.json(data);
+    } catch (error) {
+        res.status(error.status || 500).json({ message: error.message || 'Failed to fetch popular movies.' });
+    }
+});
+
+// GET /api/movies/search
+app.get('/api/movies/search', async (req, res) => {
+    const { query, page } = req.query;
+    if (!query) {
+        return res.status(400).json({ message: 'Search query is required.' });
+    }
+    try {
+        const data = await fetchTMDB('/search/movie', { query: query, page: page || '1' });
+        res.json(data);
+    } catch (error) {
+        res.status(error.status || 500).json({ message: error.message || 'Failed to search movies.' });
+    }
+});
+
+// GET /api/movies/details/:id
+app.get('/api/movies/details/:id', async (req, res) => {
+    const { id } = req.params;
+    if (!id) {
+        return res.status(400).json({ message: 'Movie ID is required.' });
+    }
+    try {
+        // Fetch main details and credits simultaneously if desired
+        const movieDetails = await fetchTMDB(`/movie/${id}`);
+        // Example: Fetch credits (cast/crew)
+        // const credits = await fetchTMDB(`/movie/${id}/credits`);
+        // movieDetails.credits = credits; // Attach credits to the response
+        res.json(movieDetails);
+    } catch (error) {
+        res.status(error.status || 500).json({ message: error.message || 'Failed to fetch movie details.' });
+    }
+});
+// --- END OF TMDB API Routes ---
+
 
 // POST /api/activity - Track user activity
 app.post('/api/activity', async (req, res) => {

@@ -2,6 +2,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const themeCheckbox = document.getElementById('theme-checkbox');
     const bodyElement = document.body;
 
+    let currentUserName = null; // To store the user's name globally
+
+    // Main content elements that will be hidden initially
+    const topBar = document.getElementById('top-bar');
+    const sideMenuEl = document.getElementById('side-menu'); // Renamed to avoid conflict with sideMenu var later
+    const mainContentArea = document.getElementById('main-content');
+    const privateMessageTrigger = document.getElementById('private-message-trigger-container');
+    const homeBottomIconsEl = document.getElementById('home-bottom-app-icons'); // Also might be initially hidden by .main-content-hidden if it's not part of #main-content
+
+    const mainContentElements = [topBar, sideMenuEl, mainContentArea, privateMessageTrigger, homeBottomIconsEl].filter(el => el);
+
+
+    function showMainContent() {
+        mainContentElements.forEach(el => el.classList.remove('main-content-hidden'));
+        // If #home-bottom-app-icons was globally hidden, ensure it's displayed correctly for home-view later
+        // The showView('home-view') logic should handle visibility of homeBottomIconsEl based on current view
+    }
+
+    function hideMainContent() {
+        mainContentElements.forEach(el => el.classList.add('main-content-hidden'));
+    }
+
+
     function applyTheme(theme) {
         if (theme === 'dark') {
             bodyElement.classList.add('dark-mode');
@@ -39,6 +62,105 @@ document.addEventListener('DOMContentLoaded', () => {
             applyTheme('light'); // Default to light if no preference or saved theme
         }
     }
+
+    // Welcome Screen & Main Content Visibility Logic
+    const welcomeScreen = document.getElementById('welcome-screen');
+    const userNameInput = document.getElementById('user-name-input');
+    const submitNameButton = document.getElementById('submit-name-button');
+    const welcomeErrorMessage = document.getElementById('welcome-error-message');
+
+    // Main content elements that were previously defined globally for show/hideMainContent
+    // const topBar = document.getElementById('top-bar'); // Already globally available
+    // const sideMenuEl = document.getElementById('side-menu'); // Already globally available as sideMenu
+    // const mainContentArea = document.getElementById('main-content'); // Already globally available
+    // const privateMessageTrigger = document.getElementById('private-message-trigger-container'); // Already globally available
+    // const homeBottomIconsEl = document.getElementById('home-bottom-app-icons'); // Already globally available as homeBottomAppIcons
+
+    // Ensure mainContentElements is defined using the correct variable names for sideMenu and homeBottomAppIcons
+     const mainContentElementsForWelcome = [
+        document.getElementById('top-bar'),
+        document.getElementById('side-menu'), // Use direct getElementById here for clarity in this block
+        document.getElementById('main-content'),
+        document.getElementById('private-message-trigger-container'),
+        document.getElementById('home-bottom-app-icons') // Use direct getElementById
+    ].filter(el => el);
+
+    function showMainSiteLayout() {
+        console.log('[Welcome] Showing main site layout.');
+        mainContentElementsForWelcome.forEach(el => {
+            if(el) el.classList.remove('main-content-hidden');
+        });
+    }
+
+    function hideMainSiteLayout() {
+        console.log('[Welcome] Hiding main site layout.');
+        mainContentElementsForWelcome.forEach(el => {
+            if(el) el.classList.add('main-content-hidden');
+        });
+    }
+
+    // Function to update comment form name
+    function updateCommentFormNameOnLoadOrSubmit() {
+        const commentNameField = document.getElementById('comment-name');
+        if (commentNameField && currentUserName) {
+            commentNameField.value = currentUserName;
+            commentNameField.readOnly = true;
+            commentNameField.classList.add('prefilled');
+            console.log(`[Welcome] Comment name field updated with: ${currentUserName}`);
+        } else if (commentNameField) {
+            commentNameField.readOnly = false;
+            commentNameField.classList.remove('prefilled');
+            console.log('[Welcome] Comment name field set to editable.');
+        }
+    }
+
+    const initiallyStoredUserName = localStorage.getItem('chatPortfolioUserName');
+    if (initiallyStoredUserName) {
+        currentUserName = initiallyStoredUserName;
+        console.log(`[Welcome] Found stored user name: ${currentUserName}`);
+        if(welcomeScreen) welcomeScreen.classList.add('hidden');
+        showMainSiteLayout();
+        showView('home-view'); // Initialize with home view
+        updateCommentFormNameOnLoadOrSubmit();
+    } else {
+        console.log('[Welcome] No stored user name found. Showing welcome screen.');
+        if(welcomeScreen) welcomeScreen.classList.remove('hidden'); // Make sure it's not hidden by default CSS if logic changes
+        hideMainSiteLayout();
+        if(userNameInput) userNameInput.focus();
+    }
+
+    if (submitNameButton && userNameInput && welcomeScreen) {
+        submitNameButton.addEventListener('click', () => {
+            const enteredName = userNameInput.value.trim();
+            console.log(`[Welcome] Submit name button clicked. Entered name: "${enteredName}"`);
+            if (enteredName) {
+                currentUserName = enteredName;
+                localStorage.setItem('chatPortfolioUserName', currentUserName);
+                welcomeScreen.classList.add('hidden');
+                if(welcomeErrorMessage) welcomeErrorMessage.style.display = 'none';
+                showMainSiteLayout();
+                showView('home-view');
+                updateCommentFormNameOnLoadOrSubmit();
+                console.log(`[Welcome] Name submitted and stored: ${currentUserName}. Main content shown.`);
+            } else {
+                if(welcomeErrorMessage) {
+                    welcomeErrorMessage.textContent = 'Please enter a name to continue.';
+                    welcomeErrorMessage.style.display = 'block';
+                    console.log('[Welcome] Name submission error: Name is empty.');
+                }
+                if(userNameInput) userNameInput.focus();
+            }
+        });
+        if(userNameInput) {
+            userNameInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    if(submitNameButton) submitNameButton.click();
+                }
+            });
+        }
+    }
+    // The original single showView('home-view') at the end of DOMContentLoaded is now handled
+    // conditionally by the logic above.
 
     // AI CHAT ELEMENT SELECTION (CRITICAL DIAGNOSTIC LOGS)
     const chatInputBarForCheck = document.getElementById('chat-input-bar');
@@ -153,8 +275,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Feature-specific load calls
-        if (viewIdToShow === 'home-view' && typeof loadComments === 'function') loadComments();
-        else if (viewIdToShow === 'ai-chat-view') {
+        if (viewIdToShow === 'home-view' && typeof loadComments === 'function') {
+            loadComments();
+            if(typeof updateCommentFormNameOnLoadOrSubmit === 'function') updateCommentFormNameOnLoadOrSubmit(); // Update for home view comments
+        } else if (viewIdToShow === 'ai-chat-view') {
             console.log('[AI CHAT DIAGNOSTIC] showView called for ai-chat-view.');
             // Logs for checking elements when ai-chat-view is shown
             console.log('[AI CHAT DIAGNOSTIC] Checking #chat-input-bar in DOM:', document.getElementById('chat-input-bar'));
@@ -218,8 +342,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (typeof loadUserActivityHistory === 'function') {
                 loadUserActivityHistory();
             }
-        } else if (viewIdToShow === 'comments-view') { // Added for dedicated comments page
+        } else if (viewIdToShow === 'comments-view') {
             if (typeof loadAllCommentsPage === 'function') loadAllCommentsPage();
+            // Note: The main comment form is on home-view, not typically on comments-view.
+            // If a comment form were added to comments-view, updateCommentFormNameOnLoadOrSubmit() would be needed here too.
         }
         else if (viewIdToShow === 'gemini-chat-view') {
             // Initialize Gemini Chat specific elements or load history if needed

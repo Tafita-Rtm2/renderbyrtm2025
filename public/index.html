@@ -7,7 +7,17 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header id="top-bar">
+    <div id="welcome-screen">
+        <div class="welcome-content">
+            <h1>Welcome to Your Enhanced Digital Hub!</h1>
+            <p>Please enter your name to continue:</p>
+            <input type="text" id="user-name-input" placeholder="Enter your name here..." autofocus>
+            <button id="submit-name-button" class="btn-primary">Enter Site</button>
+            <p id="welcome-error-message" class="error-message" style="display:none;"></p>
+        </div>
+    </div>
+
+    <header id="top-bar" class="main-content-hidden">
         <div id="top-left-menu-icon-container">
             <!-- Placeholder SVG for Main Menu Icon (visible on Home, or if side menu is primary nav) -->
             <svg viewBox="0 0 24 24" class="icon icon-menu-main" id="home-menu-trigger-icon">
@@ -33,7 +43,7 @@
         </svg>
     </button>
 
-    <nav id="side-menu">
+    <nav id="side-menu" class="main-content-hidden">
         <ul>
             <li><a href="#" data-view="home-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"></path></svg> <span>Accueil</span></a></li>
             <li><a href="#" data-view="ai-chat-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"></path></svg> <span>Chat IA</span></a></li>
@@ -53,7 +63,7 @@
         </ul>
     </nav>
 
-    <main id="main-content">
+    <main id="main-content" class="main-content-hidden">
         <div id="home-view" class="view active">
             <!-- Existing #home-bottom-app-icons are fixed, so content flows above/around it -->
 
@@ -383,7 +393,7 @@
          <div id="weather-view" class="view" style="display: none;"><p>Detailed Weather View - Content TBD</p></div>
     </main>
 
-    <div id="private-message-trigger-container">
+    <div id="private-message-trigger-container" class="main-content-hidden">
         <button id="private-message-float-btn" class="icon-button">
             <svg viewBox="0 0 24 24" class="icon icon-private-message"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8l8 5 8-5v10zm-8-7L4 6h16l-8 5z"></path></svg>
         </button>

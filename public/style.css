@@ -31,6 +31,93 @@
     --bottom-app-bar-height: 70px; /* For home page app icons */
 }
 
+.main-content-hidden {
+    display: none !important; /* Ensure this hides content effectively */
+}
+
+#welcome-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: var(--primary-bg); /* Use theme background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 3000; /* Highest z-index to cover everything */
+    padding: 20px;
+    box-sizing: border-box;
+    text-align: center;
+    opacity: 1;
+    transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
+}
+
+#welcome-screen.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none; /* Prevent interaction when hidden */
+}
+
+.welcome-content {
+    background-color: var(--secondary-bg);
+    padding: 30px 40px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    max-width: 500px;
+    width: 100%;
+}
+
+.welcome-content h1 {
+    color: var(--accent-color);
+    font-size: 1.8em;
+    margin-bottom: 15px;
+}
+
+.welcome-content p {
+    color: var(--text-muted-color);
+    margin-bottom: 25px;
+    font-size: 1.1em;
+}
+
+#user-name-input {
+    width: 100%;
+    padding: 12px 18px;
+    margin-bottom: 25px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--primary-bg);
+    color: var(--text-color);
+    font-size: 1.1em;
+    box-sizing: border-box;
+}
+#user-name-input:focus {
+    outline: none;
+    border-color: var(--action-color);
+    box-shadow: 0 0 8px var(--action-color);
+}
+
+#submit-name-button.btn-primary { /* Assuming .btn-primary exists or adding styles */
+    background-color: var(--action-color);
+    color: var(--primary-bg); /* Text color for action button */
+    border: none;
+    padding: 12px 30px;
+    font-size: 1.1em;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+#submit-name-button.btn-primary:hover {
+    background-color: var(--primary-accent-color);
+    transform: translateY(-2px);
+}
+#welcome-error-message { /* Styles for error message on welcome screen */
+    margin-top: 15px;
+    /* .error-message class already has color and basic styling */
+}
+
+
 body.dark-mode {
     --primary-bg: #0a0f1e; /* Darker space blue */
     --secondary-bg: #1a1a2e; /* Existing dark blue */

@@ -127,36 +127,47 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log(`[Session] Initializing session for UID: ${chatUID}`);
         try {
             const response = await fetch(`/api/users/check/${chatUID}`);
-            if (response.ok) {
+            console.log(`[Session] /api/users/check/${chatUID} response status: ${response.status}`);
+
+            if (response.ok) { // Status 200-299
                 const userData = await response.json();
+                console.log('[Session] User data received from server:', userData);
                 currentUserName = userData.name;
                 localStorage.setItem('chatPortfolioUserName', currentUserName); // Sync localStorage
-                console.log(`[Session] User ${currentUserName} (UID: ${chatUID}) found on server.`);
+                console.log(`[Session] User ${currentUserName} (UID: ${chatUID}) found and processed. Hiding welcome screen.`);
                 if(welcomeScreen) welcomeScreen.classList.add('hidden');
                 showMainSiteLayout();
                 showView('home-view');
                 updateCommentFormNameOnLoadOrSubmit();
             } else if (response.status === 404) {
-                console.log(`[Session] User UID ${chatUID} not found on server or no name registered. Showing welcome screen.`);
+                console.log(`[Session] User UID ${chatUID} not found on server (404). Clearing local name and showing welcome screen.`);
                 localStorage.removeItem('chatPortfolioUserName'); // Clear any outdated local name
+                currentUserName = null;
+                if(welcomeScreen) welcomeScreen.classList.remove('hidden'); // Ensure welcome screen is visible
+                hideMainSiteLayout();
+                if(userNameInput) userNameInput.focus();
+            } else { // Other server errors (500, 400, etc.)
+                const errorText = await response.text(); // Get raw text for better debugging
+                console.error(`[Session] Error checking user status. Status: ${response.status}, Body: ${errorText}`);
+                try {
+                    const errorData = JSON.parse(errorText); // Try to parse if it's JSON
+                    alert(`Error checking user status: ${errorData.message || response.statusText}. Please try refreshing.`);
+                } catch (e) {
+                    alert(`Error checking user status: ${response.statusText || "Unknown server error"}. Please try refreshing.`);
+                }
+                // Fallback to showing welcome screen
+                localStorage.removeItem('chatPortfolioUserName');
                 currentUserName = null;
                 if(welcomeScreen) welcomeScreen.classList.remove('hidden');
                 hideMainSiteLayout();
                 if(userNameInput) userNameInput.focus();
-            } else {
-                // Other server error
-                const errorData = await response.json().catch(() => ({ message: "Failed to check user status."}));
-                console.error('[Session] Error checking user status:', errorData.message);
-                alert(`Error checking user status: ${errorData.message}. Please try refreshing.`);
-                // Fallback to showing welcome screen but an error message might be better
-                if(welcomeScreen) welcomeScreen.classList.remove('hidden');
-                hideMainSiteLayout();
-                if(userNameInput) userNameInput.focus();
             }
-        } catch (error) {
+        } catch (error) { // Network errors or issues with fetch itself
             console.error('[Session] Network error or fetch issue during user check:', error);
             alert("Could not connect to the server to verify user. Please check your connection and refresh.");
-            // Fallback, show welcome screen or an error message page
+            // Fallback: show welcome screen
+            localStorage.removeItem('chatPortfolioUserName');
+            currentUserName = null;
             if(welcomeScreen) welcomeScreen.classList.remove('hidden');
             hideMainSiteLayout();
             if(userNameInput) userNameInput.focus();
@@ -196,27 +207,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 const data = await response.json();
+                console.log('[Welcome] /api/users/register response status:', response.status);
+                console.log('[Welcome] /api/users/register response data:', data);
 
-                if (response.ok) { // Status 200 or 201
-                    currentUserName = data.name; // Use name from server response
+                if (response.ok) { // Status 200 (existing user confirmed) or 201 (new user created)
+                    currentUserName = data.name; // Use name from server response for consistency
                     localStorage.setItem('chatPortfolioUserName', currentUserName);
                     welcomeScreen.classList.add('hidden');
                     showMainSiteLayout();
                     showView('home-view');
                     updateCommentFormNameOnLoadOrSubmit();
-                    console.log(`[Welcome] User ${currentUserName} registered/confirmed. Message: ${data.message}`);
-                } else { // Handle errors like 409 (conflict), 400 (bad request)
+                    console.log(`[Welcome] User '${currentUserName}' (UID: ${chatUID}) processed successfully. Server message: ${data.message}`);
+                } else { // Handle errors like 409 (conflict), 400 (bad request from server)
                     if(welcomeErrorMessage) {
-                        welcomeErrorMessage.textContent = data.message || "An error occurred.";
+                        welcomeErrorMessage.textContent = data.message || `An error occurred (Status: ${response.status}).`;
                         welcomeErrorMessage.style.display = 'block';
                     }
-                    console.error('[Welcome] Registration error:', data.message);
+                    console.error(`[Welcome] Registration/Login error from server (Status: ${response.status}):`, data.message);
                     if(userNameInput) userNameInput.focus();
                 }
-            } catch (error) {
-                console.error('[Welcome] Network error during registration:', error);
+            } catch (error) { // Network errors or if response.json() fails
+                console.error('[Welcome] Network error or JSON parsing issue during registration:', error);
                 if(welcomeErrorMessage) {
-                    welcomeErrorMessage.textContent = "Could not connect to server. Please try again.";
+                    welcomeErrorMessage.textContent = "Could not connect to the server or failed to process response. Please try again.";
                     welcomeErrorMessage.style.display = 'block';
                 }
                 if(userNameInput) userNameInput.focus();
@@ -497,7 +510,23 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!uid) { uid = Date.now().toString(36) + Math.random().toString(36).substr(2); localStorage.setItem('chatPortfolioUID', uid); }
         return uid;
     }
+    // Ensure getOrCreateUID is robust and logs info
+    function getOrCreateUID() {
+        let uid = localStorage.getItem('chatPortfolioUID');
+        if (uid) {
+            console.log('[UID] Retrieved existing UID:', uid);
+            return uid;
+        } else {
+            uid = Date.now().toString(36) + Math.random().toString(36).substr(2);
+            localStorage.setItem('chatPortfolioUID', uid);
+            console.log('[UID] Created and stored new UID:', uid);
+            return uid;
+        }
+    }
+    // Initialize chatUID EARLY in DOMContentLoaded
     chatUID = getOrCreateUID();
+    console.log('[UID] Global chatUID initialized to:', chatUID);
+
 
     // --- User Activity Tracking ---
     async function trackActivity(activityType, detailsObject = {}) {

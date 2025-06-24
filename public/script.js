@@ -106,47 +106,118 @@ document.addEventListener('DOMContentLoaded', () => {
             commentNameField.value = currentUserName;
             commentNameField.readOnly = true;
             commentNameField.classList.add('prefilled');
-            console.log(`[Welcome] Comment name field updated with: ${currentUserName}`);
+            // console.log(`[Welcome] Comment name field updated with: ${currentUserName}`);
         } else if (commentNameField) {
             commentNameField.readOnly = false;
             commentNameField.classList.remove('prefilled');
-            console.log('[Welcome] Comment name field set to editable.');
+            // console.log('[Welcome] Comment name field set to editable.');
         }
     }
 
-    const initiallyStoredUserName = localStorage.getItem('chatPortfolioUserName');
-    if (initiallyStoredUserName) {
-        currentUserName = initiallyStoredUserName;
-        console.log(`[Welcome] Found stored user name: ${currentUserName}`);
-        if(welcomeScreen) welcomeScreen.classList.add('hidden');
-        showMainSiteLayout();
-        showView('home-view'); // Initialize with home view
-        updateCommentFormNameOnLoadOrSubmit();
-    } else {
-        console.log('[Welcome] No stored user name found. Showing welcome screen.');
-        if(welcomeScreen) welcomeScreen.classList.remove('hidden'); // Make sure it's not hidden by default CSS if logic changes
-        hideMainSiteLayout();
-        if(userNameInput) userNameInput.focus();
-    }
+    async function initializeUserSession() {
+        if (!chatUID) { // chatUID should be initialized by getOrCreateUID() earlier
+            console.error("[Session] chatUID is not available. Cannot initialize session.");
+            // Fallback: show welcome screen to force some interaction, though UID generation is crucial
+            if(welcomeScreen) welcomeScreen.classList.remove('hidden');
+            hideMainSiteLayout();
+            if(userNameInput) userNameInput.focus();
+            return;
+        }
 
-    if (submitNameButton && userNameInput && welcomeScreen) {
-        submitNameButton.addEventListener('click', () => {
-            const enteredName = userNameInput.value.trim();
-            console.log(`[Welcome] Submit name button clicked. Entered name: "${enteredName}"`);
-            if (enteredName) {
-                currentUserName = enteredName;
-                localStorage.setItem('chatPortfolioUserName', currentUserName);
-                welcomeScreen.classList.add('hidden');
-                if(welcomeErrorMessage) welcomeErrorMessage.style.display = 'none';
+        console.log(`[Session] Initializing session for UID: ${chatUID}`);
+        try {
+            const response = await fetch(`/api/users/check/${chatUID}`);
+            if (response.ok) {
+                const userData = await response.json();
+                currentUserName = userData.name;
+                localStorage.setItem('chatPortfolioUserName', currentUserName); // Sync localStorage
+                console.log(`[Session] User ${currentUserName} (UID: ${chatUID}) found on server.`);
+                if(welcomeScreen) welcomeScreen.classList.add('hidden');
                 showMainSiteLayout();
                 showView('home-view');
                 updateCommentFormNameOnLoadOrSubmit();
-                console.log(`[Welcome] Name submitted and stored: ${currentUserName}. Main content shown.`);
+            } else if (response.status === 404) {
+                console.log(`[Session] User UID ${chatUID} not found on server or no name registered. Showing welcome screen.`);
+                localStorage.removeItem('chatPortfolioUserName'); // Clear any outdated local name
+                currentUserName = null;
+                if(welcomeScreen) welcomeScreen.classList.remove('hidden');
+                hideMainSiteLayout();
+                if(userNameInput) userNameInput.focus();
             } else {
+                // Other server error
+                const errorData = await response.json().catch(() => ({ message: "Failed to check user status."}));
+                console.error('[Session] Error checking user status:', errorData.message);
+                alert(`Error checking user status: ${errorData.message}. Please try refreshing.`);
+                // Fallback to showing welcome screen but an error message might be better
+                if(welcomeScreen) welcomeScreen.classList.remove('hidden');
+                hideMainSiteLayout();
+                if(userNameInput) userNameInput.focus();
+            }
+        } catch (error) {
+            console.error('[Session] Network error or fetch issue during user check:', error);
+            alert("Could not connect to the server to verify user. Please check your connection and refresh.");
+            // Fallback, show welcome screen or an error message page
+            if(welcomeScreen) welcomeScreen.classList.remove('hidden');
+            hideMainSiteLayout();
+            if(userNameInput) userNameInput.focus();
+        }
+    }
+
+    initializeUserSession(); // Call the new session initialization function
+
+    if (submitNameButton && userNameInput && welcomeScreen) {
+        submitNameButton.addEventListener('click', async () => {
+            const enteredName = userNameInput.value.trim();
+            if(welcomeErrorMessage) welcomeErrorMessage.style.display = 'none'; // Clear previous errors
+
+            if (!enteredName) {
                 if(welcomeErrorMessage) {
-                    welcomeErrorMessage.textContent = 'Please enter a name to continue.';
+                    welcomeErrorMessage.textContent = 'Please enter a name.';
                     welcomeErrorMessage.style.display = 'block';
-                    console.log('[Welcome] Name submission error: Name is empty.');
+                }
+                if(userNameInput) userNameInput.focus();
+                return;
+            }
+            if (enteredName.length < 3) {
+                 if(welcomeErrorMessage) {
+                    welcomeErrorMessage.textContent = 'Name must be at least 3 characters long.';
+                    welcomeErrorMessage.style.display = 'block';
+                }
+                if(userNameInput) userNameInput.focus();
+                return;
+            }
+
+            console.log(`[Welcome] Attempting to register UID: ${chatUID} with name: "${enteredName}"`);
+            try {
+                const response = await fetch('/api/users/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ uid: chatUID, name: enteredName })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) { // Status 200 or 201
+                    currentUserName = data.name; // Use name from server response
+                    localStorage.setItem('chatPortfolioUserName', currentUserName);
+                    welcomeScreen.classList.add('hidden');
+                    showMainSiteLayout();
+                    showView('home-view');
+                    updateCommentFormNameOnLoadOrSubmit();
+                    console.log(`[Welcome] User ${currentUserName} registered/confirmed. Message: ${data.message}`);
+                } else { // Handle errors like 409 (conflict), 400 (bad request)
+                    if(welcomeErrorMessage) {
+                        welcomeErrorMessage.textContent = data.message || "An error occurred.";
+                        welcomeErrorMessage.style.display = 'block';
+                    }
+                    console.error('[Welcome] Registration error:', data.message);
+                    if(userNameInput) userNameInput.focus();
+                }
+            } catch (error) {
+                console.error('[Welcome] Network error during registration:', error);
+                if(welcomeErrorMessage) {
+                    welcomeErrorMessage.textContent = "Could not connect to server. Please try again.";
+                    welcomeErrorMessage.style.display = 'block';
                 }
                 if(userNameInput) userNameInput.focus();
             }

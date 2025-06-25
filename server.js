@@ -757,29 +757,53 @@ app.post('/api/comments', async (req, res) => {
         return res.status(503).json({ error: "Database not connected. Please try again later." });
     }
     try {
-        const { name, text } = req.body;
+        const { name: clientProvidedName, text, uid } = req.body; // Expect uid from client
 
-        if (!name || typeof name !== 'string' || name.trim() === '') {
-            return res.status(400).json({ error: 'Name is required and must be a non-empty string.' });
+        if (!uid) {
+            return res.status(400).json({ error: 'User ID (uid) is required to post a comment.' });
         }
         if (!text || typeof text !== 'string' || text.trim() === '') {
             return res.status(400).json({ error: 'Text is required and must be a non-empty string.' });
         }
+        // Name validation can be less strict here if we prioritize the server-verified name
+        if (!clientProvidedName || typeof clientProvidedName !== 'string' || clientProvidedName.trim() === '') {
+            return res.status(400).json({ error: 'Name is required (even if prefilled).' });
+        }
+
+        let finalName = clientProvidedName.trim();
+        let userVerified = false;
+
+        // Fetch user from usersCollection to get the authoritative name
+        if (usersCollection) { // Check if usersCollection is available
+            const user = await usersCollection.findOne({ uid: uid });
+            if (user && user.name) {
+                finalName = user.name; // Prioritize registered name
+                userVerified = true;
+                console.log(`Comment submitted by verified user: ${finalName} (UID: ${uid})`);
+            } else {
+                console.warn(`Comment submitted by UID: ${uid} but user not found or has no name in usersCollection. Using client-provided name: ${clientProvidedName}`);
+                // Fallback to client-provided name if user not found, but log this.
+                // Or, you could choose to reject the comment if UID must be verified:
+                // return res.status(403).json({ error: 'User not verified. Cannot post comment.' });
+            }
+        } else {
+            console.warn("usersCollection not available. Using client-provided name for comment.");
+        }
+
 
         const newComment = {
-            name: name.trim(),
+            uid: uid, // Store the UID
+            name: finalName, // Store the (preferably verified) name
             text: text.trim(),
             createdAt: new Date(),
-            likes: { count: 0, users: [] },      // Initialize likes
-            dislikes: { count: 0, users: [] }   // Initialize dislikes
+            likes: { count: 0, users: [] },
+            dislikes: { count: 0, users: [] },
+            adminReplyText: "", // Initialize admin reply fields
+            adminReplyTimestamp: null
         };
 
         const result = await commentsCollection.insertOne(newComment);
-        // result.ops is deprecated, result.insertedId is preferred for single insert
-        // To return the full document, you might need to fetch it or construct it if insertOne doesn't return it directly in your driver version.
-        // However, newComment already has all fields except _id, which is in result.insertedId
         const createdComment = { _id: result.insertedId, ...newComment };
-
         res.status(201).json(createdComment);
 
     } catch (error) {
@@ -1068,8 +1092,21 @@ app.post('/api/activity', async (req, res) => {
             return res.status(400).json({ error: 'UID, activityType, and timestamp are required.' });
         }
 
+        let userName = "Unknown"; // Default if user not found or name not set
+        if (usersCollection) {
+            const user = await usersCollection.findOne({ uid: uid });
+            if (user && user.name) {
+                userName = user.name;
+            } else {
+                console.warn(`Activity tracking: User name not found for UID: ${uid}. Storing activity with name 'Unknown'.`);
+            }
+        } else {
+            console.warn("Activity tracking: usersCollection not available. Storing activity with name 'Unknown'.");
+        }
+
         const newActivity = {
             uid,
+            name: userName, // Add the user's name
             activityType,
             details: details || {},
             timestamp: new Date(timestamp), // Ensure it's a Date object

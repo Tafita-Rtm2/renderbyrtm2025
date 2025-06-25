@@ -780,10 +780,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             try {
+                if (!chatUID) { // Ensure chatUID is available
+                    console.error("Cannot submit comment, chatUID is missing.");
+                    throw new Error("User identifier is missing. Please refresh and try again.");
+                }
                 const response = await fetch('/api/comments', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, text })
+                    body: JSON.stringify({ name, text, uid: chatUID }) // Added uid
                 });
                 if (!response.ok) {
                     const errData = await response.json().catch(() => null);

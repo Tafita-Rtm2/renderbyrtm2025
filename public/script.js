@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOMContentLoaded: Start'); // Log start
+
     const themeCheckbox = document.getElementById('theme-checkbox');
     const bodyElement = document.body;
 
@@ -77,26 +79,55 @@ document.addEventListener('DOMContentLoaded', () => {
     // const homeBottomIconsEl = document.getElementById('home-bottom-app-icons'); // Already globally available as homeBottomAppIcons
 
     // Ensure mainContentElements is defined using the correct variable names for sideMenu and homeBottomAppIcons
+    console.log('[WelcomeSetup] Getting elements for mainContentElementsForWelcome:');
+    const elTopBar = document.getElementById('top-bar');
+    console.log('[WelcomeSetup] elTopBar:', elTopBar);
+    const elSideMenu = document.getElementById('side-menu');
+    console.log('[WelcomeSetup] elSideMenu:', elSideMenu);
+    const elMainContent = document.getElementById('main-content');
+    console.log('[WelcomeSetup] elMainContent:', elMainContent);
+    const elPrivateMessageTrigger = document.getElementById('private-message-trigger-container');
+    console.log('[WelcomeSetup] elPrivateMessageTrigger:', elPrivateMessageTrigger);
+    const elHomeBottomIcons = document.getElementById('home-bottom-app-icons');
+    console.log('[WelcomeSetup] elHomeBottomIcons:', elHomeBottomIcons);
+
      const mainContentElementsForWelcome = [
-        document.getElementById('top-bar'),
-        document.getElementById('side-menu'), // Use direct getElementById here for clarity in this block
-        document.getElementById('main-content'),
-        document.getElementById('private-message-trigger-container'),
-        document.getElementById('home-bottom-app-icons') // Use direct getElementById
-    ].filter(el => el);
+        elTopBar,
+        elSideMenu,
+        elMainContent,
+        elPrivateMessageTrigger,
+        elHomeBottomIcons
+    ].filter(el => {
+        if (!el) console.warn('[WelcomeSetup] A main content element was not found during array creation.');
+        return el;
+    });
+    console.log('[WelcomeSetup] mainContentElementsForWelcome initialized:', mainContentElementsForWelcome);
+
 
     function showMainSiteLayout() {
-        console.log('[Welcome] Showing main site layout.');
-        mainContentElementsForWelcome.forEach(el => {
-            if(el) el.classList.remove('main-content-hidden');
+        console.log('[Layout] Attempting to show main site layout. Elements to process:', mainContentElementsForWelcome.length);
+        mainContentElementsForWelcome.forEach((el, index) => {
+            if(el) {
+                el.classList.remove('main-content-hidden');
+                // console.log(`[Layout] Element ${index} (${el.id || 'no-id'}) classList after REMOVE .main-content-hidden:`, el.classList.toString());
+            } else {
+                console.warn(`[Layout] Element at index ${index} for showMainSiteLayout is null/undefined.`);
+            }
         });
+        console.log('[Layout] Main site layout shown.');
     }
 
     function hideMainSiteLayout() {
-        console.log('[Welcome] Hiding main site layout.');
-        mainContentElementsForWelcome.forEach(el => {
-            if(el) el.classList.add('main-content-hidden');
+        console.log('[Layout] Attempting to hide main site layout. Elements to process:', mainContentElementsForWelcome.length);
+        mainContentElementsForWelcome.forEach((el, index) => {
+            if(el) {
+                el.classList.add('main-content-hidden');
+                // console.log(`[Layout] Element ${index} (${el.id || 'no-id'}) classList after ADD .main-content-hidden:`, el.classList.toString());
+            } else {
+                console.warn(`[Layout] Element at index ${index} for hideMainSiteLayout is null/undefined.`);
+            }
         });
+        console.log('[Layout] Main site layout hidden.');
     }
 
     // Function to update comment form name
@@ -246,6 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // The original single showView('home-view') at the end of DOMContentLoaded is now handled
     // conditionally by the logic above.
 
+    console.log('DOMContentLoaded: End'); // Log end
     // AI CHAT ELEMENT SELECTION (CRITICAL DIAGNOSTIC LOGS)
     const chatInputBarForCheck = document.getElementById('chat-input-bar');
     const chatInputFieldForCheck = document.getElementById('chat-input-field');

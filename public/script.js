@@ -14,15 +14,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const mainContentElements = [topBar, sideMenuEl, mainContentArea, privateMessageTrigger, homeBottomIconsEl].filter(el => el);
 
 
-    function showMainContent() {
-        mainContentElements.forEach(el => el.classList.remove('main-content-hidden'));
-        // If #home-bottom-app-icons was globally hidden, ensure it's displayed correctly for home-view later
-        // The showView('home-view') logic should handle visibility of homeBottomIconsEl based on current view
-    }
+    // function showMainContent() { // Kept for reference, but direct class removal is now done
+    //     mainContentElements.forEach(el => el.classList.remove('main-content-hidden'));
+    // }
 
-    function hideMainContent() {
-        mainContentElements.forEach(el => el.classList.add('main-content-hidden'));
-    }
+    // function hideMainContent() { // Kept for reference
+    //     mainContentElements.forEach(el => el.classList.add('main-content-hidden'));
+    // }
 
 
     function applyTheme(theme) {
@@ -63,188 +61,253 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Welcome Screen & Main Content Visibility Logic
-    const welcomeScreen = document.getElementById('welcome-screen');
-    const userNameInput = document.getElementById('user-name-input');
-    const submitNameButton = document.getElementById('submit-name-button');
-    const welcomeErrorMessage = document.getElementById('welcome-error-message');
+    // Welcome Screen & Main Content Visibility Logic - MODIFIED
+    // const welcomeScreen = document.getElementById('welcome-screen'); // Removed
+    // const userNameInput = document.getElementById('user-name-input'); // Removed
+    // const submitNameButton = document.getElementById('submit-name-button'); // Removed
+    // const welcomeErrorMessage = document.getElementById('welcome-error-message'); // Removed
 
-    // Main content elements that were previously defined globally for show/hideMainContent
-    // const topBar = document.getElementById('top-bar'); // Already globally available
-    // const sideMenuEl = document.getElementById('side-menu'); // Already globally available as sideMenu
-    // const mainContentArea = document.getElementById('main-content'); // Already globally available
-    // const privateMessageTrigger = document.getElementById('private-message-trigger-container'); // Already globally available
-    // const homeBottomIconsEl = document.getElementById('home-bottom-app-icons'); // Already globally available as homeBottomAppIcons
 
-    // Ensure mainContentElements is defined using the correct variable names for sideMenu and homeBottomAppIcons
-     const mainContentElementsForWelcome = [
-        document.getElementById('top-bar'),
-        document.getElementById('side-menu'), // Use direct getElementById here for clarity in this block
-        document.getElementById('main-content'),
-        document.getElementById('private-message-trigger-container'),
-        document.getElementById('home-bottom-app-icons') // Use direct getElementById
-    ].filter(el => el);
-
+    // Main content elements are now shown by default by removing 'main-content-hidden' class from HTML elements.
+    // This function ensures they are visible.
     function showMainSiteLayout() {
-        console.log('[Welcome] Showing main site layout.');
-        mainContentElementsForWelcome.forEach(el => {
+        console.log('[Startup] Ensuring main site layout is visible.');
+        mainContentElements.forEach(el => {
             if(el) el.classList.remove('main-content-hidden');
         });
     }
 
-    function hideMainSiteLayout() {
-        console.log('[Welcome] Hiding main site layout.');
-        mainContentElementsForWelcome.forEach(el => {
-            if(el) el.classList.add('main-content-hidden');
-        });
-    }
+    // hideMainSiteLayout is no longer needed as site is visible by default.
 
-    // Function to update comment form name
+    // Function to update comment form name based on login state (loggedInUser) or old storage (currentUserName)
     function updateCommentFormNameOnLoadOrSubmit() {
         const commentNameField = document.getElementById('comment-name');
-        if (commentNameField && currentUserName) {
+        if (!commentNameField) return;
+
+        if (loggedInUser && loggedInUser.name) {
+            commentNameField.value = loggedInUser.name;
+            commentNameField.readOnly = true;
+            commentNameField.classList.add('prefilled');
+        } else if (currentUserName) { // Fallback to old system's currentUserName (from localStorage['chatPortfolioUserName'])
             commentNameField.value = currentUserName;
             commentNameField.readOnly = true;
             commentNameField.classList.add('prefilled');
-            // console.log(`[Welcome] Comment name field updated with: ${currentUserName}`);
-        } else if (commentNameField) {
+        } else {
+            commentNameField.value = '';
             commentNameField.readOnly = false;
             commentNameField.classList.remove('prefilled');
-            // console.log('[Welcome] Comment name field set to editable.');
         }
     }
 
     async function initializeUserSession() {
-        if (!chatUID) { // chatUID should be initialized by getOrCreateUID() earlier
-            console.error("[Session] chatUID is not available. Cannot initialize session.");
-            // Fallback: show welcome screen to force some interaction, though UID generation is crucial
-            if(welcomeScreen) welcomeScreen.classList.remove('hidden');
-            hideMainSiteLayout();
-            if(userNameInput) userNameInput.focus();
+        if (!chatUID) {
+            console.error("[Session] chatUID is not available. Site cannot fully initialize.");
+            showMainSiteLayout();
+            showView('home-view');
+            updateCommentFormNameOnLoadOrSubmit();
+            updateAuthUI(); // Initialize auth UI state
             return;
         }
 
-        console.log(`[Session] Initializing session for UID: ${chatUID}`);
-        try {
-            const response = await fetch(`/api/users/check/${chatUID}`);
-            console.log(`[Session] /api/users/check/${chatUID} response status: ${response.status}`);
+        console.log(`[Session] Initializing for UID: ${chatUID}. Site will be shown directly.`);
 
-            if (response.ok) { // Status 200-299
-                const userData = await response.json();
-                console.log('[Session] User data received from server:', userData);
-                currentUserName = userData.name;
-                localStorage.setItem('chatPortfolioUserName', currentUserName); // Sync localStorage
-                console.log(`[Session] User ${currentUserName} (UID: ${chatUID}) found and processed. Hiding welcome screen.`);
-                if(welcomeScreen) welcomeScreen.classList.add('hidden');
-                showMainSiteLayout();
-                showView('home-view');
-                updateCommentFormNameOnLoadOrSubmit();
-            } else if (response.status === 404) {
-                console.log(`[Session] User UID ${chatUID} not found on server (404). Clearing local name and showing welcome screen.`);
-                localStorage.removeItem('chatPortfolioUserName'); // Clear any outdated local name
-                currentUserName = null;
-                if(welcomeScreen) welcomeScreen.classList.remove('hidden'); // Ensure welcome screen is visible
-                hideMainSiteLayout();
-                if(userNameInput) userNameInput.focus();
-            } else { // Other server errors (500, 400, etc.)
-                const errorText = await response.text(); // Get raw text for better debugging
-                console.error(`[Session] Error checking user status. Status: ${response.status}, Body: ${errorText}`);
-                try {
-                    const errorData = JSON.parse(errorText); // Try to parse if it's JSON
-                    alert(`Error checking user status: ${errorData.message || response.statusText}. Please try refreshing.`);
-                } catch (e) {
-                    alert(`Error checking user status: ${response.statusText || "Unknown server error"}. Please try refreshing.`);
-                }
-                // Fallback to showing welcome screen
-                localStorage.removeItem('chatPortfolioUserName');
-                currentUserName = null;
-                if(welcomeScreen) welcomeScreen.classList.remove('hidden');
-                hideMainSiteLayout();
-                if(userNameInput) userNameInput.focus();
+        // TODO: Replace this with checking for a session token and validating with backend
+        // For now, we'll try to see if there's an old "registered" name for the UID
+        // or if a "loggedInUser" object is in localStorage from a previous session (conceptual).
+
+        const storedLoggedInUser = localStorage.getItem('loggedInUser');
+        if (storedLoggedInUser) {
+            try {
+                loggedInUser = JSON.parse(storedLoggedInUser);
+                console.log("[Session] Restored loggedInUser from localStorage:", loggedInUser);
+                currentUserName = loggedInUser.name; // Sync with currentUserName for compatibility
+            } catch (e) {
+                console.error("[Session] Error parsing loggedInUser from localStorage", e);
+                localStorage.removeItem('loggedInUser');
+                loggedInUser = null;
             }
-        } catch (error) { // Network errors or issues with fetch itself
-            console.error('[Session] Network error or fetch issue during user check:', error);
-            alert("Could not connect to the server to verify user. Please check your connection and refresh.");
-            // Fallback: show welcome screen
-            localStorage.removeItem('chatPortfolioUserName');
-            currentUserName = null;
-            if(welcomeScreen) welcomeScreen.classList.remove('hidden');
-            hideMainSiteLayout();
-            if(userNameInput) userNameInput.focus();
         }
+
+        if (!loggedInUser) { // If no modern login session, check for old username system
+            const storedOldUserName = localStorage.getItem('chatPortfolioUserName');
+            if (storedOldUserName && chatUID === localStorage.getItem('chatPortfolioUID_associated_with_name')) { // Ensure name belongs to this UID
+                currentUserName = storedOldUserName;
+                 console.log(`[Session] Found legacy stored name: ${currentUserName} for UID: ${chatUID}.`);
+            } else {
+                currentUserName = null; // No local name, user is anonymous or new
+                console.log(`[Session] No local name found for UID: ${chatUID}. User is anonymous.`);
+            }
+        }
+
+        showMainSiteLayout();
+        showView('home-view');
+        updateCommentFormNameOnLoadOrSubmit();
+        updateAuthUI(); // Initialize auth UI state
     }
 
-    initializeUserSession(); // Call the new session initialization function
+    initializeUserSession();
 
-    if (submitNameButton && userNameInput && welcomeScreen) {
-        submitNameButton.addEventListener('click', async () => {
-            const enteredName = userNameInput.value.trim();
-            if(welcomeErrorMessage) welcomeErrorMessage.style.display = 'none'; // Clear previous errors
+    // Event Listeners for Auth Forms
+    if (registerForm) {
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if(registerErrorMessage) registerErrorMessage.style.display = 'none';
+            const name = document.getElementById('register-name').value.trim();
+            const email = document.getElementById('register-email').value.trim();
+            const password = document.getElementById('register-password').value;
 
-            if (!enteredName) {
-                if(welcomeErrorMessage) {
-                    welcomeErrorMessage.textContent = 'Please enter a name.';
-                    welcomeErrorMessage.style.display = 'block';
+            // Basic client-side validation (more robust validation on backend)
+            if (!name || !email || !password) {
+                if(registerErrorMessage) {
+                    registerErrorMessage.textContent = 'All fields are required.';
+                    registerErrorMessage.style.display = 'block';
                 }
-                if(userNameInput) userNameInput.focus();
                 return;
             }
-            if (enteredName.length < 3) {
-                 if(welcomeErrorMessage) {
-                    welcomeErrorMessage.textContent = 'Name must be at least 3 characters long.';
-                    welcomeErrorMessage.style.display = 'block';
+            if (password.length < 6) {
+                 if(registerErrorMessage) {
+                    registerErrorMessage.textContent = 'Password must be at least 6 characters.';
+                    registerErrorMessage.style.display = 'block';
                 }
-                if(userNameInput) userNameInput.focus();
                 return;
             }
 
-            console.log(`[Welcome] Attempting to register UID: ${chatUID} with name: "${enteredName}"`);
             try {
                 const response = await fetch('/api/users/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ uid: chatUID, name: enteredName })
+                    body: JSON.stringify({ name, email, password, uid: chatUID }) // Send chatUID for potential association
                 });
-
                 const data = await response.json();
-                console.log('[Welcome] /api/users/register response status:', response.status);
-                console.log('[Welcome] /api/users/register response data:', data);
-
-                if (response.ok) { // Status 200 (existing user confirmed) or 201 (new user created)
-                    currentUserName = data.name; // Use name from server response for consistency
-                    localStorage.setItem('chatPortfolioUserName', currentUserName);
-                    welcomeScreen.classList.add('hidden');
-                    showMainSiteLayout();
-                    showView('home-view');
-                    updateCommentFormNameOnLoadOrSubmit();
-                    console.log(`[Welcome] User '${currentUserName}' (UID: ${chatUID}) processed successfully. Server message: ${data.message}`);
-                } else { // Handle errors like 409 (conflict), 400 (bad request from server)
-                    if(welcomeErrorMessage) {
-                        welcomeErrorMessage.textContent = data.message || `An error occurred (Status: ${response.status}).`;
-                        welcomeErrorMessage.style.display = 'block';
+                if (response.ok) {
+                    alert('Registration successful! Please log in.');
+                    registerForm.reset();
+                    // Optionally switch to login form or update UI further
+                } else {
+                    if(registerErrorMessage) {
+                        registerErrorMessage.textContent = data.message || 'Registration failed.';
+                        registerErrorMessage.style.display = 'block';
                     }
-                    console.error(`[Welcome] Registration/Login error from server (Status: ${response.status}):`, data.message);
-                    if(userNameInput) userNameInput.focus();
                 }
-            } catch (error) { // Network errors or if response.json() fails
-                console.error('[Welcome] Network error or JSON parsing issue during registration:', error);
-                if(welcomeErrorMessage) {
-                    welcomeErrorMessage.textContent = "Could not connect to the server or failed to process response. Please try again.";
-                    welcomeErrorMessage.style.display = 'block';
+            } catch (error) {
+                console.error('Registration error:', error);
+                if(registerErrorMessage) {
+                    registerErrorMessage.textContent = 'An error occurred during registration.';
+                    registerErrorMessage.style.display = 'block';
                 }
-                if(userNameInput) userNameInput.focus();
             }
         });
-        if(userNameInput) {
-            userNameInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    if(submitNameButton) submitNameButton.click();
+    }
+
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if(loginErrorMessage) loginErrorMessage.style.display = 'none';
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+
+            if (!email || !password) {
+                 if(loginErrorMessage) {
+                    loginErrorMessage.textContent = 'Email and password are required.';
+                    loginErrorMessage.style.display = 'block';
                 }
-            });
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/users/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    loggedInUser = { userId: data.userId, name: data.name, email: data.email };
+                    currentUserName = data.name; // For compatibility with parts of system using currentUserName
+                    localStorage.setItem('loggedInUser', JSON.stringify(loggedInUser)); // Persist basic login state
+                    // localStorage.setItem('sessionToken', data.token); // If using JWT
+                    updateAuthUI();
+                    updateCommentFormNameOnLoadOrSubmit(); // Update comment form name
+                    alert('Login successful!');
+                    loginForm.reset();
+                    // Potentially navigate away from settings or refresh parts of the UI
+                } else {
+                    if(loginErrorMessage) {
+                        loginErrorMessage.textContent = data.message || 'Login failed.';
+                        loginErrorMessage.style.display = 'block';
+                    }
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                 if(loginErrorMessage) {
+                    loginErrorMessage.textContent = 'An error occurred during login.';
+                    loginErrorMessage.style.display = 'block';
+                }
+            }
+        });
+    }
+
+    if (logoutButton) {
+        logoutButton.addEventListener('click', () => {
+            loggedInUser = null;
+            currentUserName = null; // Clear old system name too
+            localStorage.removeItem('loggedInUser');
+            // localStorage.removeItem('sessionToken'); // If using JWT
+            localStorage.removeItem('chatPortfolioUserName'); // Clear old stored name
+            localStorage.removeItem('chatPortfolioUID_associated_with_name'); // Clear association
+            updateAuthUI();
+            updateCommentFormNameOnLoadOrSubmit();
+            alert('Logged out successfully.');
+        });
+    }
+
+    // --- LANGUAGE SELECTION ---
+    const languageSelect = document.getElementById('language-select');
+
+    function applyLanguage(lang) {
+        // Placeholder: In a real app, this would involve loading language files
+        // and updating text content across the site.
+        console.log(`Language changed to: ${lang}`);
+        document.documentElement.lang = lang; // Set lang attribute on HTML element
+
+        // Example: Update a few hardcoded elements for demonstration
+        const sideMenuHomeLink = document.querySelector('#side-menu a[data-view="home-view"] span');
+        const parametresViewTitle = document.querySelector('#parametres-view h2');
+
+        if (lang === 'fr') {
+            if (sideMenuHomeLink) sideMenuHomeLink.textContent = 'Accueil';
+            if (parametresViewTitle) parametresViewTitle.textContent = 'Paramètres';
+            // Update more elements as needed
+        } else if (lang === 'en') {
+            if (sideMenuHomeLink) sideMenuHomeLink.textContent = 'Home';
+            if (parametresViewTitle) parametresViewTitle.textContent = 'Settings';
+            // Update more elements as needed
         }
     }
-    // The original single showView('home-view') at the end of DOMContentLoaded is now handled
-    // conditionally by the logic above.
+
+    function loadLanguagePreference() {
+        const savedLang = localStorage.getItem('preferredLanguage');
+        if (savedLang) {
+            if (languageSelect) languageSelect.value = savedLang;
+            applyLanguage(savedLang);
+        } else {
+            applyLanguage(languageSelect ? languageSelect.value : 'fr'); // Default to French or select's current value
+        }
+    }
+
+    if (languageSelect) {
+        languageSelect.addEventListener('change', (e) => {
+            const selectedLang = e.target.value;
+            localStorage.setItem('preferredLanguage', selectedLang);
+            applyLanguage(selectedLang);
+        });
+    }
+    // --- END OF LANGUAGE SELECTION ---
+
+    // Initialize language preference on load
+    loadLanguagePreference();
+
+    // Event listeners for welcomeScreen elements (userNameInput, submitNameButton) are removed as elements are gone.
 
     // AI CHAT ELEMENT SELECTION (CRITICAL DIAGNOSTIC LOGS)
     const chatInputBarForCheck = document.getElementById('chat-input-bar');
@@ -459,7 +522,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (gpt4oChatView) {
                 gpt4oChatView.style.display = 'flex';
             }
+        } else if (viewIdToShow === 'parametres-view') {
+            // Placeholder for when "Paramètres" view is shown
+            // Future: Load user settings, language preferences etc.
+            console.log('[Paramètres] Paramètres view shown.');
+            if (typeof updateAuthUI === 'function') {
+                updateAuthUI(); // Update UI based on login state
+            }
         }
+
 
         // Track view visit at the end of showView, after all specific view logic
         if(typeof trackActivity === 'function') trackActivity('view_visit', { view: viewIdToShow });
@@ -780,14 +851,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             try {
-                if (!chatUID) { // Ensure chatUID is available
-                    console.error("Cannot submit comment, chatUID is missing.");
+                // Determine identifier to send: loggedInUser.userId if available, otherwise chatUID
+                let identifier = {};
+                if (loggedInUser && loggedInUser.userId) {
+                    identifier.userId = loggedInUser.userId;
+                } else if (chatUID) {
+                    identifier.uid = chatUID; // Legacy or anonymous identifier
+                } else {
+                    console.error("Cannot submit comment, no user identifier available.");
                     throw new Error("User identifier is missing. Please refresh and try again.");
                 }
+
+                const payload = {
+                    name, // Client still sends name, backend will verify/override if logged in
+                    text,
+                    ...identifier // Spread either {userId: '...'} or {uid: '...'}
+                };
+
                 const response = await fetch('/api/comments', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, text, uid: chatUID }) // Added uid
+                    body: JSON.stringify(payload)
                 });
                 if (!response.ok) {
                     const errData = await response.json().catch(() => null);
@@ -2102,6 +2186,47 @@ document.addEventListener('DOMContentLoaded', () => {
         if (gpt4oChatMessagesArea) gpt4oChatMessagesArea.scrollTop = gpt4oChatMessagesArea.scrollHeight;
     }
     // --- END OF GPT-4o CHAT LOGIC ---
+
+    // --- USER ACCOUNT STATE & UI ---
+    let loggedInUser = null; // Example: { userId: '...', name: '...', email: '...' }
+
+    const userInfoDisplay = document.getElementById('user-info-display');
+    const displayUserName = document.getElementById('display-user-name');
+    const displayUserEmail = document.getElementById('display-user-email');
+    const logoutButton = document.getElementById('logout-button');
+    const authForms = document.getElementById('auth-forms');
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+    const loginErrorMessage = document.getElementById('login-error-message');
+    const registerErrorMessage = document.getElementById('register-error-message');
+
+    function updateAuthUI() {
+        if (loggedInUser) {
+            if (userInfoDisplay) userInfoDisplay.style.display = 'block';
+            if (displayUserName) displayUserName.textContent = loggedInUser.name;
+            if (displayUserEmail) displayUserEmail.textContent = loggedInUser.email;
+            if (authForms) authForms.style.display = 'none';
+            if (commentNameInput) { // Prefill comment name if user is logged in
+                commentNameInput.value = loggedInUser.name;
+                commentNameInput.readOnly = true;
+                commentNameInput.classList.add('prefilled');
+            }
+        } else {
+            if (userInfoDisplay) userInfoDisplay.style.display = 'none';
+            if (authForms) authForms.style.display = 'block';
+            if (commentNameInput) { // Make comment name editable if logged out
+                commentNameInput.value = '';
+                commentNameInput.readOnly = false;
+                commentNameInput.classList.remove('prefilled');
+            }
+        }
+    }
+
+    // Call updateAuthUI when the "Paramètres" view is shown
+    // This will be added to the showView function logic for 'parametres-view'
+
+    // --- END OF USER ACCOUNT STATE & UI ---
+
 
     function formatActivityUrl(url) {
         if (!url) return 'N/A';

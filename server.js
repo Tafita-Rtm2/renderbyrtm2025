@@ -4,7 +4,6 @@ const path = require('path');
 const { MongoClient, ObjectId } = require('mongodb');
 const multer = require('multer'); // For handling file uploads
 const fs = require('fs'); // For file system operations like deleting files
-const bcrypt = require('bcryptjs'); // For password hashing
 
 // Configure Multer for disk storage
 const UPLOAD_PATH = 'public/uploads/gemini_temp/';
@@ -84,26 +83,20 @@ async function connectDB() {
         console.log("Indexes ensured for userActivities collection.");
 
         // Indexes for usersCollection
-        await usersCollection.createIndex({ uid: 1 }, { unique: true }); // Keep this if chatPortfolioUID should be unique for users who *only* use the old system
-        await usersCollection.createIndex({ email: 1 }, { unique: true, sparse: true }); // Unique index for email, sparse to allow multiple nulls if email is optional
-        await usersCollection.createIndex({ name: 1 }); // Name no longer needs to be globally unique if tied to email/account
-        console.log("Indexes ensured for users collection (unique email, indexed name, unique legacy uid).");
+        await usersCollection.createIndex({ uid: 1 }, { unique: true });
+        await usersCollection.createIndex({ name: 1 }, { unique: true });
+        console.log("Unique indexes ensured for uid and name in users collection.");
 
     } catch (err) {
         console.error("Failed to connect to MongoDB Atlas or ensure indexes", err);
-        if (err.code === 11000 && err.keyPattern) {
-            if (err.keyPattern.email) {
-                 console.warn("Warning: Duplicate email index error during setup. Ensure emails are unique for registered accounts.");
-            } else if (err.keyPattern.uid) {
-                console.warn("Warning: Duplicate UID index error during setup. This might be okay if UIDs are unique for users not fully registered with email/password.");
-            } else if (err.keyPattern.name){
-                // This is now fine as name is not unique
-            } else {
-                 console.warn("Warning: Duplicate key error during setup on an unexpected field:", err.keyPattern);
-            }
+        if (err.code === 11000 && err.keyPattern && err.keyPattern.name) {
+            console.warn("Warning: Duplicate name index error during setup. This might be okay if you are re-running after a partial setup, but ensure names are unique.");
+        } else if (err.code === 11000 && err.keyPattern && err.keyPattern.uid) {
+            console.warn("Warning: Duplicate UID index error during setup. This is highly unusual and might indicate a problem if UIDs are not unique from the client.");
         }
         // Decide if process should exit for all errors or just critical ones
-        // process.exit(1);
+        // For now, let's keep process.exit(1) for general DB connection/setup failures
+        // process.exit(1); // Commenting out to allow server to start even if index creation has non-critical issues on re-run
     }
 }
 
@@ -764,56 +757,43 @@ app.post('/api/comments', async (req, res) => {
         return res.status(503).json({ error: "Database not connected. Please try again later." });
     }
     try {
-        const { name: clientProvidedName, text, uid, userId } = req.body; // Expect uid (legacy chatPortfolioUID) or userId (MongoDB _id)
+        const { name: clientProvidedName, text, uid } = req.body; // Expect uid from client
 
+        if (!uid) {
+            return res.status(400).json({ error: 'User ID (uid) is required to post a comment.' });
+        }
         if (!text || typeof text !== 'string' || text.trim() === '') {
             return res.status(400).json({ error: 'Text is required and must be a non-empty string.' });
         }
+        // Name validation can be less strict here if we prioritize the server-verified name
         if (!clientProvidedName || typeof clientProvidedName !== 'string' || clientProvidedName.trim() === '') {
-            // While backend will override name for logged-in users, good to have a fallback or for anonymous
-            return res.status(400).json({ error: 'Name is required (even if prefilled/overridden by server).' });
+            return res.status(400).json({ error: 'Name is required (even if prefilled).' });
         }
 
         let finalName = clientProvidedName.trim();
-        let finalUid = uid; // chatPortfolioUID
-        let finalUserId = userId; // MongoDB _id from usersCollection for logged-in users
+        let userVerified = false;
 
-        if (usersCollection) {
-            if (userId && ObjectId.isValid(userId)) {
-                const loggedInUser = await usersCollection.findOne({ _id: new ObjectId(userId) });
-                if (loggedInUser && loggedInUser.name) {
-                    finalName = loggedInUser.name; // Override with registered name
-                    finalUid = loggedInUser.chatPortfolioUID || uid; // Use associated chatPortfolioUID if available, or keep client's
-                    console.log(`Comment by logged-in user: ${finalName} (DB UserID: ${userId})`);
-                } else {
-                    console.warn(`Comment submitted with userId ${userId}, but user not found in DB. Falling back.`);
-                    // Fallback to uid if userId is invalid or user not found
-                    finalUserId = null; // Clear invalid userId
-                    if (uid) { // If legacy uid was also sent
-                        const legacyUser = await usersCollection.findOne({ uid: uid, email: { $exists: false } });
-                        if (legacyUser && legacyUser.name) finalName = legacyUser.name;
-                    }
-                }
-            } else if (uid) { // No valid userId, try to find user by legacy uid
-                const legacyUser = await usersCollection.findOne({ uid: uid, email: { $exists: false } }); // Look for old system user
-                if (legacyUser && legacyUser.name) {
-                    finalName = legacyUser.name;
-                    console.log(`Comment by legacy UID user: ${finalName} (UID: ${uid})`);
-                } else {
-                     console.log(`Comment by anonymous UID user: ${finalName} (UID: ${uid}) or new user.`);
-                }
+        // Fetch user from usersCollection to get the authoritative name
+        if (usersCollection) { // Check if usersCollection is available
+            const user = await usersCollection.findOne({ uid: uid });
+            if (user && user.name) {
+                finalName = user.name; // Prioritize registered name
+                userVerified = true;
+                console.log(`Comment submitted by verified user: ${finalName} (UID: ${uid})`);
             } else {
-                 // Neither userId nor uid provided, should be rare if client logic is correct
-                 console.warn("Comment submitted without userId or uid. Using client-provided name.");
+                console.warn(`Comment submitted by UID: ${uid} but user not found or has no name in usersCollection. Using client-provided name: ${clientProvidedName}`);
+                // Fallback to client-provided name if user not found, but log this.
+                // Or, you could choose to reject the comment if UID must be verified:
+                // return res.status(403).json({ error: 'User not verified. Cannot post comment.' });
             }
         } else {
             console.warn("usersCollection not available. Using client-provided name for comment.");
         }
 
+
         const newComment = {
-            userId: finalUserId ? new ObjectId(finalUserId) : null, // Store MongoDB _id if user is logged in
-            uid: finalUid, // Store chatPortfolioUID (especially for anonymous or legacy)
-            name: finalName,
+            uid: uid, // Store the UID
+            name: finalName, // Store the (preferably verified) name
             text: text.trim(),
             createdAt: new Date(),
             likes: { count: 0, users: [] },
@@ -916,120 +896,76 @@ app.post('/api/comments/:commentId/dislike', async (req, res) => {
 
 // --- User Registration and Check API Routes ---
 
-// POST /api/users/register - Register a new user with email and password
+// POST /api/users/register - Register a new user or log them in if UID exists with same name
 app.post('/api/users/register', async (req, res) => {
     if (!usersCollection) {
         return res.status(503).json({ message: "User service not available." });
     }
     try {
-        const { name, email, password, uid } = req.body; // uid is the chatPortfolioUID
+        const { uid, name } = req.body;
 
-        if (!name || !email || !password) {
-            return res.status(400).json({ message: 'Name, email, and password are required.' });
+        if (!uid || typeof uid !== 'string' || uid.trim() === '') {
+            return res.status(400).json({ message: 'User ID (uid) is required.' });
         }
-        if (name.trim().length < 3) {
-            return res.status(400).json({ message: 'Name must be at least 3 characters long.' });
-        }
-        if (password.length < 6) {
-            return res.status(400).json({ message: 'Password must be at least 6 characters long.' });
-        }
-        // Basic email format validation (more robust validation might be desired)
-        if (!/^\S+@\S+\.\S+$/.test(email)) {
-            return res.status(400).json({ message: 'Invalid email format.' });
+        if (!name || typeof name !== 'string' || name.trim() === '') {
+            return res.status(400).json({ message: 'Name is required.' });
         }
 
-        const existingUserByEmail = await usersCollection.findOne({ email: email.toLowerCase() });
-        if (existingUserByEmail) {
-            return res.status(409).json({ message: 'Email already registered.' });
+        const trimmedName = name.trim();
+        if (trimmedName.length < 3) {
+             return res.status(400).json({ message: 'Name must be at least 3 characters long.' });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10); // Hash password
 
-        const newUserDocument = {
-            name: name.trim(),
-            email: email.toLowerCase(),
-            password: hashedPassword,
-            chatPortfolioUID: uid, // Store the original chatPortfolioUID for potential linking
-            createdAt: new Date(),
-            updatedAt: new Date()
-        };
+        // Check if UID already exists
+        const existingUserByUID = await usersCollection.findOne({ uid: uid });
 
-        const result = await usersCollection.insertOne(newUserDocument);
-
-        // Optionally, if a user with this chatPortfolioUID existed from the old system, update it or link.
-        // For now, we just store chatPortfolioUID in the new user document.
-        if (uid) {
-            // Check if an old-style user record exists for this UID and doesn't have an email
-            const oldUserRecord = await usersCollection.findOne({ uid: uid, email: { $exists: false } });
-            if (oldUserRecord) {
-                // Potentially mark this old record as migrated or delete it,
-                // or update it with the new _id if your schema supports it.
-                // For simplicity, we're not doing complex migration here.
-                console.log(`User with chatPortfolioUID ${uid} has now fully registered. Old record might exist.`);
+        if (existingUserByUID) {
+            // UID exists. Check if the name matches.
+            if (existingUserByUID.name === trimmedName) {
+                // Same UID, same name - consider it a login/re-confirmation.
+                return res.status(200).json({ uid: existingUserByUID.uid, name: existingUserByUID.name, message: "Welcome back!" });
+            } else {
+                // Same UID, different name. This is problematic.
+                // For now, let's prevent name changes via this route.
+                // A separate "update profile" route would be better for name changes.
+                return res.status(409).json({ message: "This User ID is already associated with a different name. Please contact support if you believe this is an error." });
             }
         }
 
-        res.status(201).json({
-            message: "User registered successfully. Please log in.",
-            userId: result.insertedId // Send back the new MongoDB _id
-        });
+        // UID is new, now check if the name is already taken by another UID
+        const existingUserByName = await usersCollection.findOne({ name: trimmedName });
+        if (existingUserByName) {
+            // Name is taken by a different UID
+            return res.status(409).json({ message: "This name is already taken. Please choose a different name." });
+        }
+
+        // UID is new and Name is available, proceed to register
+        const newUser = {
+            uid: uid,
+            name: trimmedName,
+            createdAt: new Date()
+        };
+        const result = await usersCollection.insertOne(newUser);
+        // const createdUser = await usersCollection.findOne({ _id: result.insertedId }); // Re-fetch to confirm
+
+        // Return the newly created user data (or at least uid and name)
+        res.status(201).json({ uid: newUser.uid, name: newUser.name, message: "User registered successfully." });
 
     } catch (error) {
         console.error("Error during user registration:", error);
-        if (error.code === 11000 && error.keyPattern && error.keyPattern.email) {
-            return res.status(409).json({ message: "This email is already registered." });
+        if (error.code === 11000) { // Duplicate key error (either uid or name from index)
+             if (error.message.includes('index: name_1')) { // Check if it's the name index
+                return res.status(409).json({ message: "This name is already taken. Please choose a different name." });
+            } else if (error.message.includes('index: uid_1')) { // Check if it's the uid index (should be caught by findOne earlier but as a safeguard)
+                 return res.status(409).json({ message: "This User ID is already registered." });
+            }
         }
         res.status(500).json({ message: "Server error during user registration." });
     }
 });
 
-// POST /api/users/login - Log in a user
-app.post('/api/users/login', async (req, res) => {
-    if (!usersCollection) {
-        return res.status(503).json({ message: "User service not available." });
-    }
-    try {
-        const { email, password } = req.body;
-        if (!email || !password) {
-            return res.status(400).json({ message: 'Email and password are required.' });
-        }
-
-        const user = await usersCollection.findOne({ email: email.toLowerCase() });
-        if (!user) {
-            return res.status(401).json({ message: 'Invalid email or password.' });
-        }
-
-        // Check if user document has a password (accounts created via old system might not)
-        if (!user.password) {
-            return res.status(401).json({ message: 'This account was created with an older system and does not have a password. Please register with this email or contact support.' });
-        }
-
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(401).json({ message: 'Invalid email or password.' });
-        }
-
-        // Successful login
-        // In a real app, you'd generate and return a session token (e.g., JWT) here.
-        // For now, just returning user info.
-        res.status(200).json({
-            message: "Login successful.",
-            userId: user._id, // MongoDB ObjectId
-            name: user.name,
-            email: user.email
-            // token: "your_session_token_here" // Placeholder for JWT
-        });
-
-    } catch (error) {
-        console.error("Error during user login:", error);
-        res.status(500).json({ message: "Server error during user login." });
-    }
-});
-
-
-// GET /api/users/check/:uid - Check if a legacy user is registered and get their name
-// This route is now mostly for the old system where users only had a UID and a name.
-// For new system, session validation would be preferred.
+// GET /api/users/check/:uid - Check if a user is registered and get their name
 app.get('/api/users/check/:uid', async (req, res) => {
     if (!usersCollection) {
         return res.status(503).json({ message: "User service not available." });
@@ -1040,27 +976,20 @@ app.get('/api/users/check/:uid', async (req, res) => {
             return res.status(400).json({ message: 'User ID (uid) is required in path.' });
         }
 
-        // Find user by the chatPortfolioUID, prioritizing users who also have an email (new system)
-        // or fallback to users who only have uid and name (old system).
-        const user = await usersCollection.findOne({
-            $or: [
-                { chatPortfolioUID: uid, email: { $exists: true } }, // New system user linked to this chatPortfolioUID
-                { uid: uid, email: { $exists: false } } // Old system user with only uid
-            ]
-        });
+        const user = await usersCollection.findOne({ uid: uid });
 
-        if (user && user.name) {
-            res.status(200).json({ uid: user.chatPortfolioUID || user.uid, name: user.name, email: user.email }); // Return email if available
+        if (user) {
+            res.status(200).json({ uid: user.uid, name: user.name });
         } else {
-            res.status(404).json({ message: "User not found or name not registered yet for this UID." });
+            res.status(404).json({ message: "User not found or name not registered yet." });
         }
     } catch (error) {
-        console.error("Error checking user by UID:", error);
-        res.status(500).json({ message: "Server error while checking user by UID." });
+        console.error("Error checking user:", error);
+        res.status(500).json({ message: "Server error while checking user." });
     }
 });
 
-// --- End of User Account API Routes ---
+// --- End of User Registration and Check API Routes ---
 
 
 // --- TMDB API Routes ---

@@ -2523,6 +2523,192 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 
 /* --- END OF BOX MOVIE VIEW STYLES --- */
 
+/* --- EMAIL GENERATOR VIEW STYLES --- */
+#email-generator-view {
+    /* .view base styles are applied */
+    padding: 25px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* Space between main sections */
+}
+
+#email-generator-view h2 {
+    color: var(--primary-accent-color);
+    margin-bottom: 20px;
+}
+
+.email-generator-controls {
+    margin-bottom: 15px;
+}
+
+#generate-temp-email-button {
+    /* Assuming .btn-primary styles exist, or define specific ones */
+    padding: 12px 25px;
+    font-size: 1.1em;
+    background-color: var(--action-color);
+    color: var(--primary-bg);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+#generate-temp-email-button:hover {
+    background-color: var(--primary-accent-color);
+    transform: translateY(-2px);
+}
+#generate-temp-email-button:disabled {
+    background-color: var(--text-muted-color);
+    cursor: not-allowed;
+}
+
+
+.info-container {
+    background-color: var(--surface-color);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    margin-bottom: 15px;
+    text-align: left;
+}
+.info-container p {
+    margin: 0 0 10px 0;
+    line-height: 1.6;
+    color: var(--text-color);
+}
+.info-container p strong {
+    color: var(--accent-color);
+}
+.info-container em {
+    color: var(--text-muted-color);
+    font-size: 0.9em;
+}
+
+#generated-email-address-container {
+    /* Specific styles if needed, info-container provides base */
+}
+#generated-email-address {
+    font-weight: bold;
+    color: var(--secondary-accent-color); /* Make email address stand out */
+    word-break: break-all;
+}
+
+#copy-email-button {
+    /* .btn-secondary styles or define specific */
+    background-color: var(--surface-color);
+    color: var(--accent-color);
+    border: 1px solid var(--accent-color);
+    padding: 8px 15px;
+    border-radius: 5px;
+    margin-left: 10px; /* Space from the email text */
+    vertical-align: middle; /* Align with text if on same line */
+}
+#copy-email-button .icon {
+    margin-right: 5px;
+    fill: var(--accent-color);
+}
+#copy-email-button:hover {
+    background-color: var(--accent-color);
+    color: var(--primary-bg);
+}
+#copy-email-button:hover .icon {
+    fill: var(--primary-bg);
+}
+
+
+#email-inbox-messages-container h3 {
+    color: var(--primary-accent-color);
+    margin-top: 0;
+    margin-bottom: 15px;
+    border-bottom: 1px solid var(--surface-color);
+    padding-bottom: 10px;
+}
+
+#refresh-inbox-button {
+    /* .btn-secondary styles or define specific */
+    background-color: var(--accent-color);
+    color: var(--primary-bg);
+    border: 1px solid var(--accent-color);
+    padding: 8px 15px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    display: block; /* Make it block to center or use text-align on parent */
+    margin-left: auto;
+    margin-right: auto;
+}
+#refresh-inbox-button:hover {
+    background-color: var(--primary-accent-color);
+}
+#refresh-inbox-button:disabled {
+    background-color: var(--text-muted-color);
+    border-color: var(--text-muted-color);
+    cursor: not-allowed;
+}
+
+#email-inbox-messages {
+    min-height: 100px;
+    max-height: 300px;
+    overflow-y: auto;
+    background-color: var(--primary-bg);
+    padding: 15px;
+    border-radius: 5px;
+    border: 1px solid var(--border-color);
+}
+#email-inbox-messages .email-message-item {
+    background-color: var(--secondary-bg);
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    border-left: 3px solid var(--action-color);
+}
+#email-inbox-messages .email-message-item:last-child {
+    margin-bottom: 0;
+}
+#email-inbox-messages .email-message-item strong { /* Subject/From */
+    display: block;
+    color: var(--accent-color);
+    margin-bottom: 5px;
+}
+#email-inbox-messages .email-message-item p { /* Body snippet */
+    font-size: 0.9em;
+    color: var(--text-muted-color);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+#email-inbox-messages > p { /* Placeholder "No messages" text */
+    color: var(--text-muted-color);
+    font-style: italic;
+    text-align: center;
+}
+
+#email-expired-message {
+    text-align: center;
+    font-weight: bold;
+    color: var(--secondary-accent-color); /* Use a warning color */
+}
+
+/* Responsive adjustments for email generator if needed */
+@media (max-width: 600px) {
+    #email-generator-view {
+        padding: 15px;
+    }
+    .info-container {
+        padding: 15px;
+    }
+    #generate-temp-email-button {
+        font-size: 1em;
+        padding: 10px 20px;
+    }
+    #copy-email-button {
+        display: block; /* Stack copy button on small screens */
+        margin-left: 0;
+        margin-top: 10px;
+        width: 100%;
+        text-align: center;
+    }
+}
+/* --- END OF EMAIL GENERATOR VIEW STYLES --- */
+
 
 /* --- USER ACTIVITY HISTORY VIEW STYLES --- */
 #user-history-view { /* Uses .view base styles */

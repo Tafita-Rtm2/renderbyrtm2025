@@ -52,6 +52,7 @@
             <li><a href="#" data-view="ads-partners-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M16.5 12c1.38 0 2.5-1.12 2.5-2.5S17.88 7 16.5 7C15.12 7 14 8.12 14 9.5s1.12 2.5 2.5 2.5zM9 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm7.5 3c-1.83 0-5.5.92-5.5 2.75V18h11v-1.25c0-1.83-3.67-2.75-5.5-2.75zM9 13c-2.33 0-7 1.17-7 3.5V18h7v-1.5c0-.83.24-1.58.62-2.26-.44-.07-.9-.14-1.37-.14z"></path></svg> <span>🎯 Publicités & Partenaires</span></a></li>
             <li><a href="#" data-view="parametres-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.08-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"></path></svg> <span>Paramètres</span></a></li>
             <li><a href="#" data-view="admin-panel-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.34 8.42c-.11.2-.06.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54c.59-.24 1.13-.57 1.62-.94l2.39.96c.22.08.47 0 .59.22l1.92-3.32c.12-.22.06-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"></path></svg> <span>Panneau Admin</span></a></li>
+            <li><a href="#" data-view="email-generator-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8l8 5 8-5v10zm-8-7L4 6h16l-8 5z"></path></svg> <span>Email Generator</span></a></li>
         </ul>
     </nav>
 
@@ -127,6 +128,13 @@
                         </div>
                         <h3>GPT-4 Vision Chat</h3>
                         <p>Interact with the advanced GPT-4o model. Ask questions, get text-based assistance, and analyze images with this powerful AI chat.</p>
+                    </div>
+                    <div class="feature-highlight-item">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" class="icon"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8l8 5 8-5v10zm-8-7L4 6h16l-8 5z"></path></svg> <!-- Email Gen Icon -->
+                        </div>
+                        <h3>Email Generator</h3>
+                        <p>Generate temporary email addresses quickly for privacy or testing purposes. Receive emails and manage them for a short period.</p>
                     </div>
                 </div>
             </section>
@@ -442,6 +450,28 @@
                         <!-- Add more languages as needed -->
                     </select>
                 </div>
+            </div>
+        </div>
+
+        <div id="email-generator-view" class="view" style="display: none;">
+            <h2>Email Generator</h2>
+            <div class="email-generator-controls">
+                <button id="generate-temp-email-button" class="btn-primary">Générer un Email Temporaire</button>
+            </div>
+            <div id="generated-email-address-container" class="info-container" style="display: none;">
+                <p><strong>Votre adresse e-mail temporaire :</strong> <span id="generated-email-address"></span></p>
+                <p><em>Cet e-mail sera actif pendant <span id="email-countdown-timer">10:00</span> minutes.</em></p>
+                <button id="copy-email-button" class="btn-secondary" title="Copier l'adresse e-mail"><svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg> Copier</svg></button>
+            </div>
+            <div id="email-inbox-messages-container" class="info-container" style="display: none;">
+                <h3>Boîte de Réception</h3>
+                <button id="refresh-inbox-button" class="btn-secondary">Actualiser la boîte de réception</button>
+                <div id="email-inbox-messages">
+                    <p>Aucun message pour le moment. Cliquez sur "Actualiser" pour vérifier.</p>
+                </div>
+            </div>
+            <div id="email-expired-message" class="info-container" style="display: none;">
+                <p>L'adresse e-mail temporaire a expiré.</p>
             </div>
         </div>
     </main>

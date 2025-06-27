@@ -249,7 +249,18 @@ document.addEventListener('DOMContentLoaded', () => {
             if (gpt4oChatView) {
                 gpt4oChatView.style.display = 'flex';
             }
+        } else if (viewIdToShow === 'email-generator-view') {
+            // Initialize or reset Email Generator view state if needed
+            if (typeof initializeEmailGeneratorView === "function") {
+                initializeEmailGeneratorView();
+            }
+            const emailGeneratorView = document.getElementById('email-generator-view');
+            if (emailGeneratorView) {
+                // Ensure it's displayed correctly, e.g. 'block' or 'flex' if it uses flex layout internally
+                emailGeneratorView.style.display = 'flex'; // Assuming flex for consistency, adjust if needed
+            }
         }
+
 
         // Track view visit at the end of showView, after all specific view logic
         if(typeof trackActivity === 'function') trackActivity('view_visit', { view: viewIdToShow });
@@ -1872,6 +1883,187 @@ document.addEventListener('DOMContentLoaded', () => {
         if (gpt4oChatMessagesArea) gpt4oChatMessagesArea.scrollTop = gpt4oChatMessagesArea.scrollHeight;
     }
     // --- END OF GPT-4o CHAT LOGIC ---
+
+    // --- EMAIL GENERATOR LOGIC ---
+    const generateTempEmailButton = document.getElementById('generate-temp-email-button');
+    const generatedEmailAddressContainer = document.getElementById('generated-email-address-container');
+    const generatedEmailAddressSpan = document.getElementById('generated-email-address');
+    const emailCountdownTimerSpan = document.getElementById('email-countdown-timer');
+    const copyEmailButton = document.getElementById('copy-email-button');
+    const emailInboxMessagesContainer = document.getElementById('email-inbox-messages-container');
+    const refreshInboxButton = document.getElementById('refresh-inbox-button');
+    const emailInboxMessagesDiv = document.getElementById('email-inbox-messages');
+    const emailExpiredMessageDiv = document.getElementById('email-expired-message');
+
+    let currentTempEmailData = null; // To store { address, token }
+    let emailTimerInterval = null;
+    let inboxCheckInterval = null;
+    const EMAIL_LIFESPAN_SECONDS = 10 * 60; // 10 minutes
+
+    function initializeEmailGeneratorView() {
+        if (!generateTempEmailButton) return; // Ensure elements are present
+
+        // Reset UI to initial state
+        generateTempEmailButton.disabled = false;
+        generateTempEmailButton.textContent = 'Générer un Email Temporaire';
+        if (generatedEmailAddressContainer) generatedEmailAddressContainer.style.display = 'none';
+        if (generatedEmailAddressSpan) generatedEmailAddressSpan.textContent = '';
+        if (emailCountdownTimerSpan) emailCountdownTimerSpan.textContent = '10:00';
+        if (emailInboxMessagesContainer) emailInboxMessagesContainer.style.display = 'none';
+        if (emailInboxMessagesDiv) emailInboxMessagesDiv.innerHTML = '<p>Aucun message pour le moment. Cliquez sur "Actualiser" pour vérifier.</p>';
+        if (emailExpiredMessageDiv) emailExpiredMessageDiv.style.display = 'none';
+        if (copyEmailButton) copyEmailButton.style.display = 'inline-flex';
+
+
+        currentTempEmailData = null;
+        if (emailTimerInterval) clearInterval(emailTimerInterval);
+        if (inboxCheckInterval) clearInterval(inboxCheckInterval);
+        emailTimerInterval = null;
+        inboxCheckInterval = null;
+    }
+
+    async function generateTemporaryEmail() {
+        if (!generateTempEmailButton || !generatedEmailAddressSpan || !emailCountdownTimerSpan || !generatedEmailAddressContainer || !emailInboxMessagesContainer || !emailExpiredMessageDiv) return;
+
+        initializeEmailGeneratorView(); // Reset view before generating new email
+        generateTempEmailButton.disabled = true;
+        generateTempEmailButton.textContent = 'Génération en cours...';
+
+        try {
+            const response = await fetch('/api/tempmail/create');
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({ error: `Erreur ${response.status}` }));
+                throw new Error(errData.error || `Impossible de générer l'e-mail: ${response.statusText}`);
+            }
+            const data = await response.json();
+            if (data.address && data.token) {
+                currentTempEmailData = { address: data.address, token: data.token };
+                generatedEmailAddressSpan.textContent = data.address;
+                generatedEmailAddressContainer.style.display = 'block';
+                emailInboxMessagesContainer.style.display = 'block';
+                emailExpiredMessageDiv.style.display = 'none';
+                startEmailTimer(EMAIL_LIFESPAN_SECONDS);
+                // Initial check for inbox, then set interval
+                fetchInboxMessages();
+                inboxCheckInterval = setInterval(fetchInboxMessages, 30000); // Check every 30 seconds
+                trackActivity('temp_email_generated', { address: data.address.split('@')[1] }); // Track domain for privacy
+            } else {
+                throw new Error("Réponse invalide de l'API de génération d'e-mail.");
+            }
+        } catch (error) {
+            console.error("Erreur lors de la génération de l'e-mail temporaire:", error);
+            if (generatedEmailAddressContainer) generatedEmailAddressContainer.style.display = 'block'; // Show container to display error
+            generatedEmailAddressSpan.innerHTML = `<span class="error-message">Erreur: ${error.message}</span>`;
+            generateTempEmailButton.disabled = false;
+            generateTempEmailButton.textContent = 'Générer un Email Temporaire';
+        }
+    }
+
+    function startEmailTimer(durationSeconds) {
+        let timer = durationSeconds;
+        if (emailTimerInterval) clearInterval(emailTimerInterval);
+
+        emailTimerInterval = setInterval(() => {
+            const minutes = Math.floor(timer / 60);
+            const seconds = timer % 60;
+            if (emailCountdownTimerSpan) {
+                emailCountdownTimerSpan.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+            timer--;
+            if (timer < 0) {
+                clearInterval(emailTimerInterval);
+                emailTimerInterval = null;
+                if (inboxCheckInterval) clearInterval(inboxCheckInterval);
+                inboxCheckInterval = null;
+                currentTempEmailData = null; // Invalidate email data
+
+                if (generatedEmailAddressContainer) generatedEmailAddressContainer.style.display = 'none';
+                if (emailInboxMessagesContainer) emailInboxMessagesContainer.style.display = 'none';
+                if (emailExpiredMessageDiv) emailExpiredMessageDiv.style.display = 'block';
+                if (generateTempEmailButton) {
+                    generateTempEmailButton.disabled = false;
+                    generateTempEmailButton.textContent = 'Générer un Email Temporaire';
+                }
+                trackActivity('temp_email_expired');
+            }
+        }, 1000);
+    }
+
+    async function fetchInboxMessages() {
+        if (!currentTempEmailData || !currentTempEmailData.token || !emailInboxMessagesDiv) {
+            // console.log("Pas d'e-mail actif ou token manquant pour vérifier la boîte de réception.");
+            if (emailInboxMessagesDiv && !currentTempEmailData) { // Only update if no active email
+                 // emailInboxMessagesDiv.innerHTML = '<p>Générez un e-mail pour voir la boîte de réception.</p>';
+            }
+            return;
+        }
+        if (refreshInboxButton) refreshInboxButton.disabled = true;
+
+        try {
+            const response = await fetch(`/api/tempmail/inbox?token=${encodeURIComponent(currentTempEmailData.token)}`);
+            if (!response.ok) {
+                // Handle non-critical errors like "no messages" or "token expired" differently if API provides codes
+                const errData = await response.json().catch(() => ({error: `Erreur ${response.status}`}));
+                 // If token is invalid or expired, the main timer will handle UI reset.
+                if (response.status === 404 || response.status === 400) { // Example: token invalid/expired
+                    console.warn("Token invalide ou expiré lors de la vérification de la boîte de réception:", errData.error);
+                    // Do not display error directly in inbox, let main timer handle it
+                } else {
+                    throw new Error(errData.error || `Impossible de récupérer les messages: ${response.statusText}`);
+                }
+                emailInboxMessagesDiv.innerHTML = `<p>Impossible de charger les messages: ${errData.error || response.statusText}.</p>`;
+            } else {
+                 const messages = await response.json();
+                if (Array.isArray(messages) && messages.length > 0) {
+                    emailInboxMessagesDiv.innerHTML = messages.map(msg => `
+                        <div class="email-message-item">
+                            <strong>De:</strong> ${escapeHTML(msg.from || 'Inconnu')}<br>
+                            <strong>Sujet:</strong> ${escapeHTML(msg.subject || '(Pas de sujet)')}<br>
+                            <small>Reçu: ${escapeHTML(new Date(msg.date || Date.now()).toLocaleString())}</small>
+                            <hr>
+                            <p>${escapeHTML(msg.body_text || msg.body_html || '(Message vide)')}</p>
+                        </div>
+                    `).join('');
+                    trackActivity('temp_email_inbox_checked', { messages_found: messages.length });
+                } else {
+                    emailInboxMessagesDiv.innerHTML = '<p>Aucun nouveau message. Cliquez sur "Actualiser" pour revérifier.</p>';
+                }
+            }
+
+        } catch (error) {
+            console.error("Erreur lors de la récupération des messages de la boîte de réception:", error);
+            emailInboxMessagesDiv.innerHTML = `<p class="error-message">Erreur: ${error.message}</p>`;
+        } finally {
+            if (refreshInboxButton) refreshInboxButton.disabled = false;
+        }
+    }
+
+    if (generateTempEmailButton) {
+        generateTempEmailButton.addEventListener('click', generateTemporaryEmail);
+    }
+    if (refreshInboxButton) {
+        refreshInboxButton.addEventListener('click', fetchInboxMessages);
+    }
+    if (copyEmailButton && generatedEmailAddressSpan) {
+        copyEmailButton.addEventListener('click', () => {
+            const emailToCopy = generatedEmailAddressSpan.textContent;
+            if (emailToCopy && navigator.clipboard) {
+                navigator.clipboard.writeText(emailToCopy)
+                    .then(() => {
+                        const originalText = copyEmailButton.innerHTML;
+                        copyEmailButton.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg> Copié!';
+                        setTimeout(() => { copyEmailButton.innerHTML = originalText; }, 2000);
+                        trackActivity('temp_email_copied');
+                    })
+                    .catch(err => {
+                        console.error('Impossible de copier l\'e-mail:', err);
+                        alert('Impossible de copier l\'e-mail. Veuillez le faire manuellement.');
+                    });
+            }
+        });
+    }
+    // --- FIN DE LA LOGIQUE DU GÉNÉRATEUR D'EMAIL ---
+
 
     function formatActivityUrl(url) {
         if (!url) return 'N/A';

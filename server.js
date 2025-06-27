@@ -1139,6 +1139,54 @@ app.get('/api/comments', async (req, res) => {
     }
 });
 
+// --- Temp Email API Routes ---
+const TEMPMAIL_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
+
+app.get('/api/tempmail/create', async (req, res) => {
+    const apiUrl = `https://kaiz-apis.gleeze.com/api/tempmail-create?apikey=${TEMPMAIL_API_KEY}`;
+    try {
+        const apiResponse = await fetch(apiUrl);
+        const responseText = await apiResponse.text(); // Get text first for better error handling
+
+        if (!apiResponse.ok) {
+            let errorJson = { error: `API externe (tempmail-create) Erreur: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
+            try { errorJson = JSON.parse(responseText); if(!errorJson.error && !errorJson.message) { errorJson.error = `API externe (tempmail-create) Erreur: ${apiResponse.status} ${apiResponse.statusText}`; } } catch (e) { /* Not JSON */ }
+            console.error("Erreur de l'API tempmail-create:", errorJson);
+            return res.status(apiResponse.status).json(errorJson);
+        }
+        const data = JSON.parse(responseText); // Assume response is JSON if OK
+        res.json(data);
+    } catch (error) {
+        console.error('Erreur serveur lors de l\'appel à tempmail-create:', error);
+        res.status(500).json({ error: 'Erreur serveur lors de la création de l\'e-mail temporaire.' });
+    }
+});
+
+app.get('/api/tempmail/inbox', async (req, res) => {
+    const { token } = req.query;
+    if (!token) {
+        return res.status(400).json({ error: 'Le paramètre "token" est requis.' });
+    }
+    const apiUrl = `https://kaiz-apis.gleeze.com/api/tempmail-inbox?token=${encodeURIComponent(token)}&apikey=${TEMPMAIL_API_KEY}`;
+    try {
+        const apiResponse = await fetch(apiUrl);
+        const responseText = await apiResponse.text(); // Get text first
+
+        if (!apiResponse.ok) {
+            let errorJson = { error: `API externe (tempmail-inbox) Erreur: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
+            try { errorJson = JSON.parse(responseText); if(!errorJson.error && !errorJson.message) { errorJson.error = `API externe (tempmail-inbox) Erreur: ${apiResponse.status} ${apiResponse.statusText}`; } } catch (e) { /* Not JSON */ }
+            console.error("Erreur de l'API tempmail-inbox:", errorJson);
+            return res.status(apiResponse.status).json(errorJson);
+        }
+        const data = JSON.parse(responseText); // Assume response is JSON if OK
+        res.json(data);
+    } catch (error) {
+        console.error('Erreur serveur lors de l\'appel à tempmail-inbox:', error);
+        res.status(500).json({ error: 'Erreur serveur lors de la récupération de la boîte de réception.' });
+    }
+});
+// --- Fin des routes API Temp Email ---
+
 
 // Fallback to index.html
 app.get('*', (req, res) => {

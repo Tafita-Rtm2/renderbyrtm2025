@@ -2,27 +2,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const themeCheckbox = document.getElementById('theme-checkbox');
     const bodyElement = document.body;
 
-    let currentUserName = null; // To store the user's name globally
-
-    // Main content elements that will be hidden initially
-    const topBar = document.getElementById('top-bar');
-    const sideMenuEl = document.getElementById('side-menu'); // Renamed to avoid conflict with sideMenu var later
-    const mainContentArea = document.getElementById('main-content');
-    const privateMessageTrigger = document.getElementById('private-message-trigger-container');
-    const homeBottomIconsEl = document.getElementById('home-bottom-app-icons'); // Also might be initially hidden by .main-content-hidden if it's not part of #main-content
-
-    const mainContentElements = [topBar, sideMenuEl, mainContentArea, privateMessageTrigger, homeBottomIconsEl].filter(el => el);
-
-
-    // function showMainContent() { // Kept for reference, but direct class removal is now done
-    //     mainContentElements.forEach(el => el.classList.remove('main-content-hidden'));
-    // }
-
-    // function hideMainContent() { // Kept for reference
-    //     mainContentElements.forEach(el => el.classList.add('main-content-hidden'));
-    // }
-
-
     function applyTheme(theme) {
         if (theme === 'dark') {
             bodyElement.classList.add('dark-mode');
@@ -60,254 +39,6 @@ document.addEventListener('DOMContentLoaded', () => {
             applyTheme('light'); // Default to light if no preference or saved theme
         }
     }
-
-    // Welcome Screen & Main Content Visibility Logic - MODIFIED
-    // const welcomeScreen = document.getElementById('welcome-screen'); // Removed
-    // const userNameInput = document.getElementById('user-name-input'); // Removed
-    // const submitNameButton = document.getElementById('submit-name-button'); // Removed
-    // const welcomeErrorMessage = document.getElementById('welcome-error-message'); // Removed
-
-
-    // Main content elements are now shown by default by removing 'main-content-hidden' class from HTML elements.
-    // This function ensures they are visible.
-    function showMainSiteLayout() {
-        console.log('[Startup] Ensuring main site layout is visible.');
-        mainContentElements.forEach(el => {
-            if(el) el.classList.remove('main-content-hidden');
-        });
-    }
-
-    // hideMainSiteLayout is no longer needed as site is visible by default.
-
-    // Function to update comment form name based on login state (loggedInUser) or old storage (currentUserName)
-    function updateCommentFormNameOnLoadOrSubmit() {
-        const commentNameField = document.getElementById('comment-name');
-        if (!commentNameField) return;
-
-        if (loggedInUser && loggedInUser.name) {
-            commentNameField.value = loggedInUser.name;
-            commentNameField.readOnly = true;
-            commentNameField.classList.add('prefilled');
-        } else if (currentUserName) { // Fallback to old system's currentUserName (from localStorage['chatPortfolioUserName'])
-            commentNameField.value = currentUserName;
-            commentNameField.readOnly = true;
-            commentNameField.classList.add('prefilled');
-        } else {
-            commentNameField.value = '';
-            commentNameField.readOnly = false;
-            commentNameField.classList.remove('prefilled');
-        }
-    }
-
-    async function initializeUserSession() {
-        if (!chatUID) {
-            console.error("[Session] chatUID is not available. Site cannot fully initialize.");
-            showMainSiteLayout();
-            showView('home-view');
-            updateCommentFormNameOnLoadOrSubmit();
-            updateAuthUI(); // Initialize auth UI state
-            return;
-        }
-
-        console.log(`[Session] Initializing for UID: ${chatUID}. Site will be shown directly.`);
-
-        // TODO: Replace this with checking for a session token and validating with backend
-        // For now, we'll try to see if there's an old "registered" name for the UID
-        // or if a "loggedInUser" object is in localStorage from a previous session (conceptual).
-
-        const storedLoggedInUser = localStorage.getItem('loggedInUser');
-        if (storedLoggedInUser) {
-            try {
-                loggedInUser = JSON.parse(storedLoggedInUser);
-                console.log("[Session] Restored loggedInUser from localStorage:", loggedInUser);
-                currentUserName = loggedInUser.name; // Sync with currentUserName for compatibility
-            } catch (e) {
-                console.error("[Session] Error parsing loggedInUser from localStorage", e);
-                localStorage.removeItem('loggedInUser');
-                loggedInUser = null;
-            }
-        }
-
-        if (!loggedInUser) { // If no modern login session, check for old username system
-            const storedOldUserName = localStorage.getItem('chatPortfolioUserName');
-            if (storedOldUserName && chatUID === localStorage.getItem('chatPortfolioUID_associated_with_name')) { // Ensure name belongs to this UID
-                currentUserName = storedOldUserName;
-                 console.log(`[Session] Found legacy stored name: ${currentUserName} for UID: ${chatUID}.`);
-            } else {
-                currentUserName = null; // No local name, user is anonymous or new
-                console.log(`[Session] No local name found for UID: ${chatUID}. User is anonymous.`);
-            }
-        }
-
-        showMainSiteLayout();
-        showView('home-view');
-        updateCommentFormNameOnLoadOrSubmit();
-        updateAuthUI(); // Initialize auth UI state
-    }
-
-    initializeUserSession();
-
-    // Event Listeners for Auth Forms
-    if (registerForm) {
-        registerForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if(registerErrorMessage) registerErrorMessage.style.display = 'none';
-            const name = document.getElementById('register-name').value.trim();
-            const email = document.getElementById('register-email').value.trim();
-            const password = document.getElementById('register-password').value;
-
-            // Basic client-side validation (more robust validation on backend)
-            if (!name || !email || !password) {
-                if(registerErrorMessage) {
-                    registerErrorMessage.textContent = 'All fields are required.';
-                    registerErrorMessage.style.display = 'block';
-                }
-                return;
-            }
-            if (password.length < 6) {
-                 if(registerErrorMessage) {
-                    registerErrorMessage.textContent = 'Password must be at least 6 characters.';
-                    registerErrorMessage.style.display = 'block';
-                }
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/users/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, email, password, uid: chatUID }) // Send chatUID for potential association
-                });
-                const data = await response.json();
-                if (response.ok) {
-                    alert('Registration successful! Please log in.');
-                    registerForm.reset();
-                    // Optionally switch to login form or update UI further
-                } else {
-                    if(registerErrorMessage) {
-                        registerErrorMessage.textContent = data.message || 'Registration failed.';
-                        registerErrorMessage.style.display = 'block';
-                    }
-                }
-            } catch (error) {
-                console.error('Registration error:', error);
-                if(registerErrorMessage) {
-                    registerErrorMessage.textContent = 'An error occurred during registration.';
-                    registerErrorMessage.style.display = 'block';
-                }
-            }
-        });
-    }
-
-    if (loginForm) {
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if(loginErrorMessage) loginErrorMessage.style.display = 'none';
-            const email = document.getElementById('login-email').value.trim();
-            const password = document.getElementById('login-password').value;
-
-            if (!email || !password) {
-                 if(loginErrorMessage) {
-                    loginErrorMessage.textContent = 'Email and password are required.';
-                    loginErrorMessage.style.display = 'block';
-                }
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/users/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
-                const data = await response.json();
-                if (response.ok) {
-                    loggedInUser = { userId: data.userId, name: data.name, email: data.email };
-                    currentUserName = data.name; // For compatibility with parts of system using currentUserName
-                    localStorage.setItem('loggedInUser', JSON.stringify(loggedInUser)); // Persist basic login state
-                    // localStorage.setItem('sessionToken', data.token); // If using JWT
-                    updateAuthUI();
-                    updateCommentFormNameOnLoadOrSubmit(); // Update comment form name
-                    alert('Login successful!');
-                    loginForm.reset();
-                    // Potentially navigate away from settings or refresh parts of the UI
-                } else {
-                    if(loginErrorMessage) {
-                        loginErrorMessage.textContent = data.message || 'Login failed.';
-                        loginErrorMessage.style.display = 'block';
-                    }
-                }
-            } catch (error) {
-                console.error('Login error:', error);
-                 if(loginErrorMessage) {
-                    loginErrorMessage.textContent = 'An error occurred during login.';
-                    loginErrorMessage.style.display = 'block';
-                }
-            }
-        });
-    }
-
-    if (logoutButton) {
-        logoutButton.addEventListener('click', () => {
-            loggedInUser = null;
-            currentUserName = null; // Clear old system name too
-            localStorage.removeItem('loggedInUser');
-            // localStorage.removeItem('sessionToken'); // If using JWT
-            localStorage.removeItem('chatPortfolioUserName'); // Clear old stored name
-            localStorage.removeItem('chatPortfolioUID_associated_with_name'); // Clear association
-            updateAuthUI();
-            updateCommentFormNameOnLoadOrSubmit();
-            alert('Logged out successfully.');
-        });
-    }
-
-    // --- LANGUAGE SELECTION ---
-    const languageSelect = document.getElementById('language-select');
-
-    function applyLanguage(lang) {
-        // Placeholder: In a real app, this would involve loading language files
-        // and updating text content across the site.
-        console.log(`Language changed to: ${lang}`);
-        document.documentElement.lang = lang; // Set lang attribute on HTML element
-
-        // Example: Update a few hardcoded elements for demonstration
-        const sideMenuHomeLink = document.querySelector('#side-menu a[data-view="home-view"] span');
-        const parametresViewTitle = document.querySelector('#parametres-view h2');
-
-        if (lang === 'fr') {
-            if (sideMenuHomeLink) sideMenuHomeLink.textContent = 'Accueil';
-            if (parametresViewTitle) parametresViewTitle.textContent = 'Paramètres';
-            // Update more elements as needed
-        } else if (lang === 'en') {
-            if (sideMenuHomeLink) sideMenuHomeLink.textContent = 'Home';
-            if (parametresViewTitle) parametresViewTitle.textContent = 'Settings';
-            // Update more elements as needed
-        }
-    }
-
-    function loadLanguagePreference() {
-        const savedLang = localStorage.getItem('preferredLanguage');
-        if (savedLang) {
-            if (languageSelect) languageSelect.value = savedLang;
-            applyLanguage(savedLang);
-        } else {
-            applyLanguage(languageSelect ? languageSelect.value : 'fr'); // Default to French or select's current value
-        }
-    }
-
-    if (languageSelect) {
-        languageSelect.addEventListener('change', (e) => {
-            const selectedLang = e.target.value;
-            localStorage.setItem('preferredLanguage', selectedLang);
-            applyLanguage(selectedLang);
-        });
-    }
-    // --- END OF LANGUAGE SELECTION ---
-
-    // Initialize language preference on load
-    loadLanguagePreference();
-
-    // Event listeners for welcomeScreen elements (userNameInput, submitNameButton) are removed as elements are gone.
 
     // AI CHAT ELEMENT SELECTION (CRITICAL DIAGNOSTIC LOGS)
     const chatInputBarForCheck = document.getElementById('chat-input-bar');
@@ -422,10 +153,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Feature-specific load calls
-        if (viewIdToShow === 'home-view' && typeof loadComments === 'function') {
-            loadComments();
-            if(typeof updateCommentFormNameOnLoadOrSubmit === 'function') updateCommentFormNameOnLoadOrSubmit(); // Update for home view comments
-        } else if (viewIdToShow === 'ai-chat-view') {
+        if (viewIdToShow === 'home-view' && typeof loadComments === 'function') loadComments();
+        else if (viewIdToShow === 'ai-chat-view') {
             console.log('[AI CHAT DIAGNOSTIC] showView called for ai-chat-view.');
             // Logs for checking elements when ai-chat-view is shown
             console.log('[AI CHAT DIAGNOSTIC] Checking #chat-input-bar in DOM:', document.getElementById('chat-input-bar'));
@@ -444,13 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
             currentGeneratedStoryContent = "";
             currentGeneratedStoryTheme = "";
             if(typeof updateStoryVipControlsVisibility === 'function') updateStoryVipControlsVisibility();
-        } else if (viewIdToShow === 'box-movie-view') {
-            // Placeholder for when Box Movie view is shown
-            // For example, load popular movies by default
-            if (typeof fetchPopularMovies === 'function') {
-                fetchPopularMovies();
-            }
-        } else if (viewIdToShow === 'weather-view') {
+        } else if (viewIdToShow === 'weather-view') { // VIP view logic removed from here
             const weatherView = document.getElementById('weather-view');
             if (currentWeatherData) { // If data is already fetched
                 displayDetailedWeather(currentWeatherData);
@@ -489,10 +212,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (typeof loadUserActivityHistory === 'function') {
                 loadUserActivityHistory();
             }
-        } else if (viewIdToShow === 'comments-view') {
+        } else if (viewIdToShow === 'comments-view') { // Added for dedicated comments page
             if (typeof loadAllCommentsPage === 'function') loadAllCommentsPage();
-            // Note: The main comment form is on home-view, not typically on comments-view.
-            // If a comment form were added to comments-view, updateCommentFormNameOnLoadOrSubmit() would be needed here too.
         }
         else if (viewIdToShow === 'gemini-chat-view') {
             // Initialize Gemini Chat specific elements or load history if needed
@@ -522,15 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (gpt4oChatView) {
                 gpt4oChatView.style.display = 'flex';
             }
-        } else if (viewIdToShow === 'parametres-view') {
-            // Placeholder for when "Paramètres" view is shown
-            // Future: Load user settings, language preferences etc.
-            console.log('[Paramètres] Paramètres view shown.');
-            if (typeof updateAuthUI === 'function') {
-                updateAuthUI(); // Update UI based on login state
-            }
         }
-
 
         // Track view visit at the end of showView, after all specific view logic
         if(typeof trackActivity === 'function') trackActivity('view_visit', { view: viewIdToShow });
@@ -542,7 +255,9 @@ document.addEventListener('DOMContentLoaded', () => {
             button.addEventListener('click', (e) => {
                 e.preventDefault();
                 const viewId = button.dataset.view;
-                if (viewId) { // Removed VIP direct redirect
+                if (viewId === 'vip-view') {
+                    window.location.href = 'https://sitebymegg.onrender.com/';
+                } else if (viewId) {
                     window.showView(viewId);
                 }
             });
@@ -556,7 +271,10 @@ document.addEventListener('DOMContentLoaded', () => {
             link.addEventListener('click', (event) => {
                 event.preventDefault();
                 const viewId = link.dataset.view;
-                if (viewId) { // Removed VIP direct redirect
+                if (viewId === 'vip-view') {
+                    window.location.href = 'https://sitebymegg.onrender.com/';
+                    // sideMenu.classList.remove('visible'); // Optional: remove if redirecting anyway
+                } else if (viewId) {
                     window.showView(viewId);
                     sideMenu.classList.remove('visible');
                 }
@@ -581,23 +299,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!uid) { uid = Date.now().toString(36) + Math.random().toString(36).substr(2); localStorage.setItem('chatPortfolioUID', uid); }
         return uid;
     }
-    // Ensure getOrCreateUID is robust and logs info
-    function getOrCreateUID() {
-        let uid = localStorage.getItem('chatPortfolioUID');
-        if (uid) {
-            console.log('[UID] Retrieved existing UID:', uid);
-            return uid;
-        } else {
-            uid = Date.now().toString(36) + Math.random().toString(36).substr(2);
-            localStorage.setItem('chatPortfolioUID', uid);
-            console.log('[UID] Created and stored new UID:', uid);
-            return uid;
-        }
-    }
-    // Initialize chatUID EARLY in DOMContentLoaded
     chatUID = getOrCreateUID();
-    console.log('[UID] Global chatUID initialized to:', chatUID);
-
 
     // --- User Activity Tracking ---
     async function trackActivity(activityType, detailsObject = {}) {
@@ -851,27 +553,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             try {
-                // Determine identifier to send: loggedInUser.userId if available, otherwise chatUID
-                let identifier = {};
-                if (loggedInUser && loggedInUser.userId) {
-                    identifier.userId = loggedInUser.userId;
-                } else if (chatUID) {
-                    identifier.uid = chatUID; // Legacy or anonymous identifier
-                } else {
-                    console.error("Cannot submit comment, no user identifier available.");
-                    throw new Error("User identifier is missing. Please refresh and try again.");
-                }
-
-                const payload = {
-                    name, // Client still sends name, backend will verify/override if logged in
-                    text,
-                    ...identifier // Spread either {userId: '...'} or {uid: '...'}
-                };
-
                 const response = await fetch('/api/comments', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({ name, text })
                 });
                 if (!response.ok) {
                     const errData = await response.json().catch(() => null);
@@ -1225,293 +910,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const storyHistoryKey = 'portfolioStoryHistory';
     let currentGeneratedStoryContent = "";
     let currentGeneratedStoryTheme = "";
-
-    // --- TRAILER MODAL Elements ---
-    const trailerModal = document.getElementById('trailer-modal');
-    const trailerIframe = document.getElementById('trailer-iframe');
-    const modalCloseButton = document.querySelector('#trailer-modal .modal-close-button');
-
-    // --- TRAILER MODAL Functions ---
-    function openTrailerModal(youtubeVideoId) {
-        console.log('[TrailerModal] Attempting to open. Video ID:', youtubeVideoId);
-        if (!trailerModal || !trailerIframe) {
-            console.error('[TrailerModal] ERROR: Modal elements #trailer-modal or #trailer-iframe not found in DOM!');
-            // Fallback to new tab if modal elements are missing
-            window.open(`https://www.youtube.com/watch?v=${youtubeVideoId}`, '_blank');
-            return;
-        }
-        console.log('[TrailerModal] Modal elements found. Setting iframe src.');
-        trailerIframe.src = `https://www.youtube.com/embed/${youtubeVideoId}?autoplay=1&rel=0&modestbranding=1`;
-        trailerModal.classList.add('visible');
-        console.log('[TrailerModal] Modal classList after add:', trailerModal.classList);
-        // Forcing a reflow might help in some edge cases with CSS transitions
-        // void trailerModal.offsetWidth;
-    }
-
-    function closeTrailerModal() {
-        console.log('[TrailerModal] Attempting to close.');
-        if (!trailerModal || !trailerIframe) {
-            console.error('[TrailerModal] ERROR: Modal elements not found on close attempt.');
-            return;
-        }
-        trailerIframe.src = ''; // Clear src to stop video playback
-        trailerModal.classList.remove('visible');
-        console.log('[TrailerModal] Modal classList after remove:', trailerModal.classList);
-    }
-
-    if (modalCloseButton) {
-        modalCloseButton.addEventListener('click', closeTrailerModal);
-    }
-
-    if (trailerModal) {
-        // Close modal if user clicks on the overlay (outside the modal-content)
-        trailerModal.addEventListener('click', (event) => {
-            if (event.target === trailerModal) { // Check if the click is directly on the overlay
-                closeTrailerModal();
-            }
-        });
-    }
-    // Add keyboard accessibility for closing modal (Escape key)
-    document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && trailerModal && trailerModal.classList.contains('visible')) {
-            closeTrailerModal();
-        }
-    });
-    // --- END OF TRAILER MODAL ---
-
-    // --- BOX MOVIE Elements ---
-    const boxMovieSearchField = document.getElementById('box-movie-search-field');
-    const boxMovieSearchButton = document.getElementById('box-movie-search-button');
-    const boxMoviePopularGrid = document.getElementById('box-movie-popular-grid');
-    const boxMovieSearchGrid = document.getElementById('box-movie-search-grid');
-    const boxMoviePopularSection = document.getElementById('box-movie-popular-section');
-    const boxMovieSearchResultsSection = document.getElementById('box-movie-search-results-section');
-    const boxMovieDetailsSection = document.getElementById('box-movie-details-section');
-    const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500'; // For posters
-
-    // --- BOX MOVIE Functions ---
-    async function fetchFromTMDB(endpoint, params = {}) {
-        const baseUrl = '/api/movies'; // Using our backend proxy
-        // Construct the full URL using window.location.origin to ensure it's absolute
-        const fullUrl = new URL(`${baseUrl}${endpoint}`, window.location.origin);
-        Object.keys(params).forEach(key => fullUrl.searchParams.append(key, params[key]));
-
-        try {
-            const response = await fetch(fullUrl); // Use the full URL
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ message: `HTTP error! status: ${response.status}` }));
-                console.error(`Error fetching ${endpoint}:`, errorData.message);
-                throw new Error(errorData.message || `Failed to fetch data for ${endpoint}`);
-            }
-            return await response.json();
-        } catch (error) {
-            console.error(`Network or parsing error fetching ${endpoint}:`, error);
-            throw error; // Re-throw to be caught by caller
-        }
-    }
-
-    async function fetchPopularMovies() {
-        if (!boxMoviePopularGrid || !boxMoviePopularSection) return;
-        boxMoviePopularGrid.innerHTML = '<p class="loading-movies">Loading popular movies...</p>';
-        boxMoviePopularSection.style.display = 'block';
-        if (boxMovieSearchResultsSection) boxMovieSearchResultsSection.style.display = 'none';
-        if (boxMovieDetailsSection) boxMovieDetailsSection.style.display = 'none';
-
-        try {
-            const data = await fetchFromTMDB('/popular');
-            renderMovies(data.results, boxMoviePopularGrid);
-        } catch (error) {
-            boxMoviePopularGrid.innerHTML = `<p class="error-movies">Could not load popular movies: ${error.message}</p>`;
-        }
-    }
-
-    async function searchMovies(query) {
-        if (!query || !boxMovieSearchGrid || !boxMovieSearchResultsSection) return;
-        boxMovieSearchGrid.innerHTML = '<p class="loading-movies">Searching movies...</p>';
-        if (boxMoviePopularSection) boxMoviePopularSection.style.display = 'none';
-        boxMovieSearchResultsSection.style.display = 'block';
-        if (boxMovieDetailsSection) boxMovieDetailsSection.style.display = 'none';
-
-        try {
-            const data = await fetchFromTMDB('/search', { query });
-            renderMovies(data.results, boxMovieSearchGrid);
-             if (data.results && data.results.length === 0) {
-                boxMovieSearchGrid.innerHTML = `<p class="info-movies">No movies found for "${escapeHTML(query)}".</p>`;
-            }
-        } catch (error) {
-            boxMovieSearchGrid.innerHTML = `<p class="error-movies">Could not perform search: ${error.message}</p>`;
-        }
-    }
-
-    async function getMovieDetails(movieId) {
-        if (!movieId || !boxMovieDetailsSection) return;
-        boxMovieDetailsSection.innerHTML = '<p class="loading-movies">Loading movie details...</p>';
-        if (boxMoviePopularSection) boxMoviePopularSection.style.display = 'none';
-        if (boxMovieSearchResultsSection) boxMovieSearchResultsSection.style.display = 'none';
-        boxMovieDetailsSection.style.display = 'block';
-
-        try {
-            const movie = await fetchFromTMDB(`/details/${movieId}`);
-            renderMovieDetails(movie, boxMovieDetailsSection);
-        } catch (error) {
-            boxMovieDetailsSection.innerHTML = `<p class="error-movies">Could not load movie details: ${error.message}</p>`;
-        }
-    }
-
-    function renderMovies(movies, gridElement) {
-        if (!movies || !gridElement) return;
-        gridElement.innerHTML = ''; // Clear previous content or loading message
-        if (movies.length === 0 && gridElement.id === 'box-movie-search-grid') {
-            // This case is handled in searchMovies specifically for better message with query
-            return;
-        } else if (movies.length === 0) {
-            gridElement.innerHTML = '<p class="info-movies">No movies to display.</p>';
-            return;
-        }
-
-        movies.forEach(movie => {
-            if (!movie.poster_path) return; // Skip movies without posters for a cleaner look
-
-            const movieCard = document.createElement('div');
-            movieCard.className = 'movie-card';
-            movieCard.dataset.movieId = movie.id;
-            movieCard.innerHTML = `
-                <img src="${TMDB_IMAGE_BASE_URL}${movie.poster_path}" alt="${escapeHTML(movie.title)} Poster">
-                <div class="movie-card-info">
-                    <h4>${escapeHTML(movie.title)} ${movie.release_date ? '(' + movie.release_date.substring(0,4) + ')' : ''}</h4>
-                    <p class="movie-rating">Rating: ${movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A'} <span class="star-icon">★</span></p>
-                </div>
-            `;
-            movieCard.addEventListener('click', () => getMovieDetails(movie.id));
-            gridElement.appendChild(movieCard);
-        });
-    }
-
-    function renderMovieDetails(movie, detailElement) {
-        if (!movie || !detailElement) return;
-        const genres = movie.genres && movie.genres.map(g => escapeHTML(g.name)).join(', ');
-        const productionCompanies = movie.production_companies && movie.production_companies.slice(0, 3).map(pc => escapeHTML(pc.name)).join(', ');
-
-        detailElement.innerHTML = `
-            <button id="box-movie-back-button" class="icon-button box-movie-back-btn">&larr; Back to list</button>
-            <div class="movie-detail-header">
-                <img src="${movie.poster_path ? TMDB_IMAGE_BASE_URL + movie.poster_path : 'https://via.placeholder.com/500x750.png?text=No+Poster'}" alt="${escapeHTML(movie.title)} Poster" class="movie-detail-poster">
-                <div class="movie-detail-title-group">
-                    <h1>${escapeHTML(movie.title)}</h1>
-                    <p class="tagline"><em>${escapeHTML(movie.tagline || '')}</em></p>
-                    <p><strong>Release Date:</strong> ${escapeHTML(movie.release_date || 'N/A')}</p>
-                    <p><strong>Rating:</strong> ${movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A'} (${movie.vote_count} votes) <span class="star-icon">★</span></p>
-                    <p><strong>Runtime:</strong> ${movie.runtime ? movie.runtime + ' minutes' : 'N/A'}</p>
-                    <p><strong>Genres:</strong> ${genres || 'N/A'}</p>
-                </div>
-            </div>
-            <div class="movie-detail-overview">
-                <h3>Overview</h3>
-                <p>${escapeHTML(movie.overview || 'No overview available.')}</p>
-            </div>
-            <div class="movie-detail-meta">
-                <p><strong>Status:</strong> ${escapeHTML(movie.status || 'N/A')}</p>
-                <p><strong>Original Language:</strong> ${escapeHTML(movie.original_language ? movie.original_language.toUpperCase() : 'N/A')}</p>
-                <p><strong>Budget:</strong> ${movie.budget ? '$' + movie.budget.toLocaleString() : 'N/A'}</p>
-                <p><strong>Revenue:</strong> ${movie.revenue ? '$' + movie.revenue.toLocaleString() : 'N/A'}</p>
-                <p><strong>Production Companies:</strong> ${productionCompanies || 'N/A'}</p>
-            </div>
-
-            <div class="movie-actions">
-                <button id="watch-trailer-button-${movie.id}" class="btn-action-movie watch-trailer-btn" data-movie-id="${movie.id}">Watch Trailer</button>
-                <button class="btn-action-movie download-movie-btn" title="Functionality not yet implemented" disabled>Download Movie</button>
-            </div>
-        `;
-        const backButton = detailElement.querySelector('#box-movie-back-button');
-        const watchTrailerButton = detailElement.querySelector(`#watch-trailer-button-${movie.id}`);
-
-        if (watchTrailerButton) {
-            watchTrailerButton.addEventListener('click', (e) => {
-                const movieId = e.currentTarget.dataset.movieId;
-                fetchAndDisplayTrailer(movieId);
-            });
-        }
-        if (backButton) {
-            backButton.addEventListener('click', () => {
-                detailElement.style.display = 'none';
-                detailElement.innerHTML = '';
-                // Show the previously active list (popular or search)
-                if (boxMovieSearchGrid && boxMovieSearchGrid.innerHTML !== '' && boxMovieSearchResultsSection && boxMovieSearchResultsSection.style.display === 'block') {
-                    // Search results were visible, do nothing to explicitly re-show them as they are already block
-                } else if (boxMoviePopularGrid && boxMoviePopularGrid.innerHTML !== '' && boxMoviePopularSection) {
-                    boxMoviePopularSection.style.display = 'block';
-                } else { // Fallback if neither list has content or popular section isn't found
-                    fetchPopularMovies();
-                }
-            });
-        }
-    }
-
-    if (boxMovieSearchButton && boxMovieSearchField) {
-        boxMovieSearchButton.addEventListener('click', () => {
-            const query = boxMovieSearchField.value.trim();
-            if (query) {
-                searchMovies(query);
-            } else {
-                fetchPopularMovies(); // If search is empty, show popular movies
-            }
-        });
-        boxMovieSearchField.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                const query = boxMovieSearchField.value.trim();
-                if (query) {
-                    searchMovies(query);
-                } else {
-                    fetchPopularMovies(); // If search is empty on Enter, show popular movies
-                }
-            }
-        });
-    }
-
-    async function fetchAndDisplayTrailer(movieId) {
-        if (!movieId) {
-            console.log('[TrailerModal] fetchAndDisplayTrailer called with no movieId.');
-            return;
-        }
-        console.log(`[TrailerModal] Fetching trailer for movie ID: ${movieId}`);
-        try {
-            const videoData = await fetchFromTMDB(`/details/${movieId}/videos`);
-            console.log('[TrailerModal] Fetched video data:', videoData);
-
-            if (videoData && videoData.results && videoData.results.length > 0) {
-                const officialTrailer = videoData.results.find(video =>
-                    video.type === 'Trailer' && video.site === 'YouTube' && video.official === true
-                );
-                const trailer = officialTrailer || videoData.results.find(video => video.type === 'Trailer' && video.site === 'YouTube');
-                const teaser = videoData.results.find(video => video.type === 'Teaser' && video.site === 'YouTube');
-
-                let videoToPlay = null;
-                if (trailer) {
-                    videoToPlay = trailer;
-                } else if (teaser) {
-                    videoToPlay = teaser;
-                } else if (videoData.results.find(video => video.site === 'YouTube')) { // Find first available YouTube video if no trailer/teaser
-                    videoToPlay = videoData.results.find(video => video.site === 'YouTube');
-                }
-
-                console.log('[TrailerModal] Chosen video to play:', videoToPlay);
-
-                if (videoToPlay && videoToPlay.site === 'YouTube' && videoToPlay.key) {
-                    openTrailerModal(videoToPlay.key);
-                } else {
-                    alert('No suitable YouTube video found for this movie.');
-                    console.log('[TrailerModal] No suitable YouTube video. Available videos:', videoData.results);
-                }
-            } else {
-                alert('No trailers or video information found for this movie.');
-                console.log('[TrailerModal] No video results in data.');
-            }
-        } catch (error) {
-            console.error('[TrailerModal] Error fetching or displaying trailer:', error);
-            alert(`Could not fetch trailer information: ${error.message}`);
-        }
-    }
-    // --- END OF BOX MOVIE ---
 
     // --- GEMINI CHAT ELEMENTS ---
     const geminiChatMessagesArea = document.getElementById('gemini-chat-messages-area');
@@ -2187,65 +1585,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // --- END OF GPT-4o CHAT LOGIC ---
 
-    // --- USER ACCOUNT STATE & UI ---
-    let loggedInUser = null; // Example: { userId: '...', name: '...', email: '...' }
-
-    const userInfoDisplay = document.getElementById('user-info-display');
-    const displayUserName = document.getElementById('display-user-name');
-    const displayUserEmail = document.getElementById('display-user-email');
-    const logoutButton = document.getElementById('logout-button');
-    const authForms = document.getElementById('auth-forms');
-    const loginForm = document.getElementById('login-form');
-    const registerForm = document.getElementById('register-form');
-    const loginErrorMessage = document.getElementById('login-error-message');
-    const registerErrorMessage = document.getElementById('register-error-message');
-
-    function updateAuthUI() {
-        if (loggedInUser) {
-            if (userInfoDisplay) userInfoDisplay.style.display = 'block';
-            if (displayUserName) displayUserName.textContent = loggedInUser.name;
-            if (displayUserEmail) displayUserEmail.textContent = loggedInUser.email;
-            if (authForms) authForms.style.display = 'none';
-            if (commentNameInput) { // Prefill comment name if user is logged in
-                commentNameInput.value = loggedInUser.name;
-                commentNameInput.readOnly = true;
-                commentNameInput.classList.add('prefilled');
-            }
-        } else {
-            if (userInfoDisplay) userInfoDisplay.style.display = 'none';
-            if (authForms) authForms.style.display = 'block';
-            if (commentNameInput) { // Make comment name editable if logged out
-                commentNameInput.value = '';
-                commentNameInput.readOnly = false;
-                commentNameInput.classList.remove('prefilled');
-            }
-        }
-    }
-
-    // Call updateAuthUI when the "Paramètres" view is shown
-    // This will be added to the showView function logic for 'parametres-view'
-
-    // --- END OF USER ACCOUNT STATE & UI ---
-
-
-    function formatActivityUrl(url) {
-        if (!url) return 'N/A';
-        try {
-            const currentOrigin = window.location.origin;
-            if (url.startsWith(currentOrigin)) {
-                const path = url.substring(currentOrigin.length);
-                return `Site: ${escapeHTML(path || '/')}`;
-            } else {
-                const urlObj = new URL(url);
-                return `External: ${escapeHTML(urlObj.hostname)}`;
-            }
-        } catch (e) {
-            // If URL parsing fails, return the escaped original URL (truncated if too long)
-            const maxLength = 50;
-            return escapeHTML(url.length > maxLength ? url.substring(0, maxLength - 3) + '...' : url);
-        }
-    }
-
     // --- VIP AREA LOGIC (REMOVED) ---
     // const vipAccessArea = document.getElementById('vip-access-area'); // Element will be removed from HTML
     // const vipCodeInput = document.getElementById('vip-code-input');
@@ -2319,7 +1658,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <strong>${escapeHTML(activity.activityType)}</strong> by user <span class="activity-uid">${escapeHTML(activity.uid.slice(0,8))}...</span>
                             <br><span class="activity-details">Details: ${escapeHTML(JSON.stringify(activity.details))}</span>
                             <br><span class="activity-time">${new Date(activity.timestamp).toLocaleString()}</span>
-                            <br><span class="activity-url-styled">Source: ${formatActivityUrl(activity.url)}</span>
+                            <br><span class="activity-time">URL: ${escapeHTML(activity.url)}</span>
                         </li>`;
                 });
                 activitiesHTML += '</ul>';

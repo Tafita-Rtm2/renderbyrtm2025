@@ -991,6 +991,108 @@ app.get('/api/users/check/:uid', async (req, res) => {
 
 // --- End of User Registration and Check API Routes ---
 
+// --- New AI Model API Routes ---
+
+// Blackbox AI
+app.post('/api/blackbox', async (req, res) => {
+    const { ask, uid, webSearch } = req.body;
+    if (!ask || !uid) {
+        return res.status(400).json({ error: 'Parameters "ask" and "uid" are required for Blackbox AI.' });
+    }
+    const webSearchParam = (String(webSearch).toLowerCase() === 'on' || webSearch === true) ? 'on' : 'off';
+    // The API key is hardcoded in the URL as per the example, but ideally, it should be a constant here.
+    // For this implementation, I'll use the provided URL structure.
+    const apiKey = '793fcf57-8820-40ea-b34e-7addd227e2e6'; // Extracted from example
+    const blackboxApiUrl = `https://kaiz-apis.gleeze.com/api/blackbox?ask=${encodeURIComponent(ask)}&uid=${encodeURIComponent(uid)}&webSearch=${webSearchParam}&apikey=${apiKey}`;
+
+    try {
+        const apiResponse = await fetch(blackboxApiUrl);
+        const responseText = await apiResponse.text();
+        if (!apiResponse.ok) {
+            let errorJson = { error: `External Blackbox API Error: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
+            try { errorJson = JSON.parse(responseText); if(!errorJson.error && !errorJson.message) { errorJson.error = `External Blackbox API Error: ${apiResponse.status} ${apiResponse.statusText}`; } } catch (e) { /* Not JSON */ }
+            return res.status(apiResponse.status).json(errorJson);
+        }
+        let data;
+        try { data = JSON.parse(responseText); }
+        catch (e) { return res.status(500).json({ error: 'Failed to parse response from Blackbox API.', details: responseText }); }
+
+        if (data && data.response) {
+            res.json({ author: data.author || "Blackbox AI (Kaizenji)", response: data.response });
+        } else {
+            return res.status(500).json({ error: 'Unexpected response structure from Blackbox API.', details: data });
+        }
+    } catch (error) {
+        console.error('Server error while calling Blackbox API:', error);
+        return res.status(500).json({ error: 'Server error while processing Blackbox AI request.' });
+    }
+});
+
+// DeepSeek API
+app.post('/api/deepseek', async (req, res) => {
+    const { ask } = req.body;
+    if (!ask) {
+        return res.status(400).json({ error: 'Parameter "ask" is required for DeepSeek API.' });
+    }
+    const apiKey = '793fcf57-8820-40ea-b34e-7addd227e2e6'; // Extracted from example
+    const deepseekApiUrl = `https://kaiz-apis.gleeze.com/api/deepseek-v3?ask=${encodeURIComponent(ask)}&apikey=${apiKey}`;
+
+    try {
+        const apiResponse = await fetch(deepseekApiUrl);
+        const responseText = await apiResponse.text();
+        if (!apiResponse.ok) {
+            let errorJson = { error: `External DeepSeek API Error: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
+            try { errorJson = JSON.parse(responseText); if(!errorJson.error && !errorJson.message) { errorJson.error = `External DeepSeek API Error: ${apiResponse.status} ${apiResponse.statusText}`; } } catch (e) { /* Not JSON */ }
+            return res.status(apiResponse.status).json(errorJson);
+        }
+        let data;
+        try { data = JSON.parse(responseText); }
+        catch (e) { return res.status(500).json({ error: 'Failed to parse response from DeepSeek API.', details: responseText }); }
+
+        if (data && data.response) {
+            res.json({ author: data.author || "DeepSeek AI (Kaizenji)", response: data.response });
+        } else {
+            return res.status(500).json({ error: 'Unexpected response structure from DeepSeek API.', details: data });
+        }
+    } catch (error) {
+        console.error('Server error while calling DeepSeek API:', error);
+        return res.status(500).json({ error: 'Server error while processing DeepSeek AI request.' });
+    }
+});
+
+// Claude Haiku API
+app.post('/api/claude-haiku', async (req, res) => {
+    const { ask } = req.body;
+    if (!ask) {
+        return res.status(400).json({ error: 'Parameter "ask" is required for Claude Haiku API.' });
+    }
+    const apiKey = '793fcf57-8820-40ea-b34e-7addd227e2e6'; // Extracted from example
+    const claudeApiUrl = `https://kaiz-apis.gleeze.com/api/claude3-haiku?ask=${encodeURIComponent(ask)}&apikey=${apiKey}`;
+
+    try {
+        const apiResponse = await fetch(claudeApiUrl);
+        const responseText = await apiResponse.text();
+        if (!apiResponse.ok) {
+            let errorJson = { error: `External Claude Haiku API Error: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
+            try { errorJson = JSON.parse(responseText); if(!errorJson.error && !errorJson.message) { errorJson.error = `External Claude Haiku API Error: ${apiResponse.status} ${apiResponse.statusText}`; } } catch (e) { /* Not JSON */ }
+            return res.status(apiResponse.status).json(errorJson);
+        }
+        let data;
+        try { data = JSON.parse(responseText); }
+        catch (e) { return res.status(500).json({ error: 'Failed to parse response from Claude Haiku API.', details: responseText }); }
+
+        if (data && data.response) {
+            res.json({ author: data.author || "Claude Haiku (Kaizenji)", response: data.response });
+        } else {
+            return res.status(500).json({ error: 'Unexpected response structure from Claude Haiku API.', details: data });
+        }
+    } catch (error) {
+        console.error('Server error while calling Claude Haiku API:', error);
+        return res.status(500).json({ error: 'Server error while processing Claude Haiku AI request.' });
+    }
+});
+
+// --- End of New AI Model API Routes ---
 
 // --- TMDB API Routes ---
 // Helper function to fetch data from TMDB

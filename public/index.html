@@ -36,23 +36,48 @@
 
     <nav id="side-menu">
         <ul>
-            <li><a href="#" data-view="home-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"></path></svg> <span>Accueil</span></a></li>
-            <li><a href="#" data-view="ai-chat-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"></path></svg> <span>Chat IA</span></a></li>
-            <li><a href="#" data-view="gemini-chat-view"><img src="https://www.gstatic.com/images/branding/product/2x/gemini_48dp.png" alt="Gemini" class="icon icon-side-menu-item gemini-logo-icon"> <span>Chat Gemini</span></a></li>
-            <li><a href="#" data-view="gpt4o-chat-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"></path></svg> <span>Chat GPT-4V</span></a></li>
-            <li><a href="#" data-view="image-generator-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"></path></svg> <span>Générateur d'Images</span></a></li>
-            <li><a href="#" data-view="story-generator-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"></path></svg> <span>Générateur d'Histoires</span></a></li>
-            <li><a href="#" data-view="box-movie-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M18 3v2h-2V3H8v2H6V3H4v18h2v-2h2v2h8v-2h2v2h2V3h-2zM8 17H6v-2h2v2zm0-4H6v-2h2v2zm0-4H6V7h2v2zm10 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2z"></path></svg> <span>Box Movie</span></a></li>
-            <li><a href="#" data-view="weather-view"> <svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"></path></svg> <span>Météo</span></a></li>
-            <li><a href="#" data-view="about-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"></path></svg> <span>À Propos</span></a></li>
-            <li><a href="#" data-view="contact-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"></path></svg> <span>Contact</span></a></li>
-            <li><a href="#" data-view="comments-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18zM18 14H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"></path></svg> <span>Commentaires</span></a></li>
-            <li><a href="#" data-view="user-history-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7v-3l-4.89-4.89-.07-.14L2 15h3c0 4.97 4.03 9 9 9s9-4.03 9-9-4.03-9-9-9z"></path></svg> <span>Historique Utilisateur</span></a></li>
-            <li><a href="#" data-view="gallery-view-main"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M22 16V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2zm-11-4l2.03 2.71L16 11l4 5H8l3-4zM2 6v14c0 1.1.9 2 2 2h14v-2H4V6H2z"></path></svg> <span>Galerie d'Images</span></a></li>
-            <li><a href="#" data-view="ads-partners-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M16.5 12c1.38 0 2.5-1.12 2.5-2.5S17.88 7 16.5 7C15.12 7 14 8.12 14 9.5s1.12 2.5 2.5 2.5zM9 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm7.5 3c-1.83 0-5.5.92-5.5 2.75V18h11v-1.25c0-1.83-3.67-2.75-5.5-2.75zM9 13c-2.33 0-7 1.17-7 3.5V18h7v-1.5c0-.83.24-1.58.62-2.26-.44-.07-.9-.14-1.37-.14z"></path></svg> <span>🎯 Publicités & Partenaires</span></a></li>
-            <li><a href="#" data-view="parametres-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.08-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"></path></svg> <span>Paramètres</span></a></li>
-            <li><a href="#" data-view="admin-panel-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.34 8.42c-.11.2-.06.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54c.59-.24 1.13-.57 1.62-.94l2.39.96c.22.08.47 0 .59.22l1.92-3.32c.12-.22.06-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"></path></svg> <span>Panneau Admin</span></a></li>
-            <li><a href="#" data-view="email-generator-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8l8 5 8-5v10zm-8-7L4 6h16l-8 5z"></path></svg> <span>Email Generator</span></a></li>
+            <li><a href="#" data-view="home-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"></path></svg> <span data-translate-key="home">Accueil</span></a></li>
+            <li><a href="#" data-view="ai-chat-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"></path></svg> <span data-translate-key="aiChat">Chat IA</span></a></li>
+            <li><a href="#" data-view="gemini-chat-view"><img src="https://www.gstatic.com/images/branding/product/2x/gemini_48dp.png" alt="Gemini" class="icon icon-side-menu-item gemini-logo-icon"> <span data-translate-key="geminiChat">Chat Gemini</span></a></li>
+            <li><a href="#" data-view="gpt4o-chat-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"></path></svg> <span data-translate-key="gpt4oChat">Chat GPT-4V</span></a></li>
+
+            <!-- New AI Model Links -->
+            <li>
+                <a href="#" data-view="blackbox-chat-view">
+                    <svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18zM17 11h-4v4h-2v-4H7V9h4V5h2v4h4v2z"></path></svg> <!-- Placeholder Icon -->
+                    <span data-translate-key="blackboxAIChat">Blackbox AI</span>
+                    <small class="ai-description" data-translate-key="blackboxAIDescription">Advanced AI with web search.</small>
+                </a>
+            </li>
+            <li>
+                <a href="#" data-view="deepseek-chat-view">
+                    <svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"></path></svg> <!-- Placeholder Icon -->
+                    <span data-translate-key="deepseekAIChat">DeepSeek AI</span>
+                    <small class="ai-description" data-translate-key="deepseekAIDescription">In-depth understanding & problem-solving.</small>
+                </a>
+            </li>
+            <li>
+                <a href="#" data-view="claude-haiku-chat-view">
+                    <svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"></path></svg> <!-- Placeholder Icon -->
+                    <span data-translate-key="claudeHaikuAIChat">Claude Haiku AI</span>
+                    <small class="ai-description" data-translate-key="claudeHaikuAIDescription">Creative, fast, and efficient AI.</small>
+                </a>
+            </li>
+            <!-- End New AI Model Links -->
+
+            <li><a href="#" data-view="image-generator-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"></path></svg> <span data-translate-key="imageGenerator">Générateur d'Images</span></a></li>
+            <li><a href="#" data-view="story-generator-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"></path></svg> <span data-translate-key="storyGenerator">Générateur d'Histoires</span></a></li>
+            <li><a href="#" data-view="box-movie-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M18 3v2h-2V3H8v2H6V3H4v18h2v-2h2v2h8v-2h2v2h2V3h-2zM8 17H6v-2h2v2zm0-4H6v-2h2v2zm0-4H6V7h2v2zm10 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2z"></path></svg> <span data-translate-key="boxMovie">Box Movie</span></a></li>
+            <li><a href="#" data-view="weather-view"> <svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"></path></svg> <span data-translate-key="weather">Météo</span></a></li>
+            <li><a href="#" data-view="about-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"></path></svg> <span data-translate-key="about">À Propos</span></a></li>
+            <li><a href="#" data-view="contact-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"></path></svg> <span data-translate-key="contact">Contact</span></a></li>
+            <li><a href="#" data-view="comments-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18zM18 14H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"></path></svg> <span data-translate-key="comments">Commentaires</span></a></li>
+            <li><a href="#" data-view="user-history-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7v-3l-4.89-4.89-.07-.14L2 15h3c0 4.97 4.03 9 9 9s9-4.03 9-9-4.03-9-9-9z"></path></svg> <span data-translate-key="userHistory">Historique Utilisateur</span></a></li>
+            <li><a href="#" data-view="gallery-view-main"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M22 16V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2zm-11-4l2.03 2.71L16 11l4 5H8l3-4zM2 6v14c0 1.1.9 2 2 2h14v-2H4V6H2z"></path></svg> <span data-translate-key="gallery">Galerie d'Images</span></a></li>
+            <li><a href="#" data-view="ads-partners-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M16.5 12c1.38 0 2.5-1.12 2.5-2.5S17.88 7 16.5 7C15.12 7 14 8.12 14 9.5s1.12 2.5 2.5 2.5zM9 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm7.5 3c-1.83 0-5.5.92-5.5 2.75V18h11v-1.25c0-1.83-3.67-2.75-5.5-2.75zM9 13c-2.33 0-7 1.17-7 3.5V18h7v-1.5c0-.83.24-1.58.62-2.26-.44-.07-.9-.14-1.37-.14z"></path></svg> <span data-translate-key="adsPartners">🎯 Publicités & Partenaires</span></a></li>
+            <li><a href="#" data-view="parametres-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.08-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49.42l.38-2.65c.61-.25 1.17-.59 1.69.98l2.49 1c.23.08.49 0 .61.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"></path></svg> <span data-translate-key="settings">Paramètres</span></a></li>
+            <li><a href="#" data-view="admin-panel-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.34 8.42c-.11.2-.06.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54c.59-.24 1.13-.57 1.62.94l2.39.96c.22.08.47 0 .59.22l1.92-3.32c.12-.22.06-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"></path></svg> <span data-translate-key="adminPanel">Panneau Admin</span></a></li>
+            <li><a href="#" data-view="email-generator-view"><svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8l8 5 8-5v10zm-8-7L4 6h16l-8 5z"></path></svg> <span data-translate-key="emailGenerator">Email Generator</span></a></li>
         </ul>
     </nav>
 
@@ -61,32 +86,32 @@
             <!-- Existing #home-bottom-app-icons are fixed, so content flows above/around it -->
 
             <section id="welcome-description-section">
-                <h2>Welcome to Your Enhanced Digital Hub!</h2>
-                <p class="site-tagline">Explore a suite of AI-powered tools and creative utilities designed to inspire and assist you. Here's what you can do:</p>
+                <h2 data-translate-key="welcomeTitle">Welcome to Your Enhanced Digital Hub!</h2>
+                <p class="site-tagline" data-translate-key="welcomeTagline">Explore a suite of AI-powered tools and creative utilities designed to inspire and assist you. Here's what you can do:</p>
 
                 <div class="feature-highlights-grid">
                     <div class="feature-highlight-item">
                         <div class="feature-icon">
                             <svg viewBox="0 0 24 24" class="icon"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"></path></svg> <!-- AI Chat Icon -->
                         </div>
-                        <h3>AI Chat</h3>
-                        <p>Engage in intelligent conversations, ask questions, get assistance, and enable web search for up-to-date information. Your creative partner for ideas and problem-solving.</p>
+                        <h3 data-translate-key="featureAIChatTitle">AI Chat</h3>
+                        <p data-translate-key="featureAIChatDesc">Engage in intelligent conversations, ask questions, get assistance, and enable web search for up-to-date information. Your creative partner for ideas and problem-solving.</p>
                     </div>
 
                     <div class="feature-highlight-item">
                         <div class="feature-icon">
                             <svg viewBox="0 0 24 24" class="icon"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"></path></svg> <!-- Image Gen Icon -->
                         </div>
-                        <h3>Image Generator</h3>
-                        <p>Unleash your creativity by generating unique images from text prompts. Describe your vision and watch it come to life. Save your favorite creations!</p>
+                        <h3 data-translate-key="featureImageGeneratorTitle">Image Generator</h3>
+                        <p data-translate-key="featureImageGeneratorDesc">Unleash your creativity by generating unique images from text prompts. Describe your vision and watch it come to life. Save your favorite creations!</p>
                     </div>
 
                     <div class="feature-highlight-item">
                         <div class="feature-icon">
                             <svg viewBox="0 0 24 24" class="icon"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"></path></svg> <!-- Story Gen Icon -->
                         </div>
-                        <h3>Story Generator</h3>
-                        <p>Craft compelling narratives and short stories from a simple theme or title. Explore different genres and let the AI weave engaging tales for you.</p>
+                        <h3 data-translate-key="featureStoryGeneratorTitle">Story Generator</h3>
+                        <p data-translate-key="featureStoryGeneratorDesc">Craft compelling narratives and short stories from a simple theme or title. Explore different genres and let the AI weave engaging tales for you.</p>
                     </div>
 
                     <div class="feature-highlight-item"> 
@@ -94,31 +119,31 @@
                             
                             <svg viewBox="0 0 24 24" class="icon"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"></path></svg>
                         </div>
-                        <h3>Gemini Vision Chat</h3>
-                        <p>Engage with the Gemini model for text and image-based conversations. Get answers to your questions about images or simply chat with a cutting-edge AI.</p>
+                        <h3 data-translate-key="featureGeminiVisionTitle">Gemini Vision Chat</h3>
+                        <p data-translate-key="featureGeminiVisionDesc">Engage with the Gemini model for text and image-based conversations. Get answers to your questions about images or simply chat with a cutting-edge AI.</p>
                     </div>
 
                     <div class="feature-highlight-item">
                         <div class="feature-icon">
                             <svg viewBox="0 0 24 24" class="icon"><path d="M18 3v2h-2V3H8v2H6V3H4v18h2v-2h2v2h8v-2h2v2h2V3h-2zM8 17H6v-2h2v2zm0-4H6v-2h2v2zm0-4H6V7h2v2zm10 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2z"></path></svg> <!-- Box Movie Icon -->
                         </div>
-                        <h3>Box Movie</h3>
-                        <p>Explore, search, and discover a vast library of movies. Get details, watch trailers, and manage your watchlist all in one place.</p>
+                        <h3 data-translate-key="featureBoxMovieTitle">Box Movie</h3>
+                        <p data-translate-key="featureBoxMovieDesc">Explore, search, and discover a vast library of movies. Get details, watch trailers, and manage your watchlist all in one place.</p>
                     </div>
 
                     <div class="feature-highlight-item">
                          <div class="feature-icon">
                             <svg viewBox="0 0 24 24" class="icon"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"></path></svg> <!-- Weather Icon -->
                         </div>
-                        <h3>Weather Details</h3>
-                        <p>Get the latest weather updates for your location or any city, including current conditions and a 5-day forecast, presented in a clear and detailed view.</p>
+                        <h3 data-translate-key="featureWeatherTitle">Weather Details</h3>
+                        <p data-translate-key="featureWeatherDesc">Get the latest weather updates for your location or any city, including current conditions and a 5-day forecast, presented in a clear and detailed view.</p>
                     </div>
                      <div class="feature-highlight-item">
                          <div class="feature-icon">
                             <svg viewBox="0 0 24 24" class="icon"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7v-3l-4.89-4.89-.07-.14L2 15h3c0 4.97 4.03 9 9 9s9-4.03 9-9-4.03-9-9-9z"></path></svg> <!-- User History Icon -->
                         </div>
-                        <h3>Activity History</h3>
-                        <p>Keep track of your interactions and activities within the site. Review your journey and easily revisit your favorite features.</p>
+                        <h3 data-translate-key="featureActivityHistoryTitle">Activity History</h3>
+                        <p data-translate-key="featureActivityHistoryDesc">Keep track of your interactions and activities within the site. Review your journey and easily revisit your favorite features.</p>
                     </div>
 
                     <div class="feature-highlight-item"> 
@@ -126,15 +151,15 @@
                         
                             <svg viewBox="0 0 24 24" class="icon"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"></path></svg>
                         </div>
-                        <h3>GPT-4 Vision Chat</h3>
-                        <p>Interact with the advanced GPT-4o model. Ask questions, get text-based assistance, and analyze images with this powerful AI chat.</p>
+                        <h3 data-translate-key="featureGPT4VisionTitle">GPT-4 Vision Chat</h3>
+                        <p data-translate-key="featureGPT4VisionDesc">Interact with the advanced GPT-4o model. Ask questions, get text-based assistance, and analyze images with this powerful AI chat.</p>
                     </div>
                     <div class="feature-highlight-item">
                         <div class="feature-icon">
                             <svg viewBox="0 0 24 24" class="icon"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8l8 5 8-5v10zm-8-7L4 6h16l-8 5z"></path></svg> <!-- Email Gen Icon -->
                         </div>
-                        <h3>Email Generator</h3>
-                        <p>Generate temporary email addresses quickly for privacy or testing purposes. Receive emails and manage them for a short period.</p>
+                        <h3 data-translate-key="featureEmailGeneratorTitle">Email Generator</h3>
+                        <p data-translate-key="featureEmailGeneratorDesc">Generate temporary email addresses quickly for privacy or testing purposes. Receive emails and manage them for a short period.</p>
                     </div>
                 </div>
             </section>
@@ -143,45 +168,45 @@
             <nav id="home-bottom-app-icons">
                 <button class="home-app-btn" data-view="ai-chat-view">
                     <svg viewBox="0 0 24 24" class="icon"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"></path></svg>
-                    <span>AI Chat</span>
+                    <span data-translate-key="aiChat">AI Chat</span>
                 </button>
                 <button class="home-app-btn" data-view="image-generator-view">
                     <svg viewBox="0 0 24 24" class="icon"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"></path></svg>
-                    <span>Image Gen</span>
+                    <span data-translate-key="imageGeneratorShort">Image Gen</span>
                 </button>
                 <button class="home-app-btn" data-view="story-generator-view">
                     <svg viewBox="0 0 24 24" class="icon"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"></path></svg>
-                    <span>Story Gen</span>
+                    <span data-translate-key="storyGeneratorShort">Story Gen</span>
                 </button>
                 <button class="home-app-btn" data-view="box-movie-view">
                     <svg viewBox="0 0 24 24" class="icon"><path d="M18 3v2h-2V3H8v2H6V3H4v18h2v-2h2v2h8v-2h2v2h2V3h-2zM8 17H6v-2h2v2zm0-4H6v-2h2v2zm0-4H6V7h2v2zm10 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2z"></path></svg>
-                    <span>Box Movie</span>
+                    <span data-translate-key="boxMovieShort">Box Movie</span>
                 </button>
                 <button class="home-app-btn" data-view="gemini-chat-view">
                     <img src="https://www.gstatic.com/images/branding/product/2x/gemini_48dp.png" alt="Gemini Chat" class="icon gemini-logo-icon">
-                    <span>Gemini Chat</span>
+                    <span data-translate-key="geminiChatShort">Gemini Chat</span>
                 </button>
                 <button class="home-app-btn" data-view="gpt4o-chat-view"> 
                     <svg viewBox="0 0 24 24" class="icon"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"></path></svg>
-                    <span>GPT-4V Chat</span>
+                    <span data-translate-key="gpt4oChatShort">GPT-4V Chat</span>
                 </button>
             </nav>
             <section id="public-comments-section">
                 <!-- Content from existing comments section -->
-                 <h3>Leave a Comment</h3>
+                 <h3 data-translate-key="leaveAComment">Leave a Comment</h3>
                 <form id="comment-form">
                     <div class="form-group">
-                        <label for="comment-name">Name:</label>
+                        <label for="comment-name" data-translate-key="nameLabelForm">Name:</label>
                         <input type="text" id="comment-name" name="comment-name" required>
                     </div>
                     <div class="form-group">
-                        <label for="comment-text">Comment:</label>
+                        <label for="comment-text" data-translate-key="commentLabelForm">Comment:</label>
                         <textarea id="comment-text" name="comment-text" rows="4" required></textarea>
                     </div>
-                    <button type="submit" class="btn-submit-comment">Submit Comment</button>
+                    <button type="submit" class="btn-submit-comment" data-translate-key="submitCommentButton">Submit Comment</button>
                 </form>
                 <div id="comments-display-area">
-                    <p>Loading comments...</p>
+                    <p data-translate-key="loadingComments">Loading comments...</p>
                 </div>
             </section>
             <div id="admin-login-trigger-icon">
@@ -193,13 +218,13 @@
              <div id="chat-messages-area"></div>
             <div id="chat-input-bar">
                 <div class="web-search-container">
-                    <label for="web-search-toggle" class="web-search-label">Web Search:</label>
+                    <label for="web-search-toggle" class="web-search-label" data-translate-key="webSearchLabel">Web Search:</label>
                     <label class="switch">
                         <input type="checkbox" id="web-search-toggle" name="web-search-toggle">
                         <span class="slider round"></span>
                     </label>
                 </div>
-                <input type="text" id="chat-input-field" placeholder="Type your message...">
+                <input type="text" id="chat-input-field" placeholder="Type your message..." data-translate-key="typeYourMessagePlaceholder">
                 <button id="chat-send-button" class="icon-button">
                     <svg viewBox="0 0 24 24" class="icon"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
                 </button>
@@ -210,15 +235,15 @@
             <div id="gemini-chat-messages-area"></div>
             <div id="gemini-chat-input-bar">
                 <input type="file" id="gemini-chat-image-upload" accept="image/*" style="display:none;">
-                <button id="gemini-chat-attach-image-button" class="icon-button" title="Attach Image">
+                <button id="gemini-chat-attach-image-button" class="icon-button" title="Attach Image" data-translate-key="attachImageTitle">
                     <svg viewBox="0 0 24 24" class="icon"><path d="M21.586 10.414l-7.071-7.071A.996.996 0 0013.828 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V11.121a.996.996 0 00-.414-.707zM15 5.414L18.586 9H15V5.414zM19 19H5V5h8v4a2 2 0 002 2h4v8z"></path></svg>
                 </button>
                 <div id="gemini-image-preview-container" style="margin-right: 10px; max-height: 50px; overflow: hidden;">
                     
                 </div>
-                <input type="text" id="gemini-chat-image-url-field" placeholder="Or paste image URL here" style="display: none; flex-grow: 0.5; margin-right:5px;"> 
-                <input type="text" id="gemini-chat-input-field" placeholder="Ask Gemini anything...">
-                <button id="gemini-chat-send-button" class="icon-button" title="Send">
+                <input type="text" id="gemini-chat-image-url-field" placeholder="Or paste image URL here" style="display: none; flex-grow: 0.5; margin-right:5px;" data-translate-key="pasteImageUrlPlaceholder">
+                <input type="text" id="gemini-chat-input-field" placeholder="Ask Gemini anything..." data-translate-key="askGeminiPlaceholder">
+                <button id="gemini-chat-send-button" class="icon-button" title="Send" data-translate-key="sendButtonTitle">
                     <svg viewBox="0 0 24 24" class="icon"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
                 </button>
             </div>
@@ -228,19 +253,58 @@
             <div id="gpt4o-chat-messages-area"></div>
             <div id="gpt4o-chat-input-bar">
                 <input type="file" id="gpt4o-chat-image-upload" accept="image/*" style="display:none;">
-                <button id="gpt4o-chat-attach-image-button" class="icon-button" title="Attach Image">
+                <button id="gpt4o-chat-attach-image-button" class="icon-button" title="Attach Image" data-translate-key="attachImageTitle">
                     
                     <svg viewBox="0 0 24 24" class="icon"><path d="M21.586 10.414l-7.071-7.071A.996.996 0 0013.828 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V11.121a.996.996 0 00-.414-.707zM15 5.414L18.586 9H15V5.414zM19 19H5V5h8v4a2 2 0 002 2h4v8z"></path></svg>
                 </button>
                 <div id="gpt4o-image-preview-container" style="margin-right: 10px; max-height: 50px; overflow: hidden;">
                     
                 </div>
-                <input type="text" id="gpt4o-chat-input-field" placeholder="Ask GPT-4o anything...">
-                <button id="gpt4o-chat-send-button" class="icon-button" title="Send">
+                <input type="text" id="gpt4o-chat-input-field" placeholder="Ask GPT-4o anything..." data-translate-key="askGPT4oPlaceholder">
+                <button id="gpt4o-chat-send-button" class="icon-button" title="Send" data-translate-key="sendButtonTitle">
                     <svg viewBox="0 0 24 24" class="icon"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
                 </button>
             </div>
         </div>
+
+        <!-- New AI Model Chat Views -->
+        <div id="blackbox-chat-view" class="view" style="display: none;">
+            <div id="blackbox-chat-messages-area"></div>
+            <div id="blackbox-chat-input-bar">
+                <div class="web-search-container">
+                    <label for="blackbox-web-search-toggle" class="web-search-label" data-translate-key="webSearchLabel">Web Search:</label>
+                    <label class="switch">
+                        <input type="checkbox" id="blackbox-web-search-toggle" name="blackbox-web-search-toggle">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <input type="text" id="blackbox-chat-input-field" placeholder="Ask Blackbox AI..." data-translate-key="askBlackboxPlaceholder">
+                <button id="blackbox-chat-send-button" class="icon-button" title="Send" data-translate-key="sendButtonTitle">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <div id="deepseek-chat-view" class="view" style="display: none;">
+            <div id="deepseek-chat-messages-area"></div>
+            <div id="deepseek-chat-input-bar">
+                <input type="text" id="deepseek-chat-input-field" placeholder="Ask DeepSeek AI..." data-translate-key="askDeepseekPlaceholder">
+                <button id="deepseek-chat-send-button" class="icon-button" title="Send" data-translate-key="sendButtonTitle">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <div id="claude-haiku-chat-view" class="view" style="display: none;">
+            <div id="claude-haiku-chat-messages-area"></div>
+            <div id="claude-haiku-chat-input-bar">
+                <input type="text" id="claude-haiku-chat-input-field" placeholder="Ask Claude Haiku AI..." data-translate-key="askClaudeHaikuPlaceholder">
+                <button id="claude-haiku-chat-send-button" class="icon-button" title="Send" data-translate-key="sendButtonTitle">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+                </button>
+            </div>
+        </div>
+        <!-- End New AI Model Chat Views -->
 
         <div id="image-generator-view" class="view" style="display: none;">
             <h2>Image Generator</h2>
@@ -251,7 +315,7 @@
                 </button>
             </div>
             <div id="image-display-area"><p>Generated image will appear here.</p></div>
-            <button id="download-image-button" class="icon-button" title="Download Image" style="display: none;">
+            <button id="download-image-button" class="icon-button" title="Download Image" style="display: none;" data-translate-key="downloadImageButton">
                  <svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>
             </button>
             <div id="image-history-gallery"><h4>History</h4></div>
@@ -445,8 +509,8 @@
                 <div class="form-group">
                     <label for="language-select">Choisir la langue:</label>
                     <select id="language-select">
-                        <option value="fr">Français</option>
-                        <option value="en">English</option>
+                        <option value="fr" data-translate-key="languageFrench">Français</option>
+                        <option value="en" data-translate-key="languageEnglish">English</option>
                         <!-- Add more languages as needed -->
                     </select>
                 </div>

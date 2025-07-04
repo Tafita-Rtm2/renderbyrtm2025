@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // AI CHAT ELEMENT SELECTION (CRITICAL DIAGNOSTIC LOGS)
+    // AI CHAT ELEMENT SELECTION (CRITICAL DIAGNOSTIC LOG)
     const chatInputBarForCheck = document.getElementById('chat-input-bar');
     const chatInputFieldForCheck = document.getElementById('chat-input-field');
     const chatSendButtonForCheck = document.getElementById('chat-send-button');

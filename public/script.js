@@ -165,12 +165,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (typeof loadChatHistory === 'function') loadChatHistory();
             if (typeof loadWebSearchToggleState === 'function') loadWebSearchToggleState();
-        } else if (viewIdToShow === 'blackbox-chat-view') {
+        } else if (viewIdToShow === 'blackbox-chat-view') { // Added for Blackbox
             if (typeof loadBlackboxChatHistory === 'function') loadBlackboxChatHistory();
             if (typeof loadBlackboxWebSearchToggleState === 'function') loadBlackboxWebSearchToggleState();
-        } else if (viewIdToShow === 'deepseek-chat-view') {
+        } else if (viewIdToShow === 'deepseek-chat-view') { // Added for DeepSeek
             if (typeof loadDeepseekChatHistory === 'function') loadDeepseekChatHistory();
-        } else if (viewIdToShow === 'claude-haiku-chat-view') {
+        } else if (viewIdToShow === 'claude-haiku-chat-view') { // Added for Claude Haiku
             if (typeof loadClaudeHaikuChatHistory === 'function') loadClaudeHaikuChatHistory();
         } else if (viewIdToShow === 'image-generator-view' && typeof loadImagePromptHistory === 'function') loadImagePromptHistory();
         else if (viewIdToShow === 'story-generator-view') {
@@ -589,7 +589,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (document.getElementById('comments-view')?.classList.contains('active') && typeof loadAllCommentsPage === 'function') {
                     loadAllCommentsPage();
                 }
-            trackActivity('comment_posted', { nameLength: name.length, textLength: text.length }); //This was an existing trackActivity call.
+                trackActivity('comment_posted', { nameLength: name.length, textLength: text.length });
             } catch (error) {
                 console.error('Error submitting comment:', error);
                 const errorDiv = document.createElement('div');
@@ -1891,13 +1891,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // --- END OF GPT-4o CHAT LOGIC ---
 
-    // --- BLACKBOX AI CHAT LOGIC ---
+    // --- ISOLATED BLACKBOX AI CHAT LOGIC ---
     const blackboxChatMessagesArea = document.getElementById('blackbox-chat-messages-area');
     const blackboxChatInputField = document.getElementById('blackbox-chat-input-field');
     const blackboxChatSendButton = document.getElementById('blackbox-chat-send-button');
     const blackboxWebSearchToggle = document.getElementById('blackbox-web-search-toggle');
     let blackboxTypingIndicator = null;
-    const blackboxHistoryKeyPrefix = 'blackboxChatHistory_';
+    const blackboxHistoryKeyPrefix = 'blackboxChatHistory_'; // Unique prefix
 
     function addBlackboxMessageToChat(message, sender, isTyping = false) {
         if (!blackboxChatMessagesArea) return;
@@ -1908,21 +1908,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const messageWrapper = document.createElement('div');
         messageWrapper.classList.add('chat-message-wrapper', sender === 'user' ? 'user' : 'ai');
+
         const avatarContainer = document.createElement('div');
         avatarContainer.classList.add('chat-avatar-container');
-        // Placeholder icon for Blackbox AI - replace with actual or better SVG later
-        const blackboxAvatarSvg = '<svg viewBox="0 0 24 24" class="icon"><path d="M4 2c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2H4zm8 16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>';
+        // Placeholder icon for Blackbox AI - to be replaced or styled via CSS
+        const blackboxAvatarSvg = '<svg viewBox="0 0 24 24" class="icon icon-chat-ai-blackbox"><path d="M4 2c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2H4zm8 16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>';
         avatarContainer.innerHTML = sender === 'user' ? userAvatarSvg : blackboxAvatarSvg;
 
         const messageBubble = document.createElement('div');
         messageBubble.classList.add('chat-bubble');
 
         if (isTyping) {
-            messageBubble.innerHTML = typingIndicatorHTML;
-            messageWrapper.id = 'blackbox-typing-indicator-message';
+            messageBubble.innerHTML = typingIndicatorHTML; // Re-use global typing indicator HTML
+            messageWrapper.id = 'blackbox-typing-indicator-message'; // Unique ID
             blackboxTypingIndicator = messageWrapper;
         } else {
-            messageBubble.innerHTML = formatTextContent(message);
+            messageBubble.innerHTML = formatTextContent(message); // Re-use global formatter
         }
 
         messageWrapper.append(avatarContainer, messageBubble);
@@ -1934,32 +1935,37 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!chatUID) return;
         const historyKey = `${blackboxHistoryKeyPrefix}${chatUID}`;
         let history = [];
-        try { const stored = localStorage.getItem(historyKey); if (stored) history = JSON.parse(stored); } catch (e) { console.error(e); }
+        try { const stored = localStorage.getItem(historyKey); if (stored) history = JSON.parse(stored); } catch (e) { console.error("Error parsing Blackbox history:", e); }
         history.push({ message, sender, timestamp: new Date().toISOString() });
-        if (history.length > 50) history = history.slice(history.length - 50);
-        try { localStorage.setItem(historyKey, JSON.stringify(history)); } catch (e) { console.error(e); }
+        if (history.length > 50) history = history.slice(history.length - 50); // Limit history
+        try { localStorage.setItem(historyKey, JSON.stringify(history)); } catch (e) { console.error("Error saving Blackbox history:", e); }
     }
 
     function loadBlackboxChatHistory() {
         if (!blackboxChatMessagesArea || !chatUID) return;
-        blackboxChatMessagesArea.innerHTML = "";
+        blackboxChatMessagesArea.innerHTML = ""; // Clear current messages
         const historyKey = `${blackboxHistoryKeyPrefix}${chatUID}`;
         let history = [];
-        try { const stored = localStorage.getItem(historyKey); if (stored) history = JSON.parse(stored); } catch (e) { console.error(e); }
-        if (history.length === 0) addBlackboxMessageToChat("Welcome to Blackbox AI Chat! How can I assist you?", "ai");
-        else history.forEach(item => addBlackboxMessageToChat(item.message, item.sender));
-        blackboxChatMessagesArea.scrollTop = blackboxChatMessagesArea.scrollHeight;
+        try { const stored = localStorage.getItem(historyKey); if (stored) history = JSON.parse(stored); } catch (e) { console.error("Error parsing Blackbox history on load:", e); }
+
+        if (history.length === 0) {
+            addBlackboxMessageToChat("Welcome to Blackbox AI. How can I assist you today?", "ai");
+        } else {
+            history.forEach(item => addBlackboxMessageToChat(item.message, item.sender));
+        }
+        if (blackboxChatMessagesArea) blackboxChatMessagesArea.scrollTop = blackboxChatMessagesArea.scrollHeight;
     }
 
-    const blackboxWebSearchToggleKey = 'blackboxWebSearchEnabled';
+    const blackboxWebSearchToggleKey = 'blackboxWebSearchEnabled'; // Unique key
     function loadBlackboxWebSearchToggleState() {
         if (!blackboxWebSearchToggle) return;
         blackboxWebSearchToggle.checked = localStorage.getItem(blackboxWebSearchToggleKey) === 'true';
     }
     if (blackboxWebSearchToggle) {
-        blackboxWebSearchToggle.addEventListener('change', () => localStorage.setItem(blackboxWebSearchToggleKey, blackboxWebSearchToggle.checked));
+        blackboxWebSearchToggle.addEventListener('change', () => {
+            localStorage.setItem(blackboxWebSearchToggleKey, blackboxWebSearchToggle.checked);
+        });
     }
-
 
     async function handleBlackboxSendMessage() {
         if (!blackboxChatInputField || !chatUID) return;
@@ -1968,7 +1974,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         addBlackboxMessageToChat(messageText, 'user');
         saveBlackboxMessageToHistory(messageText, 'user');
-        trackActivity('blackbox_chat_message_sent', { messageLength: messageText.length, webSearch: blackboxWebSearchToggle ? blackboxWebSearchToggle.checked : false });
+        trackActivity('blackbox_ai_message_sent', {
+            messageLength: messageText.length,
+            webSearch: blackboxWebSearchToggle ? blackboxWebSearchToggle.checked : false
+        });
 
         blackboxChatInputField.value = '';
         blackboxChatInputField.disabled = true;
@@ -1992,7 +2001,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({ error: `Server error: ${response.status}` }));
-                throw new Error(errorData.error || `Blackbox API request failed: ${response.status}`);
+                throw new Error(errorData.error || `Blackbox AI API request failed: ${response.status}`);
             }
 
             const aiResponse = await response.json();
@@ -2003,7 +2012,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error("Invalid response structure from Blackbox AI.");
             }
         } catch (error) {
-            console.error('Error sending Blackbox message:', error);
+            console.error('Error sending Blackbox AI message:', error);
             if (blackboxTypingIndicator) blackboxTypingIndicator.remove();
             addBlackboxMessageToChat(`Error: ${error.message || 'Could not connect to Blackbox AI.'}`, 'ai');
         } finally {
@@ -2015,15 +2024,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (blackboxChatSendButton) blackboxChatSendButton.addEventListener('click', handleBlackboxSendMessage);
-    if (blackboxChatInputField) blackboxChatInputField.addEventListener('keypress', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleBlackboxSendMessage(); } });
-    // --- END OF BLACKBOX AI CHAT LOGIC ---
+    if (blackboxChatInputField) blackboxChatInputField.addEventListener('keypress', e => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleBlackboxSendMessage(); }
+    });
+    // --- END OF ISOLATED BLACKBOX AI CHAT LOGIC ---
 
-    // --- DEEPSEEK AI CHAT LOGIC ---
+    // --- ISOLATED DEEPSEEK AI CHAT LOGIC ---
     const deepseekChatMessagesArea = document.getElementById('deepseek-chat-messages-area');
     const deepseekChatInputField = document.getElementById('deepseek-chat-input-field');
     const deepseekChatSendButton = document.getElementById('deepseek-chat-send-button');
     let deepseekTypingIndicator = null;
-    const deepseekHistoryKeyPrefix = 'deepseekChatHistory_';
+    const deepseekHistoryKeyPrefix = 'deepseekChatHistory_'; // Unique prefix
 
     function addDeepseekMessageToChat(message, sender, isTyping = false) {
         if (!deepseekChatMessagesArea) return;
@@ -2034,10 +2045,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const messageWrapper = document.createElement('div');
         messageWrapper.classList.add('chat-message-wrapper', sender === 'user' ? 'user' : 'ai');
+
         const avatarContainer = document.createElement('div');
         avatarContainer.classList.add('chat-avatar-container');
-        // Placeholder icon for Deepseek AI
-        const deepseekAvatarSvg = '<svg viewBox="0 0 24 24" class="icon"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 18a8 8 0 110-16 8 8 0 010 16zm-1-5h2V9h-2v6zm0 4h2v-2h-2v2z"/></svg>';
+        // Placeholder icon for DeepSeek AI
+        const deepseekAvatarSvg = '<svg viewBox="0 0 24 24" class="icon icon-chat-ai-deepseek"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 18a8 8 0 110-16 8 8 0 010 16zm-1-5h2V9h-2v6zm0 4h2v-2h-2v2z"/></svg>';
         avatarContainer.innerHTML = sender === 'user' ? userAvatarSvg : deepseekAvatarSvg;
 
         const messageBubble = document.createElement('div');
@@ -2045,7 +2057,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (isTyping) {
             messageBubble.innerHTML = typingIndicatorHTML;
-            messageWrapper.id = 'deepseek-typing-indicator-message';
+            messageWrapper.id = 'deepseek-typing-indicator-message'; // Unique ID
             deepseekTypingIndicator = messageWrapper;
         } else {
             messageBubble.innerHTML = formatTextContent(message);
@@ -2057,13 +2069,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function saveDeepseekMessageToHistory(message, sender) {
-        if (!chatUID) return; // UID might not be strictly necessary for Deepseek if API doesn't require it, but good for consistency
+        if (!chatUID) return;
         const historyKey = `${deepseekHistoryKeyPrefix}${chatUID}`;
         let history = [];
-        try { const stored = localStorage.getItem(historyKey); if (stored) history = JSON.parse(stored); } catch (e) { console.error(e); }
+        try { const stored = localStorage.getItem(historyKey); if (stored) history = JSON.parse(stored); } catch (e) { console.error("Error parsing DeepSeek history:", e); }
         history.push({ message, sender, timestamp: new Date().toISOString() });
         if (history.length > 50) history = history.slice(history.length - 50);
-        try { localStorage.setItem(historyKey, JSON.stringify(history)); } catch (e) { console.error(e); }
+        try { localStorage.setItem(historyKey, JSON.stringify(history)); } catch (e) { console.error("Error saving DeepSeek history:", e); }
     }
 
     function loadDeepseekChatHistory() {
@@ -2071,10 +2083,14 @@ document.addEventListener('DOMContentLoaded', () => {
         deepseekChatMessagesArea.innerHTML = "";
         const historyKey = `${deepseekHistoryKeyPrefix}${chatUID}`;
         let history = [];
-        try { const stored = localStorage.getItem(historyKey); if (stored) history = JSON.parse(stored); } catch (e) { console.error(e); }
-        if (history.length === 0) addDeepseekMessageToChat("Hello! I'm DeepSeek AI. What can I help you with?", "ai");
-        else history.forEach(item => addDeepseekMessageToChat(item.message, item.sender));
-        deepseekChatMessagesArea.scrollTop = deepseekChatMessagesArea.scrollHeight;
+        try { const stored = localStorage.getItem(historyKey); if (stored) history = JSON.parse(stored); } catch (e) { console.error("Error parsing DeepSeek history on load:", e); }
+
+        if (history.length === 0) {
+            addDeepseekMessageToChat("Hello! I'm DeepSeek AI. How can I help you explore complex topics?", "ai");
+        } else {
+            history.forEach(item => addDeepseekMessageToChat(item.message, item.sender));
+        }
+        if (deepseekChatMessagesArea) deepseekChatMessagesArea.scrollTop = deepseekChatMessagesArea.scrollHeight;
     }
 
     async function handleDeepseekSendMessage() {
@@ -2084,7 +2100,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         addDeepseekMessageToChat(messageText, 'user');
         saveDeepseekMessageToHistory(messageText, 'user');
-        trackActivity('deepseek_chat_message_sent', { messageLength: messageText.length });
+        trackActivity('deepseek_ai_message_sent', { messageLength: messageText.length });
 
         deepseekChatInputField.value = '';
         deepseekChatInputField.disabled = true;
@@ -2096,14 +2112,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch('/api/deepseek', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ask: messageText }) // UID not explicitly sent if API doesn't need it
+                body: JSON.stringify({ ask: messageText })
             });
 
             if (deepseekTypingIndicator) deepseekTypingIndicator.remove();
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({ error: `Server error: ${response.status}` }));
-                throw new Error(errorData.error || `DeepSeek API request failed: ${response.status}`);
+                throw new Error(errorData.error || `DeepSeek AI API request failed: ${response.status}`);
             }
 
             const aiResponse = await response.json();
@@ -2114,7 +2130,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error("Invalid response structure from DeepSeek AI.");
             }
         } catch (error) {
-            console.error('Error sending DeepSeek message:', error);
+            console.error('Error sending DeepSeek AI message:', error);
             if (deepseekTypingIndicator) deepseekTypingIndicator.remove();
             addDeepseekMessageToChat(`Error: ${error.message || 'Could not connect to DeepSeek AI.'}`, 'ai');
         } finally {
@@ -2125,15 +2141,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (deepseekChatSendButton) deepseekChatSendButton.addEventListener('click', handleDeepseekSendMessage);
-    if (deepseekChatInputField) deepseekChatInputField.addEventListener('keypress', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleDeepseekSendMessage(); } });
-    // --- END OF DEEPSEEK AI CHAT LOGIC ---
+    if (deepseekChatInputField) deepseekChatInputField.addEventListener('keypress', e => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleDeepseekSendMessage(); }
+    });
+    // --- END OF ISOLATED DEEPSEEK AI CHAT LOGIC ---
 
-    // --- CLAUDE HAIKU AI CHAT LOGIC ---
+    // --- ISOLATED CLAUDE HAIKU AI CHAT LOGIC ---
     const claudeHaikuChatMessagesArea = document.getElementById('claude-haiku-chat-messages-area');
     const claudeHaikuChatInputField = document.getElementById('claude-haiku-chat-input-field');
     const claudeHaikuChatSendButton = document.getElementById('claude-haiku-chat-send-button');
     let claudeHaikuTypingIndicator = null;
-    const claudeHaikuHistoryKeyPrefix = 'claudeHaikuChatHistory_';
+    const claudeHaikuHistoryKeyPrefix = 'claudeHaikuChatHistory_'; // Unique prefix
 
     function addClaudeHaikuMessageToChat(message, sender, isTyping = false) {
         if (!claudeHaikuChatMessagesArea) return;
@@ -2144,10 +2162,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const messageWrapper = document.createElement('div');
         messageWrapper.classList.add('chat-message-wrapper', sender === 'user' ? 'user' : 'ai');
+
         const avatarContainer = document.createElement('div');
         avatarContainer.classList.add('chat-avatar-container');
         // Placeholder icon for Claude Haiku AI
-        const claudeHaikuAvatarSvg = '<svg viewBox="0 0 24 24" class="icon"><path d="M19.07 4.93a10 10 0 00-14.14 0 10 10 0 000 14.14 10 10 0 0014.14 0 10 10 0 000-14.14zM12 20c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-11h2v2h-2v-2zm0 4h2v2h-2v-2z"/></svg>';
+        const claudeHaikuAvatarSvg = '<svg viewBox="0 0 24 24" class="icon icon-chat-ai-claude"><path d="M19.07 4.93a10 10 0 00-14.14 0 10 10 0 000 14.14 10 10 0 0014.14 0 10 10 0 000-14.14zM12 20c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-11h2v2h-2v-2zm0 4h2v2h-2v-2z"/></svg>';
         avatarContainer.innerHTML = sender === 'user' ? userAvatarSvg : claudeHaikuAvatarSvg;
 
         const messageBubble = document.createElement('div');
@@ -2155,7 +2174,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (isTyping) {
             messageBubble.innerHTML = typingIndicatorHTML;
-            messageWrapper.id = 'claudeHaiku-typing-indicator-message';
+            messageWrapper.id = 'claudeHaiku-typing-indicator-message'; // Unique ID
             claudeHaikuTypingIndicator = messageWrapper;
         } else {
             messageBubble.innerHTML = formatTextContent(message);
@@ -2170,10 +2189,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!chatUID) return;
         const historyKey = `${claudeHaikuHistoryKeyPrefix}${chatUID}`;
         let history = [];
-        try { const stored = localStorage.getItem(historyKey); if (stored) history = JSON.parse(stored); } catch (e) { console.error(e); }
+        try { const stored = localStorage.getItem(historyKey); if (stored) history = JSON.parse(stored); } catch (e) { console.error("Error parsing Claude Haiku history:", e); }
         history.push({ message, sender, timestamp: new Date().toISOString() });
         if (history.length > 50) history = history.slice(history.length - 50);
-        try { localStorage.setItem(historyKey, JSON.stringify(history)); } catch (e) { console.error(e); }
+        try { localStorage.setItem(historyKey, JSON.stringify(history)); } catch (e) { console.error("Error saving Claude Haiku history:", e); }
     }
 
     function loadClaudeHaikuChatHistory() {
@@ -2181,10 +2200,14 @@ document.addEventListener('DOMContentLoaded', () => {
         claudeHaikuChatMessagesArea.innerHTML = "";
         const historyKey = `${claudeHaikuHistoryKeyPrefix}${chatUID}`;
         let history = [];
-        try { const stored = localStorage.getItem(historyKey); if (stored) history = JSON.parse(stored); } catch (e) { console.error(e); }
-        if (history.length === 0) addClaudeHaikuMessageToChat("Hi, I'm Claude Haiku. What can I do for you today?", "ai");
-        else history.forEach(item => addClaudeHaikuMessageToChat(item.message, item.sender));
-        claudeHaikuChatMessagesArea.scrollTop = claudeHaikuChatMessagesArea.scrollHeight;
+        try { const stored = localStorage.getItem(historyKey); if (stored) history = JSON.parse(stored); } catch (e) { console.error("Error parsing Claude Haiku history on load:", e); }
+
+        if (history.length === 0) {
+            addClaudeHaikuMessageToChat("Hi, I'm Claude Haiku! Fast, creative, and ready to help.", "ai");
+        } else {
+            history.forEach(item => addClaudeHaikuMessageToChat(item.message, item.sender));
+        }
+        if (claudeHaikuChatMessagesArea) claudeHaikuChatMessagesArea.scrollTop = claudeHaikuChatMessagesArea.scrollHeight;
     }
 
     async function handleClaudeHaikuSendMessage() {
@@ -2194,7 +2217,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         addClaudeHaikuMessageToChat(messageText, 'user');
         saveClaudeHaikuMessageToHistory(messageText, 'user');
-        trackActivity('claude_haiku_chat_message_sent', { messageLength: messageText.length });
+        trackActivity('claude_haiku_ai_message_sent', { messageLength: messageText.length });
 
         claudeHaikuChatInputField.value = '';
         claudeHaikuChatInputField.disabled = true;
@@ -2213,7 +2236,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({ error: `Server error: ${response.status}` }));
-                throw new Error(errorData.error || `Claude Haiku API request failed: ${response.status}`);
+                throw new Error(errorData.error || `Claude Haiku AI API request failed: ${response.status}`);
             }
 
             const aiResponse = await response.json();
@@ -2224,7 +2247,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error("Invalid response structure from Claude Haiku AI.");
             }
         } catch (error) {
-            console.error('Error sending Claude Haiku message:', error);
+            console.error('Error sending Claude Haiku AI message:', error);
             if (claudeHaikuTypingIndicator) claudeHaikuTypingIndicator.remove();
             addClaudeHaikuMessageToChat(`Error: ${error.message || 'Could not connect to Claude Haiku AI.'}`, 'ai');
         } finally {
@@ -2235,8 +2258,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (claudeHaikuChatSendButton) claudeHaikuChatSendButton.addEventListener('click', handleClaudeHaikuSendMessage);
-    if (claudeHaikuChatInputField) claudeHaikuChatInputField.addEventListener('keypress', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleClaudeHaikuSendMessage(); } });
-    // --- END OF CLAUDE HAIKU AI CHAT LOGIC ---
+    if (claudeHaikuChatInputField) claudeHaikuChatInputField.addEventListener('keypress', e => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleClaudeHaikuSendMessage(); }
+    });
+    // --- END OF ISOLATED CLAUDE HAIKU AI CHAT LOGIC ---
 
     // --- EMAIL GENERATOR LOGIC ---
     const generateTempEmailButton = document.getElementById('generate-temp-email-button');
@@ -2691,11 +2716,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- LANGUAGE AND INTERNATIONALIZATION ---
-    const languageSelect = document.getElementById('language-select');
-    let currentLanguage = localStorage.getItem('selectedLanguage') || 'fr'; // Default to French
+    // --- LANGUAGE AND INTERNATIONALIZATION (Re-implementation) ---
+    const languageSelectElement = document.getElementById('language-select'); // Renamed to avoid conflict if 'languageSelect' is used elsewhere
+    let siteCurrentLanguage = localStorage.getItem('selectedPortfolioLanguage') || 'fr'; // Default to French, unique localStorage key
 
-    const translations = {
+    const siteTranslations = {
         fr: {
             "home": "Accueil",
             "aiChat": "Chat IA",
@@ -2717,17 +2742,30 @@ document.addEventListener('DOMContentLoaded', () => {
             "settings": "Paramètres",
             "adminPanel": "Panneau Admin",
             "emailGenerator": "Email Generator",
+
+            "blackboxAIDescription": "IA avancée avec recherche web.",
+            "deepseekAIDescription": "Compréhension approfondie et résolution de problèmes.",
+            "claudeHaikuAIDescription": "IA créative, rapide et efficace.",
+
             "settingsTitle": "Paramètres",
             "userAccountSectionTitle": "Compte Utilisateur",
             "languageSectionTitle": "Langue",
             "chooseLanguageLabel": "Choisir la langue:",
             "languageFrench": "Français",
-            "languageEnglish": "English",
-            "languageMalagasy": "Malagasy", // Name of the language in its own tongue or common representation
-            "blackboxAIDescription": "Advanced AI with web search.",
-            "deepseekAIDescription": "In-depth understanding & problem-solving.",
-            "claudeHaikuAIDescription": "Creative, fast, and efficient AI.",
-            // Add more keys as needed for other elements
+            "languageEnglish": "Anglais",
+            "languageMalagasy": "Malagasy",
+
+            "webSearchLabel": "Recherche Web:",
+            "typeYourMessagePlaceholder": "Tapez votre message...",
+            "askGeminiPlaceholder": "Demandez à Gemini...",
+            "askGPT4oPlaceholder": "Demandez à GPT-4o...",
+            "askBlackboxPlaceholder": "Demandez à Blackbox AI...",
+            "askDeepseekPlaceholder": "Demandez à DeepSeek AI...",
+            "askClaudeHaikuPlaceholder": "Demandez à Claude Haiku AI...",
+            "sendButtonTitle": "Envoyer",
+            "attachImageTitle": "Joindre une image",
+            "pasteImageUrlPlaceholder": "Ou collez l'URL de l'image ici",
+            // Add other general UI keys if needed
         },
         en: {
             "home": "Home",
@@ -2750,6 +2788,11 @@ document.addEventListener('DOMContentLoaded', () => {
             "settings": "Settings",
             "adminPanel": "Admin Panel",
             "emailGenerator": "Email Generator",
+
+            "blackboxAIDescription": "Advanced AI with web search.",
+            "deepseekAIDescription": "In-depth understanding & problem-solving.",
+            "claudeHaikuAIDescription": "Creative, fast, and efficient AI.",
+
             "settingsTitle": "Settings",
             "userAccountSectionTitle": "User Account",
             "languageSectionTitle": "Language",
@@ -2757,98 +2800,132 @@ document.addEventListener('DOMContentLoaded', () => {
             "languageFrench": "French",
             "languageEnglish": "English",
             "languageMalagasy": "Malagasy",
-            "blackboxAIDescription": "Advanced AI with web search.",
-            "deepseekAIDescription": "In-depth understanding & problem-solving.",
-            "claudeHaikuAIDescription": "Creative, fast, and efficient AI.",
+
+            "webSearchLabel": "Web Search:",
+            "typeYourMessagePlaceholder": "Type your message...",
+            "askGeminiPlaceholder": "Ask Gemini...",
+            "askGPT4oPlaceholder": "Ask GPT-4o...",
+            "askBlackboxPlaceholder": "Ask Blackbox AI...",
+            "askDeepseekPlaceholder": "Ask DeepSeek AI...",
+            "askClaudeHaikuPlaceholder": "Ask Claude Haiku AI...",
+            "sendButtonTitle": "Send",
+            "attachImageTitle": "Attach Image",
+            "pasteImageUrlPlaceholder": "Or paste image URL here",
         },
         mg: {
             "home": "Fandraisana",
-            "aiChat": "Chat IA",
-            "geminiChat": "Chat Gemini",
-            "gpt4oChat": "Chat GPT-4V",
-            "blackboxAIChat": "Blackbox AI",
-            "deepseekAIChat": "DeepSeek AI",
-            "claudeHaikuAIChat": "Claude Haiku AI",
+            "aiChat": "Chat IA (MG)", // Placeholder, update with actual Malagasy
+            "geminiChat": "Chat Gemini (MG)",
+            "gpt4oChat": "Chat GPT-4V (MG)",
+            "blackboxAIChat": "Blackbox AI (MG)",
+            "deepseekAIChat": "DeepSeek AI (MG)",
+            "claudeHaikuAIChat": "Claude Haiku AI (MG)",
             "imageGenerator": "Mpamorona Sary",
             "storyGenerator": "Mpamorona Tantára",
-            "boxMovie": "Box Movie",
+            "boxMovie": "Box Movie (MG)",
             "weather": "Toetrandro",
             "about": "Mombamomba",
             "contact": "Fifandraisana",
             "comments": "Fanehoan-kevitra",
-            "userHistory": "Tantaran'ny mpampiasa",
+            "userHistory": "Tantaran'ny Mpampiasa",
             "gallery": "Galerian-tsary",
             "adsPartners": "🎯 Dokam-barotra & Mpiara-miasa",
             "settings": "Paramètre",
-            "adminPanel": "Panel Admin",
-            "emailGenerator": "Email Generator",
+            "adminPanel": "Panel Admin (MG)",
+            "emailGenerator": "Email Generator (MG)",
+
+            "blackboxAIDescription": "AI mandroso miaraka amin'ny fikarohana web.",
+            "deepseekAIDescription": "Fهمaraha lalina & famahana olana.",
+            "claudeHaikuAIDescription": "AI mamorona, haingana ary mahomby.",
+
             "settingsTitle": "Paramètre",
-            "userAccountSectionTitle": "Kaonty mpampiasa",
+            "userAccountSectionTitle": "Kaontin'ny Mpampiasa",
             "languageSectionTitle": "Fiteny",
             "chooseLanguageLabel": "Safidio ny fiteny:",
             "languageFrench": "Frantsay",
             "languageEnglish": "Anglisy",
             "languageMalagasy": "Malagasy",
-            "blackboxAIDescription": "AI mandroso miaraka amin'ny fikarohana web.",
-            "deepseekAIDescription": "Fهمaraha lalina & famahana olana.", // Note: Using placeholder for Malagasy for DeepSeek, might need better translation
-            "claudeHaikuAIDescription": "AI mamorona, haingana ary mahomby.",
+
+            "webSearchLabel": "Fikarohana Web:",
+            "typeYourMessagePlaceholder": "Soraty eto ny hafatrao...",
+            "askGeminiPlaceholder": "Anontanio an'i Gemini...",
+            "askGPT4oPlaceholder": "Anontanio an'i GPT-4o...",
+            "askBlackboxPlaceholder": "Anontanio an'i Blackbox AI...",
+            "askDeepseekPlaceholder": "Anontanio an'i DeepSeek AI...",
+            "askClaudeHaikuPlaceholder": "Anontanio an'i Claude Haiku AI...",
+            "sendButtonTitle": "Alefaso",
+            "attachImageTitle": "Ampidiro sary",
+            "pasteImageUrlPlaceholder": "Na apetaho eto ny URL-n'ny sary",
         }
     };
 
-    function translateUI(lang) {
-        if (!translations[lang]) {
-            console.warn(`Language ${lang} not found in translations. Defaulting to French.`);
+    function applyTranslations(lang) {
+        if (!siteTranslations[lang]) {
+            console.warn(`Language ${lang} not found in siteTranslations. Defaulting to French (fr).`);
             lang = 'fr';
         }
-        document.querySelectorAll('[data-translate-key]').forEach(element => {
+        const elementsToTranslate = document.querySelectorAll('[data-translate-key]');
+        elementsToTranslate.forEach(element => {
             const key = element.dataset.translateKey;
-            if (translations[lang][key]) {
+            const translation = siteTranslations[lang][key];
+            if (translation) {
                 if (element.tagName === 'INPUT' && element.placeholder) {
-                    element.placeholder = translations[lang][key];
-                } else if (element.tagName === 'OPTION') { // Specifically target OPTION elements
-                    element.textContent = translations[lang][key];
-                } else if (element.tagName === 'SPAN' && element.closest('#side-menu a')) {
-                     element.textContent = translations[lang][key];
-                } else if (element.classList.contains('ai-description')) {
-                    element.textContent = translations[lang][key];
-                } else {
-                    element.textContent = translations[lang][key];
+                    element.placeholder = translation;
+                } else if (element.tagName === 'OPTION') {
+                    element.textContent = translation;
+                } else if (element.title && (element.tagName === 'BUTTON' || element.tagName === 'A')) { // For button/link titles
+                    element.title = translation;
+                }
+                else {
+                    element.textContent = translation;
                 }
             } else {
-                console.warn(`Translation key "${key}" not found for language "${lang}".`);
+                // Fallback to French if key not found in current language, then to key itself
+                const fallbackTranslation = siteTranslations['fr'][key] || `[${key}]`;
+                if (element.tagName === 'INPUT' && element.placeholder) {
+                    element.placeholder = fallbackTranslation;
+                } else {
+                    element.textContent = fallbackTranslation;
+                }
+                console.warn(`Translation key "${key}" not found for language "${lang}". Used fallback.`);
             }
         });
         document.documentElement.lang = lang;
-        if (languageSelect) languageSelect.value = lang;
+        if (languageSelectElement) languageSelectElement.value = lang;
     }
 
-    if (languageSelect) {
-        languageSelect.addEventListener('change', (event) => {
-            currentLanguage = event.target.value;
-            localStorage.setItem('selectedLanguage', currentLanguage);
-            translateUI(currentLanguage);
-            // Potentially re-initialize or update specific view content if language-dependent
-        });
-    }
-
-    // Function to initialize UI translations on load
-    function initializeTranslations() {
-        if (languageSelect) {
-            // Ensure Malagasy option exists and is translatable
-            let mgOption = languageSelect.querySelector('option[value="mg"]');
+    function setupLanguageSelector() {
+        if (languageSelectElement) {
+            // Ensure Malagasy option exists
+            let mgOption = languageSelectElement.querySelector('option[value="mg"]');
             if (!mgOption) {
                 mgOption = document.createElement('option');
                 mgOption.value = 'mg';
-                languageSelect.appendChild(mgOption);
+                // The textContent will be set by applyTranslations via data-translate-key
+                languageSelectElement.appendChild(mgOption);
             }
-            // Add data-translate-key to it so its text gets updated by translateUI
+            // Ensure all options have their data-translate-key
+            if (languageSelectElement.querySelector('option[value="fr"]')) {
+                 languageSelectElement.querySelector('option[value="fr"]').dataset.translateKey = 'languageFrench';
+            }
+            if (languageSelectElement.querySelector('option[value="en"]')) {
+                 languageSelectElement.querySelector('option[value="en"]').dataset.translateKey = 'languageEnglish';
+            }
             mgOption.dataset.translateKey = 'languageMalagasy';
+
+
+            languageSelectElement.value = siteCurrentLanguage; // Set dropdown to current language
+            applyTranslations(siteCurrentLanguage); // Apply translations on load
+
+            languageSelectElement.addEventListener('change', (event) => {
+                siteCurrentLanguage = event.target.value;
+                localStorage.setItem('selectedPortfolioLanguage', siteCurrentLanguage);
+                applyTranslations(siteCurrentLanguage);
+            });
         }
-        translateUI(currentLanguage); // This will now also translate the option texts
     }
 
-    // Initial translation call on page load
-    initializeTranslations();
+    setupLanguageSelector(); // Initialize and apply translations
 
     // --- END OF LANGUAGE AND INTERNATIONALIZATION ---
 

@@ -2538,6 +2538,35 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // Initial load
     loadTranslations(currentLanguage);
+
+    // Make feature descriptions on home page clickable
+    document.querySelectorAll('#welcome-description-section .feature-highlight-item').forEach(item => {
+        const viewId = item.dataset.view;
+        if (viewId) {
+            // Make the whole item clickable
+            item.style.cursor = 'pointer'; // Already done for p, but good for whole item
+            item.addEventListener('click', function(event) {
+                // Prevent mis-clicks if user is selecting text in description
+                if (window.getSelection().toString()) {
+                    return;
+                }
+                // Allow clicks on actual links within the description to proceed normally
+                if (event.target.tagName === 'A' && event.target.href) {
+                    return;
+                }
+                window.showView(viewId);
+            });
+
+            // Specifically for the paragraph, ensure it also navigates and gets styling.
+            // The parent click listener might already cover this, but explicit class for styling is good.
+            const descriptionP = item.querySelector('p');
+            if (descriptionP) {
+                descriptionP.classList.add('clickable-description');
+                // The parent item click listener should handle the navigation.
+                // If we wanted only the p to be clickable, the listener would be here.
+            }
+        }
+    });
     // --- END OF I18N Basic Setup ---
 
     function formatActivityUrl(url) {

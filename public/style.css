@@ -446,6 +446,17 @@ body:not(.dark-mode) .theme-switch input:checked + .slider:before {
     padding: 0 10px; /* Overall padding for the bar */
     gap: 5px; /* Add a small gap between the buttons */
     z-index: 1000;
+    overflow-x: auto; /* Enable horizontal scrolling */
+    overflow-y: hidden; /* Hide vertical scrollbar if any */
+}
+
+/* Inner wrapper for buttons to allow them to overflow */
+#home-bottom-app-icons-wrapper {
+    display: flex;
+    flex-wrap: nowrap; /* Prevent wrapping to new line */
+    padding: 0 5px; /* Padding for the ends of the scrollable content */
+    height: 100%;
+    align-items: center; /* Align buttons vertically */
 }
 
 .home-app-btn {
@@ -2261,6 +2272,13 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
     font-size: 0.95em;
     color: var(--text-muted-color);
     line-height: 1.6;
+}
+.feature-highlight-item p.clickable-description {
+    cursor: pointer;
+}
+.feature-highlight-item p.clickable-description:hover {
+    text-decoration: underline;
+    color: var(--accent-color);
 }
 /* --- END OF HOME PAGE WELCOME/DESCRIPTION SECTION --- */
 

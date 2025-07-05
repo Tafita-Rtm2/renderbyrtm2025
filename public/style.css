@@ -656,7 +656,18 @@ body:not(.dark-mode) .theme-switch input:checked + .slider:before {
 }
 #side-menu li a span {
     font-size: 0.95em;
+    display: block; /* Make title and description stack */
 }
+#side-menu li a .menu-item-description {
+    font-size: 0.75em;
+    color: var(--text-muted-color);
+    margin-top: 2px;
+    font-style: italic;
+}
+#side-menu li a:hover .menu-item-description {
+    color: var(--primary-bg); /* Match title color on hover */
+}
+
 #side-menu li:last-child a {
     border-bottom: none;
 }
@@ -2252,6 +2263,177 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
     line-height: 1.6;
 }
 /* --- END OF HOME PAGE WELCOME/DESCRIPTION SECTION --- */
+
+/* --- STYLING FOR NEW AI CHAT VIEWS (Blackbox, Deepseek, Claude Haiku) --- */
+
+/* General structure for new AI views (mostly inherited from .view and specific JS display:flex) */
+#blackbox-ai-view,
+#deepseek-ai-view,
+#claude-haiku-view {
+    display: flex; /* Ensured by JS, but good to have a base */
+    flex-direction: column !important;
+    height: calc(100vh - var(--top-bar-height) - 30px) !important; /* Full height minus top bar and some padding */
+    padding: 0 !important;
+    box-sizing: border-box !important;
+    background-color: var(--secondary-bg) !important;
+    border-radius: 10px !important;
+    overflow: hidden !important;
+}
+
+/* Message Areas */
+#blackbox-chat-messages-area,
+#deepseek-chat-messages-area,
+#claude-chat-messages-area {
+    flex-grow: 1 !important;
+    overflow-y: auto !important;
+    padding: 20px !important;
+    background-color: var(--primary-bg) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 15px !important;
+}
+
+/* Scrollbar for new message areas */
+#blackbox-chat-messages-area::-webkit-scrollbar,
+#deepseek-chat-messages-area::-webkit-scrollbar,
+#claude-chat-messages-area::-webkit-scrollbar { width: 8px; }
+
+#blackbox-chat-messages-area::-webkit-scrollbar-track,
+#deepseek-chat-messages-area::-webkit-scrollbar-track,
+#claude-chat-messages-area::-webkit-scrollbar-track { background: var(--primary-bg); }
+
+#blackbox-chat-messages-area::-webkit-scrollbar-thumb,
+#deepseek-chat-messages-area::-webkit-scrollbar-thumb,
+#claude-chat-messages-area::-webkit-scrollbar-thumb { background-color: var(--accent-color); border-radius: 4px; }
+
+#blackbox-chat-messages-area::-webkit-scrollbar-thumb:hover,
+#deepseek-chat-messages-area::-webkit-scrollbar-thumb:hover,
+#claude-chat-messages-area::-webkit-scrollbar-thumb:hover { background-color: var(--primary-accent-color); }
+
+
+/* Input Bars */
+#blackbox-chat-input-bar,
+#deepseek-chat-input-bar,
+#claude-chat-input-bar {
+    display: flex;
+    align-items: center !important;
+    padding: 15px !important;
+    background-color: var(--primary-bg) !important;
+    border-top: 1px solid var(--surface-color) !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    min-height: 70px !important;
+    flex-shrink: 0 !important;
+}
+
+/* Input Fields */
+#blackbox-chat-input-field,
+#deepseek-chat-input-field,
+#claude-chat-input-field {
+    flex-grow: 1 !important;
+    padding: 14px 20px !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 25px !important;
+    background-color: var(--surface-color) !important;
+    color: var(--text-color) !important;
+    font-family: var(--font-primary) !important;
+    margin-right: 10px !important;
+    outline: none !important;
+    min-height: 48px !important;
+    height: 48px !important;
+    box-sizing: border-box;
+}
+#blackbox-chat-input-field:focus,
+#deepseek-chat-input-field:focus,
+#claude-chat-input-field:focus {
+    border-color: var(--action-color) !important;
+    box-shadow: 0 0 8px rgba(255, 153, 0, 0.6) !important;
+}
+
+/* Send Buttons */
+#blackbox-chat-send-button,
+#deepseek-chat-send-button,
+#claude-chat-send-button {
+    background-color: var(--action-color) !important;
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 50% !important;
+    border: none !important;
+    flex-shrink: 0 !important;
+}
+#blackbox-chat-send-button .icon,
+#deepseek-chat-send-button .icon,
+#claude-chat-send-button .icon {
+    fill: var(--primary-bg) !important;
+    width: 26px !important;
+    height: 26px !important;
+}
+#blackbox-chat-send-button:hover,
+#deepseek-chat-send-button:hover,
+#claude-chat-send-button:hover {
+    background-color: var(--primary-accent-color) !important;
+}
+#blackbox-chat-send-button:disabled,
+#deepseek-chat-send-button:disabled,
+#claude-chat-send-button:disabled {
+    background-color: var(--text-muted-color) !important;
+    cursor: not-allowed !important;
+}
+
+/* Blackbox AI Specific Web Search Toggle */
+#blackbox-chat-input-bar .web-search-container { /* Already styled by general .web-search-container */
+    margin-right: 10px; /* Ensure spacing */
+}
+
+
+/* Message Bubble Theming for New AIs */
+/* User messages for Blackbox AI */
+#blackbox-chat-messages-area .chat-message-wrapper.user .chat-bubble {
+    background-color: #007bff !important; /* Blue */
+    color: #ffffff !important;
+}
+#blackbox-chat-messages-area .chat-message-wrapper.user .chat-bubble a,
+#blackbox-chat-messages-area .chat-message-wrapper.user .chat-bubble strong {
+    color: #f0f8ff !important; /* AliceBlue for links/strong on blue */
+}
+
+
+/* User messages for Deepseek AI */
+#deepseek-chat-messages-area .chat-message-wrapper.user .chat-bubble {
+    background-color: #28a745 !important; /* Green */
+    color: #ffffff !important;
+}
+#deepseek-chat-messages-area .chat-message-wrapper.user .chat-bubble a,
+#deepseek-chat-messages-area .chat-message-wrapper.user .chat-bubble strong {
+    color: #f0fff0 !important; /* Honeydew for links/strong on green */
+}
+
+/* User messages for Claude Haiku AI */
+#claude-chat-messages-area .chat-message-wrapper.user .chat-bubble {
+    background-color: #6f42c1 !important; /* Purple */
+    color: #ffffff !important;
+}
+#claude-chat-messages-area .chat-message-wrapper.user .chat-bubble a,
+#claude-chat-messages-area .chat-message-wrapper.user .chat-bubble strong {
+    color: #e6e6fa !important; /* Lavender for links/strong on purple */
+}
+
+
+/* AI Avatars - using generic .chat-avatar-container and .icon-chat-ai for now. Specific SVGs are in JS. */
+/* If specific background colors for AI avatars are desired: */
+#blackbox-chat-messages-area .chat-message-wrapper.ai .chat-avatar-container,
+#deepseek-chat-messages-area .chat-message-wrapper.ai .chat-avatar-container,
+#claude-chat-messages-area .chat-message-wrapper.ai .chat-avatar-container {
+    /* Example: background-color: var(--surface-color); */
+    /* SVGs defined in JS will provide the icon fill */
+}
+
+/* Ensure feature highlight items are clickable */
+.feature-highlight-item {
+    cursor: pointer;
+}
+
 
 /* --- BOX MOVIE VIEW STYLES --- */
 #box-movie-view {

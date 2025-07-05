@@ -49,6 +49,11 @@ const GEMINI_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6'; // Votre clé API
 const GPT4O_LATEST_API_URL = 'https://kaiz-apis.gleeze.com/api/gpt4o-latest';
 const GPT4O_LATEST_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6'; // Même clé API
 
+// New AI Model API Keys
+const BLACKBOX_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
+const DEEPSEEK_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
+const CLAUDE_HAIKU_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
+
 // TMDB API Configuration
 const TMDB_API_KEY = '973515c7684f56d1472bba67b13d676b';
 const TMDB_ACCESS_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI5NzM1MTVjNzY4NGY1NmQxNDcyYmJhNjdiMTNkNjc2YiIsIm5iZiI6MTc1MDc1NDgwNy41OTksInN1YiI6IjY4NWE2NWY3OWM3M2UyMWMzYWU2NGJmNSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.qofUiAxiL4ed8ONCxljkTqbsddbvFyVB4_Jwp_HyDnM';
@@ -1186,6 +1191,109 @@ app.get('/api/tempmail/inbox', async (req, res) => {
     }
 });
 // --- Fin des routes API Temp Email ---
+
+// --- Blackbox AI API Route ---
+app.post('/api/blackbox-ai', async (req, res) => {
+    const { ask, uid, webSearch } = req.body;
+    if (!ask || !uid) {
+        return res.status(400).json({ error: 'Parameters "ask" and "uid" are required for Blackbox AI.' });
+    }
+
+    const webSearchParam = (webSearch === true || String(webSearch).toLowerCase() === 'on') ? 'on' : 'off';
+    const blackboxApiUrl = `https://kaiz-apis.gleeze.com/api/blackbox?ask=${encodeURIComponent(ask)}&uid=${encodeURIComponent(uid)}&webSearch=${webSearchParam}&apikey=${BLACKBOX_API_KEY}`;
+
+    try {
+        const apiResponse = await fetch(blackboxApiUrl);
+        const responseText = await apiResponse.text(); // Get text first for better error handling
+
+        if (!apiResponse.ok) {
+            let errorJson = { error: `External Blackbox API Error: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
+            try { errorJson = JSON.parse(responseText); if(!errorJson.error && !errorJson.message) { errorJson.error = `External Blackbox API Error: ${apiResponse.status} ${apiResponse.statusText}`; } } catch (e) { /* Not JSON */ }
+            console.error("Blackbox API Error:", errorJson);
+            return res.status(apiResponse.status).json(errorJson);
+        }
+        let data;
+        try { data = JSON.parse(responseText); }
+        catch (e) { return res.status(500).json({ error: 'Failed to parse response from Blackbox API.', details: responseText }); }
+
+        if (data && data.response) {
+            res.json({ author: data.author || "Blackbox AI (Kaizenji)", response: data.response });
+        } else {
+            return res.status(500).json({ error: 'Unexpected response structure from Blackbox API.', details: data });
+        }
+    } catch (error) {
+        console.error('Server error while calling Blackbox API:', error);
+        return res.status(500).json({ error: 'Server error while processing Blackbox AI request.' });
+    }
+});
+
+// --- Deepseek AI API Route ---
+app.post('/api/deepseek-ai', async (req, res) => {
+    const { ask } = req.body;
+    if (!ask) {
+        return res.status(400).json({ error: 'Parameter "ask" is required for Deepseek AI.' });
+    }
+
+    const deepseekApiUrl = `https://kaiz-apis.gleeze.com/api/deepseek-v3?ask=${encodeURIComponent(ask)}&apikey=${DEEPSEEK_API_KEY}`;
+
+    try {
+        const apiResponse = await fetch(deepseekApiUrl);
+        const responseText = await apiResponse.text();
+
+        if (!apiResponse.ok) {
+            let errorJson = { error: `External Deepseek API Error: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
+            try { errorJson = JSON.parse(responseText); if(!errorJson.error && !errorJson.message) { errorJson.error = `External Deepseek API Error: ${apiResponse.status} ${apiResponse.statusText}`; } } catch (e) { /* Not JSON */ }
+            console.error("Deepseek API Error:", errorJson);
+            return res.status(apiResponse.status).json(errorJson);
+        }
+        let data;
+        try { data = JSON.parse(responseText); }
+        catch (e) { return res.status(500).json({ error: 'Failed to parse response from Deepseek API.', details: responseText }); }
+
+        if (data && data.response) {
+            res.json({ author: data.author || "Deepseek AI (Kaizenji)", response: data.response });
+        } else {
+            return res.status(500).json({ error: 'Unexpected response structure from Deepseek API.', details: data });
+        }
+    } catch (error) {
+        console.error('Server error while calling Deepseek API:', error);
+        return res.status(500).json({ error: 'Server error while processing Deepseek AI request.' });
+    }
+});
+
+// --- Claude Haiku AI API Route ---
+app.post('/api/claude-haiku-ai', async (req, res) => {
+    const { ask } = req.body;
+    if (!ask) {
+        return res.status(400).json({ error: 'Parameter "ask" is required for Claude Haiku AI.' });
+    }
+
+    const claudeApiUrl = `https://kaiz-apis.gleeze.com/api/claude3-haiku?ask=${encodeURIComponent(ask)}&apikey=${CLAUDE_HAIKU_API_KEY}`;
+
+    try {
+        const apiResponse = await fetch(claudeApiUrl);
+        const responseText = await apiResponse.text();
+
+        if (!apiResponse.ok) {
+            let errorJson = { error: `External Claude Haiku API Error: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
+            try { errorJson = JSON.parse(responseText); if(!errorJson.error && !errorJson.message) { errorJson.error = `External Claude Haiku API Error: ${apiResponse.status} ${apiResponse.statusText}`; } } catch (e) { /* Not JSON */ }
+            console.error("Claude Haiku API Error:", errorJson);
+            return res.status(apiResponse.status).json(errorJson);
+        }
+        let data;
+        try { data = JSON.parse(responseText); }
+        catch (e) { return res.status(500).json({ error: 'Failed to parse response from Claude Haiku API.', details: responseText }); }
+
+        if (data && data.response) {
+            res.json({ author: data.author || "Claude Haiku AI (Kaizenji)", response: data.response });
+        } else {
+            return res.status(500).json({ error: 'Unexpected response structure from Claude Haiku API.', details: data });
+        }
+    } catch (error) {
+        console.error('Server error while calling Claude Haiku API:', error);
+        return res.status(500).json({ error: 'Server error while processing Claude Haiku AI request.' });
+    }
+});
 
 
 // Fallback to index.html

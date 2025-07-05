@@ -136,7 +136,14 @@ document.addEventListener('DOMContentLoaded', () => {
             viewIdToShow = 'home-view';
         }
          // Special display handling for flex views
-        if (viewIdToShow === 'ai-chat-view' || viewIdToShow === 'vip-view') { // vip-view might also be flex
+        if (viewIdToShow === 'ai-chat-view' ||
+            viewIdToShow === 'vip-view' || /* vip-view might also be flex */
+            viewIdToShow === 'gemini-chat-view' ||
+            viewIdToShow === 'gpt4o-chat-view' ||
+            viewIdToShow === 'blackbox-ai-view' ||
+            viewIdToShow === 'deepseek-ai-view' ||
+            viewIdToShow === 'claude-haiku-view' ||
+            viewIdToShow === 'email-generator-view') {
             if(viewToShow) viewToShow.style.display = 'flex';
         }
 
@@ -254,11 +261,23 @@ document.addEventListener('DOMContentLoaded', () => {
             if (typeof initializeEmailGeneratorView === "function") {
                 initializeEmailGeneratorView();
             }
-            const emailGeneratorView = document.getElementById('email-generator-view');
-            if (emailGeneratorView) {
-                // Ensure it's displayed correctly, e.g. 'block' or 'flex' if it uses flex layout internally
-                emailGeneratorView.style.display = 'flex'; // Assuming flex for consistency, adjust if needed
-            }
+            // Flex display for email-generator-view is handled in the common block above
+        } else if (viewIdToShow === 'blackbox-ai-view') {
+            console.log('[BLACKBOX AI DIAGNOSTIC] showView called for blackbox-ai-view.');
+            if (typeof loadBlackboxAiChatHistory === "function") { loadBlackboxAiChatHistory(); }
+            if (typeof loadBlackboxWebSearchToggleState === "function") { loadBlackboxWebSearchToggleState(); }
+            const blackboxChatInputBar = document.getElementById('blackbox-chat-input-bar');
+            if (blackboxChatInputBar) blackboxChatInputBar.style.display = 'flex';
+        } else if (viewIdToShow === 'deepseek-ai-view') {
+            console.log('[DEEPSEEK AI DIAGNOSTIC] showView called for deepseek-ai-view.');
+            if (typeof loadDeepseekAiChatHistory === "function") { loadDeepseekAiChatHistory(); }
+            const deepseekChatInputBar = document.getElementById('deepseek-chat-input-bar');
+            if (deepseekChatInputBar) deepseekChatInputBar.style.display = 'flex';
+        } else if (viewIdToShow === 'claude-haiku-view') {
+            console.log('[CLAUDE HAIKU AI DIAGNOSTIC] showView called for claude-haiku-view.');
+            if (typeof loadClaudeHaikuAiChatHistory === "function") { loadClaudeHaikuAiChatHistory(); }
+            const claudeChatInputBar = document.getElementById('claude-chat-input-bar');
+            if (claudeChatInputBar) claudeChatInputBar.style.display = 'flex';
         }
 
 
@@ -1884,6 +1903,339 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // --- END OF GPT-4o CHAT LOGIC ---
 
+    // --- BLACKBOX AI CHAT LOGIC ---
+    const blackboxChatMessagesArea = document.getElementById('blackbox-chat-messages-area');
+    const blackboxChatInputField = document.getElementById('blackbox-chat-input-field');
+    const blackboxChatSendButton = document.getElementById('blackbox-chat-send-button');
+    const blackboxWebSearchToggle = document.getElementById('blackbox-web-search-toggle');
+    const blackboxHistoryKeyPrefix = 'blackboxAiChatHistory_';
+    let blackboxTypingIndicator = null;
+
+    // Specific avatar for Blackbox AI (example, can be an SVG or img tag)
+    const blackboxAvatarSvg = `<svg viewBox="0 0 24 24" class="icon icon-chat-ai"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L6 12.07V14h2v-3.09l-1.79-1.79C7.39 8.07 8.63 7 10 7c.74 0 1.38.33 1.81.84L13 9h-2v2h3V9.67l.47-.47C14.64 9.07 14.82 9 15 9c.55 0 1 .45 1 1v1.44c0 .43-.28.81-.68.95L13.5 13H11v2h3.5l1.78-1.78c.4-.4.99-.46 1.45-.13.62.45.97 1.17.97 1.91 0 2.76-2.24 5-5 5-.78 0-1.5-.19-2.15-.52zM12 4c-1.3 0-2.4.84-2.82 2H11V4h2v2h1.82C14.4 4.84 13.3 4 12 4z"/></svg>`; // Example: more complex/blocky icon
+
+    function addBlackboxAiMessageToChat(message, sender, isTyping = false) {
+        if (!blackboxChatMessagesArea) return;
+        if (blackboxTypingIndicator && blackboxTypingIndicator.parentNode) {
+            blackboxTypingIndicator.remove();
+            blackboxTypingIndicator = null;
+        }
+
+        const messageWrapper = document.createElement('div');
+        messageWrapper.classList.add('chat-message-wrapper', sender === 'user' ? 'user' : 'ai');
+        const avatarContainer = document.createElement('div');
+        avatarContainer.classList.add('chat-avatar-container');
+        avatarContainer.innerHTML = sender === 'user' ? userAvatarSvg : blackboxAvatarSvg;
+
+        const messageBubble = document.createElement('div');
+        messageBubble.classList.add('chat-bubble');
+
+        if (isTyping) {
+            messageBubble.innerHTML = typingIndicatorHTML;
+            messageWrapper.id = 'blackbox-typing-indicator-message';
+            blackboxTypingIndicator = messageWrapper;
+        } else {
+            messageBubble.innerHTML = formatTextContent(message);
+        }
+        messageWrapper.append(avatarContainer, messageBubble);
+        blackboxChatMessagesArea.appendChild(messageWrapper);
+        blackboxChatMessagesArea.scrollTop = blackboxChatMessagesArea.scrollHeight;
+    }
+
+    function saveBlackboxAiMessageToHistory(message, sender) {
+        if (!chatUID) return;
+        const historyKey = `${blackboxHistoryKeyPrefix}${chatUID}`;
+        let history = [];
+        try { const stored = localStorage.getItem(historyKey); if (stored) history = JSON.parse(stored); } catch (e) { console.error(e); }
+        history.push({ message, sender, timestamp: new Date().toISOString() });
+        if (history.length > 50) history = history.slice(history.length - 50);
+        try { localStorage.setItem(historyKey, JSON.stringify(history)); } catch (e) { console.error(e); }
+    }
+
+    function loadBlackboxAiChatHistory() {
+        if (!blackboxChatMessagesArea || !chatUID) return;
+        blackboxChatMessagesArea.innerHTML = "";
+        const historyKey = `${blackboxHistoryKeyPrefix}${chatUID}`;
+        let history = [];
+        try { const stored = localStorage.getItem(historyKey); if (stored) history = JSON.parse(stored); } catch (e) { console.error(e); }
+        if (history.length === 0) {
+            addBlackboxAiMessageToChat("Hi! I'm Blackbox AI. Ask me anything or toggle web search.", 'ai');
+        } else {
+            history.forEach(item => addBlackboxAiMessageToChat(item.message, item.sender));
+        }
+        if (blackboxChatMessagesArea) blackboxChatMessagesArea.scrollTop = blackboxChatMessagesArea.scrollHeight;
+    }
+
+    const blackboxWebSearchToggleKey = 'blackboxWebSearchEnabled';
+    function loadBlackboxWebSearchToggleState() {
+        if (!blackboxWebSearchToggle) return;
+        blackboxWebSearchToggle.checked = localStorage.getItem(blackboxWebSearchToggleKey) === 'true';
+    }
+    if (blackboxWebSearchToggle) {
+        blackboxWebSearchToggle.addEventListener('change', () => {
+            localStorage.setItem(blackboxWebSearchToggleKey, blackboxWebSearchToggle.checked);
+        });
+    }
+
+
+    async function handleBlackboxAiSendMessage() {
+        if (!blackboxChatInputField || !chatUID || !blackboxWebSearchToggle) return;
+        const messageText = blackboxChatInputField.value.trim();
+        if (!messageText) return;
+
+        addBlackboxAiMessageToChat(messageText, 'user');
+        saveBlackboxAiMessageToHistory(messageText, 'user');
+        trackActivity('blackbox_ai_message_sent', { messageLength: messageText.length, webSearch: blackboxWebSearchToggle.checked });
+
+        blackboxChatInputField.value = '';
+        blackboxChatInputField.disabled = true;
+        if (blackboxChatSendButton) blackboxChatSendButton.disabled = true;
+        if (blackboxWebSearchToggle) blackboxWebSearchToggle.disabled = true;
+
+        addBlackboxAiMessageToChat(null, 'ai', true); // Typing indicator
+
+        try {
+            const response = await fetch('/api/blackbox-ai', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ask: messageText, uid: chatUID, webSearch: blackboxWebSearchToggle.checked })
+            });
+            if (blackboxTypingIndicator) blackboxTypingIndicator.remove();
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: `Server error: ${response.status}` }));
+                throw new Error(errorData.error || `API request failed: ${response.status}`);
+            }
+            const aiResponse = await response.json();
+            if (aiResponse && aiResponse.response) {
+                addBlackboxAiMessageToChat(aiResponse.response, 'ai');
+                saveBlackboxAiMessageToHistory(aiResponse.response, 'ai');
+            } else {
+                throw new Error("Invalid response structure from Blackbox AI.");
+            }
+        } catch (error) {
+            console.error('Error sending Blackbox AI message:', error);
+            if (blackboxTypingIndicator) blackboxTypingIndicator.remove();
+            addBlackboxAiMessageToChat(`Error: ${error.message || 'Could not connect to Blackbox AI.'}`, 'ai');
+        } finally {
+            blackboxChatInputField.disabled = false;
+            if (blackboxChatSendButton) blackboxChatSendButton.disabled = false;
+            if (blackboxWebSearchToggle) blackboxWebSearchToggle.disabled = false;
+            if (blackboxChatInputField) blackboxChatInputField.focus();
+        }
+    }
+
+    if (blackboxChatSendButton) blackboxChatSendButton.addEventListener('click', handleBlackboxAiSendMessage);
+    if (blackboxChatInputField) blackboxChatInputField.addEventListener('keypress', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleBlackboxAiSendMessage(); } });
+    // --- END OF BLACKBOX AI CHAT LOGIC ---
+
+    // --- DEEPSEEK AI CHAT LOGIC ---
+    const deepseekChatMessagesArea = document.getElementById('deepseek-chat-messages-area');
+    const deepseekChatInputField = document.getElementById('deepseek-chat-input-field');
+    const deepseekChatSendButton = document.getElementById('deepseek-chat-send-button');
+    const deepseekHistoryKeyPrefix = 'deepseekAiChatHistory_';
+    let deepseekTypingIndicator = null;
+    const deepseekAvatarSvg = `<svg viewBox="0 0 24 24" class="icon icon-chat-ai"><path d="M12 2a10 10 0 00-7.07 17.07L12 22l7.07-2.93A10 10 0 0012 2zm0 18a8 8 0 01-5.66-13.66L12 10l5.66-3.66A8 8 0 0112 20zm-2-8v2h4v-2h-4zm0-4v2h4V8h-4z"/></svg>`; // Example: simplified brain/chip icon
+
+    function addDeepseekAiMessageToChat(message, sender, isTyping = false) {
+        if (!deepseekChatMessagesArea) return;
+        if (deepseekTypingIndicator && deepseekTypingIndicator.parentNode) {
+            deepseekTypingIndicator.remove();
+            deepseekTypingIndicator = null;
+        }
+        const messageWrapper = document.createElement('div');
+        messageWrapper.classList.add('chat-message-wrapper', sender === 'user' ? 'user' : 'ai');
+        const avatarContainer = document.createElement('div');
+        avatarContainer.classList.add('chat-avatar-container');
+        avatarContainer.innerHTML = sender === 'user' ? userAvatarSvg : deepseekAvatarSvg;
+        const messageBubble = document.createElement('div');
+        messageBubble.classList.add('chat-bubble');
+        if (isTyping) {
+            messageBubble.innerHTML = typingIndicatorHTML;
+            messageWrapper.id = 'deepseek-typing-indicator-message';
+            deepseekTypingIndicator = messageWrapper;
+        } else {
+            messageBubble.innerHTML = formatTextContent(message);
+        }
+        messageWrapper.append(avatarContainer, messageBubble);
+        deepseekChatMessagesArea.appendChild(messageWrapper);
+        deepseekChatMessagesArea.scrollTop = deepseekChatMessagesArea.scrollHeight;
+    }
+
+    function saveDeepseekAiMessageToHistory(message, sender) {
+        if (!chatUID) return;
+        const historyKey = `${deepseekHistoryKeyPrefix}${chatUID}`;
+        let history = [];
+        try { const stored = localStorage.getItem(historyKey); if (stored) history = JSON.parse(stored); } catch (e) { console.error(e); }
+        history.push({ message, sender, timestamp: new Date().toISOString() });
+        if (history.length > 50) history = history.slice(history.length - 50);
+        try { localStorage.setItem(historyKey, JSON.stringify(history)); } catch (e) { console.error(e); }
+    }
+
+    function loadDeepseekAiChatHistory() {
+        if (!deepseekChatMessagesArea || !chatUID) return;
+        deepseekChatMessagesArea.innerHTML = "";
+        const historyKey = `${deepseekHistoryKeyPrefix}${chatUID}`;
+        let history = [];
+        try { const stored = localStorage.getItem(historyKey); if (stored) history = JSON.parse(stored); } catch (e) { console.error(e); }
+        if (history.length === 0) {
+            addDeepseekAiMessageToChat("Hello! I'm Deepseek AI. How can I assist you?", 'ai');
+        } else {
+            history.forEach(item => addDeepseekAiMessageToChat(item.message, item.sender));
+        }
+        if (deepseekChatMessagesArea) deepseekChatMessagesArea.scrollTop = deepseekChatMessagesArea.scrollHeight;
+    }
+
+    async function handleDeepseekAiSendMessage() {
+        if (!deepseekChatInputField || !chatUID) return;
+        const messageText = deepseekChatInputField.value.trim();
+        if (!messageText) return;
+
+        addDeepseekAiMessageToChat(messageText, 'user');
+        saveDeepseekAiMessageToHistory(messageText, 'user');
+        trackActivity('deepseek_ai_message_sent', { messageLength: messageText.length });
+
+        deepseekChatInputField.value = '';
+        deepseekChatInputField.disabled = true;
+        if (deepseekChatSendButton) deepseekChatSendButton.disabled = true;
+        addDeepseekAiMessageToChat(null, 'ai', true); // Typing indicator
+
+        try {
+            const response = await fetch('/api/deepseek-ai', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ask: messageText, uid: chatUID }) // uid can be sent for consistency/logging even if API doesn't use it
+            });
+            if (deepseekTypingIndicator) deepseekTypingIndicator.remove();
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: `Server error: ${response.status}` }));
+                throw new Error(errorData.error || `API request failed: ${response.status}`);
+            }
+            const aiResponse = await response.json();
+            if (aiResponse && aiResponse.response) {
+                addDeepseekAiMessageToChat(aiResponse.response, 'ai');
+                saveDeepseekAiMessageToHistory(aiResponse.response, 'ai');
+            } else {
+                throw new Error("Invalid response structure from Deepseek AI.");
+            }
+        } catch (error) {
+            console.error('Error sending Deepseek AI message:', error);
+            if (deepseekTypingIndicator) deepseekTypingIndicator.remove();
+            addDeepseekAiMessageToChat(`Error: ${error.message || 'Could not connect to Deepseek AI.'}`, 'ai');
+        } finally {
+            deepseekChatInputField.disabled = false;
+            if (deepseekChatSendButton) deepseekChatSendButton.disabled = false;
+            if (deepseekChatInputField) deepseekChatInputField.focus();
+        }
+    }
+    if (deepseekChatSendButton) deepseekChatSendButton.addEventListener('click', handleDeepseekAiSendMessage);
+    if (deepseekChatInputField) deepseekChatInputField.addEventListener('keypress', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleDeepseekAiSendMessage(); } });
+    // --- END OF DEEPSEEK AI CHAT LOGIC ---
+
+    // --- CLAUDE HAIKU AI CHAT LOGIC ---
+    const claudeChatMessagesArea = document.getElementById('claude-chat-messages-area');
+    const claudeChatInputField = document.getElementById('claude-chat-input-field');
+    const claudeChatSendButton = document.getElementById('claude-chat-send-button');
+    const claudeHaikuHistoryKeyPrefix = 'claudeHaikuAiChatHistory_';
+    let claudeTypingIndicator = null;
+    const claudeAvatarSvg = `<svg viewBox="0 0 24 24" class="icon icon-chat-ai"><path d="M19.07 4.93a10 10 0 00-14.14 0L2.93 7.07A8 8 0 017.07 2.93L12 7.86l4.93-4.93A8 8 0 0121.07 7.07L19.07 4.93zM4.93 19.07L7.07 21.07A8 8 0 012.93 16.93L7.86 12l-4.93 4.93A10 10 0 004.93 19.07zm14.14 0A10 10 0 0019.07 4.93L16.93 2.93A8 8 0 0121.07 7.07L12 16.14l4.93 4.93z"/></svg>`; // Example: abstract/poetic icon
+
+    function addClaudeHaikuAiMessageToChat(message, sender, isTyping = false) {
+        if (!claudeChatMessagesArea) return;
+        if (claudeTypingIndicator && claudeTypingIndicator.parentNode) {
+            claudeTypingIndicator.remove();
+            claudeTypingIndicator = null;
+        }
+        const messageWrapper = document.createElement('div');
+        messageWrapper.classList.add('chat-message-wrapper', sender === 'user' ? 'user' : 'ai');
+        const avatarContainer = document.createElement('div');
+        avatarContainer.classList.add('chat-avatar-container');
+        avatarContainer.innerHTML = sender === 'user' ? userAvatarSvg : claudeAvatarSvg;
+        const messageBubble = document.createElement('div');
+        messageBubble.classList.add('chat-bubble');
+        if (isTyping) {
+            messageBubble.innerHTML = typingIndicatorHTML;
+            messageWrapper.id = 'claude-typing-indicator-message';
+            claudeTypingIndicator = messageWrapper;
+        } else {
+            messageBubble.innerHTML = formatTextContent(message);
+        }
+        messageWrapper.append(avatarContainer, messageBubble);
+        claudeChatMessagesArea.appendChild(messageWrapper);
+        claudeChatMessagesArea.scrollTop = claudeChatMessagesArea.scrollHeight;
+    }
+
+    function saveClaudeHaikuAiMessageToHistory(message, sender) {
+        if (!chatUID) return;
+        const historyKey = `${claudeHaikuHistoryKeyPrefix}${chatUID}`;
+        let history = [];
+        try { const stored = localStorage.getItem(historyKey); if (stored) history = JSON.parse(stored); } catch (e) { console.error(e); }
+        history.push({ message, sender, timestamp: new Date().toISOString() });
+        if (history.length > 50) history = history.slice(history.length - 50);
+        try { localStorage.setItem(historyKey, JSON.stringify(history)); } catch (e) { console.error(e); }
+    }
+
+    function loadClaudeHaikuAiChatHistory() {
+        if (!claudeChatMessagesArea || !chatUID) return;
+        claudeChatMessagesArea.innerHTML = "";
+        const historyKey = `${claudeHaikuHistoryKeyPrefix}${chatUID}`;
+        let history = [];
+        try { const stored = localStorage.getItem(historyKey); if (stored) history = JSON.parse(stored); } catch (e) { console.error(e); }
+        if (history.length === 0) {
+            addClaudeHaikuAiMessageToChat("Greetings, I am Claude Haiku. What shall we discuss?", 'ai');
+        } else {
+            history.forEach(item => addClaudeHaikuAiMessageToChat(item.message, item.sender));
+        }
+        if (claudeChatMessagesArea) claudeChatMessagesArea.scrollTop = claudeChatMessagesArea.scrollHeight;
+    }
+
+    async function handleClaudeHaikuAiSendMessage() {
+        if (!claudeChatInputField || !chatUID) return;
+        const messageText = claudeChatInputField.value.trim();
+        if (!messageText) return;
+
+        addClaudeHaikuAiMessageToChat(messageText, 'user');
+        saveClaudeHaikuAiMessageToHistory(messageText, 'user');
+        trackActivity('claude_haiku_ai_message_sent', { messageLength: messageText.length });
+
+        claudeChatInputField.value = '';
+        claudeChatInputField.disabled = true;
+        if (claudeChatSendButton) claudeChatSendButton.disabled = true;
+        addClaudeHaikuAiMessageToChat(null, 'ai', true); // Typing indicator
+
+        try {
+            const response = await fetch('/api/claude-haiku-ai', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ask: messageText, uid: chatUID }) // uid for consistency
+            });
+            if (claudeTypingIndicator) claudeTypingIndicator.remove();
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: `Server error: ${response.status}` }));
+                throw new Error(errorData.error || `API request failed: ${response.status}`);
+            }
+            const aiResponse = await response.json();
+            if (aiResponse && aiResponse.response) {
+                addClaudeHaikuAiMessageToChat(aiResponse.response, 'ai');
+                saveClaudeHaikuAiMessageToHistory(aiResponse.response, 'ai');
+            } else {
+                throw new Error("Invalid response structure from Claude Haiku AI.");
+            }
+        } catch (error) {
+            console.error('Error sending Claude Haiku AI message:', error);
+            if (claudeTypingIndicator) claudeTypingIndicator.remove();
+            addClaudeHaikuAiMessageToChat(`Error: ${error.message || 'Could not connect to Claude Haiku AI.'}`, 'ai');
+        } finally {
+            claudeChatInputField.disabled = false;
+            if (claudeChatSendButton) claudeChatSendButton.disabled = false;
+            if (claudeChatInputField) claudeChatInputField.focus();
+        }
+    }
+    if (claudeChatSendButton) claudeChatSendButton.addEventListener('click', handleClaudeHaikuAiSendMessage);
+    if (claudeChatInputField) claudeChatInputField.addEventListener('keypress', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleClaudeHaikuAiSendMessage(); } });
+    // --- END OF CLAUDE HAIKU AI CHAT LOGIC ---
+
+
     // --- EMAIL GENERATOR LOGIC ---
     const generateTempEmailButton = document.getElementById('generate-temp-email-button');
     const generatedEmailAddressContainer = document.getElementById('generated-email-address-container');
@@ -2064,6 +2416,129 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // --- FIN DE LA LOGIQUE DU GÉNÉRATEUR D'EMAIL ---
 
+    // --- I18N Basic Setup ---
+    let currentLanguage = localStorage.getItem('selectedLanguage') || 'fr'; // Default to French
+    let translations = {};
+
+    async function loadTranslations(lang) {
+        try {
+            const response = await fetch(`locales/${lang}.json`);
+            if (!response.ok) {
+                console.error(`Could not load translations for ${lang}. Status: ${response.status}`);
+                // Fallback to English if current lang fails, but not if English itself fails
+                if (lang !== 'en') {
+                    console.warn(`Falling back to English translations.`);
+                    await loadTranslations('en'); // Attempt to load English as a fallback
+                } else {
+                    translations = {}; // No translations available
+                }
+                return;
+            }
+            translations = await response.json();
+            applyTranslations();
+            updateLanguageDropdown(); // Ensure dropdown reflects the loaded language
+        } catch (error) {
+            console.error('Error loading or parsing translation file:', error);
+            if (lang !== 'en') {
+                console.warn(`Falling back to English translations due to error.`);
+                await loadTranslations('en');
+            } else {
+                translations = {};
+            }
+        }
+    }
+
+    function applyTranslations() {
+        document.querySelectorAll('[data-translate]').forEach(element => {
+            const key = element.dataset.translate;
+            if (translations[key]) {
+                if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                    if (element.placeholder) element.placeholder = translations[key];
+                } else if (element.title) {
+                     element.title = translations[key];
+                }
+                // For elements like <span> in sidebar, direct textContent is fine
+                // Check if the element is a direct child of a an 'a' tag in the side menu for description
+                else if (element.classList.contains('menu-item-description')) {
+                     element.textContent = translations[key];
+                }
+                // For sidebar main titles, they are usually the first span if description exists or only span
+                else if (element.parentElement?.tagName === 'A' && element.parentElement.closest('#side-menu') && !element.classList.contains('menu-item-description')) {
+                    element.textContent = translations[key];
+                }
+                else {
+                    element.textContent = translations[key];
+                }
+            } else {
+                console.warn(`Translation key not found: ${key} for lang: ${currentLanguage}`);
+            }
+        });
+        // Update dynamic content if needed, e.g., default chat messages
+        // This would require modifying functions like loadChatHistory, loadGeminiChatHistory etc.
+        // Example for a default message (conceptual)
+        // if (translations.ai_chat_welcome_message && chatMessagesArea.children.length === 0) {
+        //     addMessageToChat(translations.ai_chat_welcome_message, "ai");
+        // }
+        // Update specific placeholders not covered by data-translate, if any
+        // For example, the ones set dynamically in JS
+        const chatInputField = document.getElementById('chat-input-field');
+        if (chatInputField && translations.ai_chat_placeholder) chatInputField.placeholder = translations.ai_chat_placeholder;
+
+        const geminiChatInputField = document.getElementById('gemini-chat-input-field');
+        if (geminiChatInputField && translations.gemini_chat_placeholder) geminiChatInputField.placeholder = translations.gemini_chat_placeholder;
+
+        const gpt4oChatInputField = document.getElementById('gpt4o-chat-input-field');
+        if (gpt4oChatInputField && translations.gpt4o_chat_placeholder) gpt4oChatInputField.placeholder = translations.gpt4o_chat_placeholder;
+
+        const blackboxChatInputField = document.getElementById('blackbox-chat-input-field');
+        if (blackboxChatInputField && translations.blackbox_ai_placeholder) blackboxChatInputField.placeholder = translations.blackbox_ai_placeholder;
+
+        const deepseekChatInputField = document.getElementById('deepseek-chat-input-field');
+        if (deepseekChatInputField && translations.deepseek_ai_placeholder) deepseekChatInputField.placeholder = translations.deepseek_ai_placeholder;
+
+        const claudeChatInputField = document.getElementById('claude-chat-input-field');
+        if (claudeChatInputField && translations.claude_haiku_placeholder) claudeChatInputField.placeholder = translations.claude_haiku_placeholder;
+
+        // Update welcome messages for new AIs if their chat history is empty
+        if (blackboxChatMessagesArea && blackboxChatMessagesArea.children.length === 0 && translations.blackbox_welcome_message) {
+            addBlackboxAiMessageToChat(translations.blackbox_welcome_message, 'ai');
+        }
+        if (deepseekChatMessagesArea && deepseekChatMessagesArea.children.length === 0 && translations.deepseek_welcome_message) {
+            addDeepseekAiMessageToChat(translations.deepseek_welcome_message, 'ai');
+        }
+        if (claudeChatMessagesArea && claudeChatMessagesArea.children.length === 0 && translations.claude_welcome_message) {
+            addClaudeHaikuAiMessageToChat(translations.claude_welcome_message, 'ai');
+        }
+    }
+
+    function updateLanguageDropdown() {
+        const languageSelect = document.getElementById('language-select');
+        if (languageSelect) {
+            languageSelect.value = currentLanguage;
+        }
+    }
+
+    const languageSelectElement = document.getElementById('language-select');
+    if (languageSelectElement) {
+        // Add Malagasy to dropdown
+        let mgOption = languageSelectElement.querySelector('option[value="mg"]');
+        if (!mgOption) {
+            mgOption = document.createElement('option');
+            mgOption.value = 'mg';
+            // The textContent will be set by applyTranslations if a key like "language_mg" exists
+            mgOption.setAttribute('data-translate', 'language_mg');
+            languageSelectElement.appendChild(mgOption);
+        }
+
+        languageSelectElement.addEventListener('change', (event) => {
+            currentLanguage = event.target.value;
+            localStorage.setItem('selectedLanguage', currentLanguage);
+            loadTranslations(currentLanguage);
+        });
+    }
+    // Initial load
+    loadTranslations(currentLanguage);
+    // --- END OF I18N Basic Setup ---
 
     function formatActivityUrl(url) {
         if (!url) return 'N/A';

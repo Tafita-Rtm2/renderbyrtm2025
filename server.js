@@ -53,47 +53,6 @@ const uploadGeminiAllModel = multer({
     limits: { fileSize: 20 * 1024 * 1024 } // Limit file size to 20MB for this feature
 });
 
-// New UPLOAD_PATH for generic temporary file uploads (e.g., for ChatGPT All Models)
-const TEMP_UPLOAD_PATH = 'public/temp_uploads/';
-if (!fs.existsSync(TEMP_UPLOAD_PATH)){
-    fs.mkdirSync(TEMP_UPLOAD_PATH, { recursive: true });
-}
-
-// Storage configuration for generic temporary file uploads
-const tempStorage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, TEMP_UPLOAD_PATH);
-    },
-    filename: function (req, file, cb) {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-    }
-});
-
-// Multer instance for generic temporary uploads
-const uploadTemp = multer({
-    storage: tempStorage,
-    limits: { fileSize: 25 * 1024 * 1024 }, // Max 25MB for generic uploads
-    fileFilter: function (req, file, cb) {
-        // More permissive filter for generic uploads, but can be restricted as needed
-        // For now, allow common image, document, audio, video, and text types
-        const allowedMimeTypes = [
-            'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-            'application/pdf', 'text/plain',
-            'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-            'audio/mpeg', 'audio/wav', 'audio/ogg',
-            'video/mp4', 'video/webm', 'video/quicktime'
-        ];
-        if (allowedMimeTypes.includes(file.mimetype)) {
-            cb(null, true);
-        } else {
-            cb(new Error('Error: This file type is not allowed for generic uploads.'));
-        }
-    }
-});
-
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -102,7 +61,6 @@ const PORT = process.env.PORT || 3000;
 // Serve static files from the upload directories
 app.use('/uploads/gemini_temp', express.static(path.join(__dirname, LEGACY_GEMINI_UPLOAD_PATH)));
 app.use('/uploads/gemini_all_model_temp', express.static(path.join(__dirname, GEMINI_ALL_MODEL_TEMP_UPLOAD_PATH)));
-app.use('/temp_uploads', express.static(path.join(__dirname, TEMP_UPLOAD_PATH))); // Serve new temp folder
 // Serve main public files
 app.use(express.static(path.join(__dirname, 'public')));
 // JSON parsing middleware
@@ -667,57 +625,6 @@ app.post('/api/gemini-all-model', uploadGeminiAllModel.single('file'), async (re
         return res.status(500).json({ error: 'Server error processing Haji Mix Gemini API request.' });
     }
 });
-
-// New endpoint for generic file uploads
-app.post('/api/upload-temp-file', uploadTemp.single('file'), (req, res) => {
-    if (!req.file) {
-        return res.status(400).json({ success: false, error: 'No file uploaded.' });
-    }
-    try {
-        const APP_BASE_URL = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
-        const publicFileUrl = new URL(`/temp_uploads/${req.file.filename}`, APP_BASE_URL).toString();
-
-        // Log successful upload and URL generation
-        console.log(`Temp file uploaded: ${req.file.filename}, URL: ${publicFileUrl}`);
-
-        // Schedule file for deletion after a timeout (e.g., 1 hour)
-        const tempFilePath = req.file.path;
-        setTimeout(() => {
-            fs.unlink(tempFilePath, (err) => {
-                if (err) {
-                    console.error(`Error deleting temp file ${tempFilePath}:`, err);
-                } else {
-                    console.log(`Temp file ${tempFilePath} deleted after timeout.`);
-                }
-            });
-        }, 3600000); // 1 hour in milliseconds
-
-        res.json({ success: true, fileUrl: publicFileUrl, filename: req.file.filename });
-
-    } catch (error) {
-        console.error('Error processing file upload:', error);
-        // If file was saved by multer but an error occurred here, try to delete it.
-        if (req.file && req.file.path) {
-            fs.unlink(req.file.path, (unlinkErr) => {
-                if (unlinkErr) console.error(`Error deleting partially uploaded file ${req.file.path} after error:`, unlinkErr);
-            });
-        }
-        res.status(500).json({ success: false, error: 'Server error processing file upload.' });
-    }
-}, (error, req, res, next) => { // Multer error handler
-    if (error instanceof multer.MulterError) {
-        // A Multer error occurred when uploading.
-        console.error('Multer error during upload:', error);
-        return res.status(400).json({ success: false, error: `File upload error: ${error.message}` });
-    } else if (error) {
-        // An unknown error occurred when uploading (e.g., file type filter).
-        console.error('Unknown error during upload:', error);
-        return res.status(400).json({ success: false, error: error.message || 'File upload failed due to an unknown error.' });
-    }
-    // Everything went fine if we reach here with no error.
-    next();
-});
-
 
 // Fallback to index.html
 app.get('*', (req, res) => {

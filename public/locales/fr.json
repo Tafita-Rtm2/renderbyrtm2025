@@ -51,6 +51,8 @@
     "feature_activity_history_desc": "Suivez vos interactions et activités sur le site. Revoyez votre parcours et revisitez facilement vos fonctionnalités préférées.",
     "feature_email_generator_title": "Générateur d'Email",
     "feature_email_generator_desc": "Générez rapidement des adresses e-mail temporaires pour des raisons de confidentialité ou de test. Recevez des e-mails et gérez-les pendant une courte période.",
+    "chatgpt_all_model_view_title_feature": "Tous les modèles ChatGPT",
+    "chatgpt_all_model_description_feature": "Interagissez avec une variété de modèles d'OpenAI, téléchargez des fichiers et explorez diverses capacités d'IA.",
 
     "home_nav_ai_chat": "Chat IA",
     "home_nav_image_gen": "Gén. Image",
@@ -61,6 +63,7 @@
     "home_nav_blackbox_ai": "Blackbox AI",
     "home_nav_deepseek_ai": "Deepseek AI",
     "home_nav_claude_haiku": "Claude Haiku",
+    "home_nav_chatgpt_all_models": "ChatGPT Tous",
 
     "public_comments_title": "Laissez un Commentaire",
     "comment_name_label": "Nom :",
@@ -208,23 +211,6 @@
     "deepseek_welcome_message": "Bonjour ! Je suis Deepseek AI. Comment puis-je vous aider ?",
     "claude_welcome_message": "Salutations, je suis Claude Haiku. De quoi allons-nous discuter ?",
 
-    "chatgpt_all_model_view_title": "Tous les modèles ChatGPT",
-    "chatgpt_all_model_description": "Discutez avec divers modèles OpenAI et téléchargez des fichiers.",
-    "chatgpt_all_model_chat_title": "Chat Tous Modèles ChatGPT",
-    "chatgpt_model_selector_label": "Sélectionner le Modèle :",
-    "chatgpt_model_select_default_option": "Chargement des modèles...",
-    "chatgpt_all_model_attach_file_title": "Joindre un Fichier",
-    "chatgpt_all_model_placeholder": "Demandez à ChatGPT (tous modèles)...",
-    "chatgpt_all_model_placeholder_dynamic": "Demandez à {modelName}...",
-    "chatgpt_select_model_alert": "Veuillez d'abord sélectionner un modèle ChatGPT.",
-    "chatgpt_type_message_or_attach_file_alert": "Veuillez taper un message ou joindre un fichier.",
-    "chatgpt_models_load_error": "Erreur lors du chargement des modèles",
-    "chatgpt_no_models_available": "Aucun modèle disponible",
-    "chatgpt_all_model_welcome_message": "Bienvenue sur ChatGPT {modelName} ! Demandez n'importe quoi ou téléchargez un fichier.",
-
-    "copy_button_title": "Copier",
-    "download_button_title": "Télécharger",
-    "copy_code_button_title": "Copier le Code",
     "error_ai_connection": "Erreur : {error} Impossible de se connecter à {aiName}.",
     "invalid_response_from_ai": "Structure de réponse invalide de l'IA {aiName}."
 }

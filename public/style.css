@@ -383,13 +383,27 @@ body:not(.dark-mode) .theme-switch input:checked + .slider:before {
     height: 100%;
 }
 
+#active-view-title-container {
+    flex-grow: 1;
+    text-align: center;
+    font-size: 1.2em;
+    font-weight: 500;
+    color: var(--accent-color);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 0 10px; /* Add some padding to prevent sticking to edges */
+}
+
+
 /* --- Main Content Area --- */
 #main-content {
     flex-grow: 1;
-    overflow-y: auto;
-    padding: 15px;
+    overflow-y: auto; /* This should be managed by individual views if they are full height */
+    padding: 15px; /* This padding will be problematic for full-screen chat views */
     display: flex;
     flex-direction: column;
+    position: relative; /* For potential absolute positioning of views */
 }
 
 /* --- View Management --- */
@@ -398,10 +412,11 @@ body:not(.dark-mode) .theme-switch input:checked + .slider:before {
     width: 100%;
     flex-grow: 1;
     animation: fadeInView 0.5s ease-in-out;
-    background-color: var(--secondary-bg); /* Standardized background */
-    padding: 20px; /* Standardized padding */
-    border-radius: 8px; /* Standardized radius */
-    margin-bottom: 15px; /* Space from bottom or between views if stacked */
+    background-color: var(--secondary-bg);
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    box-sizing: border-box; /* Ensure padding is included in width/height */
 }
 .view.active {
     display: block;
@@ -412,21 +427,38 @@ body:not(.dark-mode) .theme-switch input:checked + .slider:before {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Specific overrides for certain views */
-#ai-chat-view {
-    padding: 0 !important; /* Chat view manages its own internal padding for messages area */
-    border-radius: 10px !important;
-    /* background-color already set by .view, if #ai-chat-view needs specific bg, set it here */
-    display: flex;
+/* Full screen chat view common styles */
+.chat-view-fullscreen {
+    padding: 0 !important;
+    margin: 0 !important; /* Remove margin if main-content padding is handled */
+    border-radius: 0 !important; /* No radius for full screen */
+    height: calc(100vh - var(--top-bar-height)) !important; /* Full viewport height minus top bar */
+    width: 100% !important;
+    position: absolute; /* Take out of normal flow of main-content's padding */
+    top: 0;
+    left: 0;
+    background-color: var(--secondary-bg) !important; /* Ensure background covers */
+    display: flex !important;
     flex-direction: column !important;
-    height: calc(100vh - var(--top-bar-height) - 30px) !important;
-    visibility: visible;
-    opacity: 1;
+    z-index: 1; /* Ensure it's above other content in main-content if any */
 }
 
+
+/* Specific overrides for certain views */
+#ai-chat-view,
+#gemini-chat-view, /* Added */
+#gpt4o-chat-view,  /* Added */
+#blackbox-ai-view, /* Added */
+#deepseek-ai-view, /* Added */
+#claude-haiku-view, /* Added */
+#chatgpt-all-model-view { /* Added */
+    /* All these will use .chat-view-fullscreen, specific styles below if needed */
+}
+
+
 #home-view {
-    background-color: var(--primary-bg); /* Home view uses primary background */
-    padding: 15px; /* Retain specific padding for home */
+    background-color: var(--primary-bg);
+    padding: 15px;
     /* margin-bottom might not be needed if it's the main view usually */
 }
 
@@ -828,6 +860,7 @@ body:not(.dark-mode) .theme-switch input:checked + .slider:before {
     line-height: 1.6 !important;
     word-wrap: break-word !important;
     box-shadow: 0 3px 6px rgba(0,0,0,0.25) !important;
+    white-space: pre-wrap !important; /* Added for proper line break handling */
 }
 .chat-bubble a {
     color: var(--accent-color); /* Use accent color for links */
@@ -2452,38 +2485,44 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
     cursor: pointer;
 }
 
-/* --- GEMINI ALL MODEL VIEW STYLES --- */
-#gemini-all-model-view {
+/* --- CHATGPT ALL MODEL VIEW STYLES --- */
+#chatgpt-all-model-view {
     /* Basic structure inherited from .view and JS (display:flex, flex-direction:column, height) */
 }
 
-#gemini-all-model-view .chat-view-header {
+#chatgpt-all-model-view .chat-view-header {
     display: flex;
     align-items: center;
     padding: 10px 15px;
-    background-color: var(--surface-color); /* Or var(--secondary-bg) */
+    background-color: var(--surface-color);
     border-bottom: 1px solid var(--border-color);
     flex-shrink: 0;
 }
 
-#gemini-all-model-view .chat-header-logo {
-    width: 32px; /* Adjust size as needed */
+#chatgpt-all-model-view .chat-header-logo { /* Updated for SVG if it's an SVG element directly */
+    width: 32px;
     height: 32px;
     margin-right: 10px;
+    fill: var(--accent-color); /* Or specific color for ChatGPT logo */
+}
+/* If using an <img> tag for the SVG, this might be needed if .icon class is not sufficient */
+#chatgpt-all-model-view img.chat-header-logo {
+    object-fit: contain;
 }
 
-#gemini-all-model-view .chat-view-header h2 {
+
+#chatgpt-all-model-view .chat-view-header h2 {
     margin: 0;
-    font-size: 1.2em; /* Adjust size */
+    font-size: 1.2em;
     color: var(--accent-color);
-    flex-grow: 1; /* Allow title to take space */
+    flex-grow: 1;
 }
 
-#gemini-all-model-view .model-selector-container {
-    margin-left: auto; /* Pushes selector to the right if title takes space */
+#chatgpt-all-model-view .model-selector-container {
+    margin-left: auto;
 }
 
-#gemini-model-selector {
+#chatgpt-model-selector { /* Renamed ID */
     padding: 8px 12px;
     border-radius: 6px;
     border: 1px solid var(--border-color);
@@ -2494,38 +2533,34 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
     outline: none;
     cursor: pointer;
 }
-#gemini-model-selector:focus {
+#chatgpt-model-selector:focus { /* Renamed ID */
     border-color: var(--accent-color);
     box-shadow: 0 0 5px var(--accent-color);
 }
 
-/* Messages area and input bar will largely use existing chat styles by ID */
-#gemini-all-model-chat-messages-area {
-    /* Inherits from general chat message area styles if IDs are similar enough or new specific styles needed */
-    /* For example, it uses: flex-grow, overflow-y, padding, background-color, border-bottom, display:flex, flex-direction:column, gap */
+#chatgpt-all-model-chat-messages-area { /* Renamed ID */
+    /* Inherits from general chat message area styles */
 }
 
-#gemini-all-model-chat-input-bar {
+#chatgpt-all-model-chat-input-bar { /* Renamed ID */
     /* Inherits from general chat input bar styles */
-    /* display:flex, align-items, padding, background-color, border-top, min-height, flex-shrink */
 }
 
-#gemini-all-model-attach-file-button {
-    /* Similar to #gemini-chat-attach-image-button */
+#chatgpt-all-model-attach-file-button { /* Renamed ID */
     background-color: var(--surface-color);
     border: 1px solid var(--border-color);
-    width: 44px; /* Slightly smaller if needed */
+    width: 44px;
     height: 44px;
     border-radius: 50%;
     margin-right: 8px;
     flex-shrink: 0;
 }
-#gemini-all-model-attach-file-button .icon { fill: var(--accent-color); }
-#gemini-all-model-attach-file-button:hover { background-color: var(--accent-color); border-color: var(--accent-color); }
-#gemini-all-model-attach-file-button:hover .icon { fill: var(--primary-bg); }
+#chatgpt-all-model-attach-file-button .icon { fill: var(--accent-color); } /* Renamed ID */
+#chatgpt-all-model-attach-file-button:hover { background-color: var(--accent-color); border-color: var(--accent-color); } /* Renamed ID */
+#chatgpt-all-model-attach-file-button:hover .icon { fill: var(--primary-bg); } /* Renamed ID */
 
 
-#gemini-all-model-file-preview-container {
+#chatgpt-all-model-file-preview-container { /* Renamed ID */
     display: flex;
     align-items: center;
     gap: 5px;
@@ -2534,210 +2569,182 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
     background-color: var(--surface-color);
     border-radius: 4px;
     font-size: 0.8em;
-    max-width: 150px; /* Limit preview width */
+    max-width: 150px;
     overflow: hidden;
 }
-.file-preview-name {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    color: var(--text-muted-color);
-}
-.file-preview-image {
-    max-height: 30px;
-    max-width: 50px;
-    border-radius: 3px;
-    border: 1px solid var(--border-color);
-}
+/* .file-preview-name and .file-preview-image can remain generic */
 
-
-#gemini-all-model-chat-input-field {
-    /* Inherits general input field styling but ID specific for JS targeting */
+#chatgpt-all-model-chat-input-field { /* Renamed ID */
+    /* Inherits general input field styling */
 }
-#gemini-all-model-chat-send-button {
+#chatgpt-all-model-chat-send-button { /* Renamed ID */
     /* Inherits general send button styling */
 }
 
-/* User message bubble color for Gemini All Model (can be unique or inherit) */
-#gemini-all-model-chat-messages-area .chat-message-wrapper.user .chat-bubble {
-    background-color: var(--success-green) !important; /* Example: a distinct green */
-    color: var(--primary-bg) !important;
+/* User message bubble color for ChatGPT All Model */
+#chatgpt-all-model-chat-messages-area .chat-message-wrapper.user .chat-bubble { /* Renamed ID */
+    background-color: #10a37f !important; /* A common ChatGPT-like green */
+    color: #ffffff !important;
 }
-#gemini-all-model-chat-messages-area .chat-message-wrapper.user .chat-bubble a,
-#gemini-all-model-chat-messages-area .chat-message-wrapper.user .chat-bubble strong {
-    color: var(--primary-bg) !important; /* Ensure contrast */
-}
-
-/* More specific styling for the Gemini All Model header elements */
-#gemini-all-model-view .chat-view-header {
-    gap: 15px; /* Add gap between header items */
-    padding: 12px 20px; /* Adjust padding */
+#chatgpt-all-model-chat-messages-area .chat-message-wrapper.user .chat-bubble a, /* Renamed ID */
+#chatgpt-all-model-chat-messages-area .chat-message-wrapper.user .chat-bubble strong { /* Renamed ID */
+    color: #f0f0f0 !important; /* Lighter contrast for links/strong on the green */
 }
 
-#gemini-all-model-view .chat-header-logo {
+/* More specific styling for the ChatGPT All Model header elements */
+#chatgpt-all-model-view .chat-view-header { /* Renamed ID */
+    gap: 15px;
+    padding: 12px 20px;
+}
+
+#chatgpt-all-model-view .chat-header-logo { /* Renamed ID */
     width: 36px;
     height: 36px;
 }
 
-#gemini-all-model-view .chat-view-header h2 {
+#chatgpt-all-model-view .chat-view-header h2 { /* Renamed ID */
     font-size: 1.3em;
     font-weight: 500;
     letter-spacing: 0.5px;
 }
 
-#gemini-all-model-view .model-selector-container {
-    position: relative; /* For custom arrow later if needed */
+#chatgpt-all-model-view .model-selector-container { /* Renamed ID */
+    position: relative;
 }
 
-#gemini-model-selector {
-    min-width: 200px; /* Give it some space */
-    padding: 10px 15px; /* More padding */
-    padding-right: 35px; /* Space for custom arrow */
-    appearance: none; /* Remove default browser appearance */
+#chatgpt-model-selector { /* Renamed ID */
+    min-width: 200px;
+    padding: 10px 15px;
+    padding-right: 35px;
+    appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23a0a0a0' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E"); /* Basic SVG arrow */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23a0a0a0' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 10px center;
-    background-size: 16px 12px; /* Adjust arrow size */
-    border-radius: 8px; /* More rounded */
+    background-size: 16px 12px;
+    border-radius: 8px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
-body.dark-mode #gemini-model-selector {
+body.dark-mode #chatgpt-model-selector { /* Renamed ID */
      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23e0e0e0' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
 }
 
-#gemini-model-selector:hover {
+#chatgpt-model-selector:hover { /* Renamed ID */
     border-color: var(--primary-accent-color);
 }
 
 /* File preview container enhancements */
-#gemini-all-model-file-preview-container {
+#chatgpt-all-model-file-preview-container { /* Renamed ID */
     border: 1px dashed var(--border-color);
     padding: 8px;
-    max-width: 250px; /* Allow more width for filename */
-    min-height: 38px; /* Align with button height */
+    max-width: 250px;
+    min-height: 38px;
     box-sizing: border-box;
-    /* Ensure it doesn't cause input bar to grow too tall */
-    max-height: 42px; /* Match attachment button height roughly */
-    overflow: hidden; /* Hide overflow if content is too tall */
-}
-.file-preview-name {
-    white-space: nowrap;
+    max-height: 42px;
     overflow: hidden;
-    text-overflow: ellipsis;
-    color: var(--text-muted-color);
-    font-size: 0.85em; /* Slightly smaller for compactness */
 }
-.file-preview-image {
-    max-height: 35px; /* Slightly larger preview */
-    max-width: 60px;
-    border-radius: 3px;
-    border: 1px solid var(--border-color);
-    object-fit: cover; /* Ensure image covers the area nicely */
-}
+/* .file-preview-name and .file-preview-image reused */
 
-/* Specific styling for Gemini All Model chat messages to match other chat views */
-#gemini-all-model-chat-messages-area {
+/* Specific styling for ChatGPT All Model chat messages to match other chat views */
+#chatgpt-all-model-chat-messages-area { /* Renamed ID */
     flex-grow: 1 !important;
     overflow-y: auto !important;
     padding: 20px !important;
-    background-color: var(--primary-bg) !important; /* Matches other chat views */
-    border-bottom: 1px solid var(--border-color) !important; /* Matches other chat views */
+    background-color: var(--primary-bg) !important;
+    border-bottom: 1px solid var(--border-color) !important;
     display: flex !important;
     flex-direction: column !important;
-    gap: 15px !important; /* Matches other chat views */
+    gap: 15px !important;
 }
 
-#gemini-all-model-chat-messages-area::-webkit-scrollbar { width: 8px; }
-#gemini-all-model-chat-messages-area::-webkit-scrollbar-track { background: var(--primary-bg); }
-#gemini-all-model-chat-messages-area::-webkit-scrollbar-thumb { background-color: var(--accent-color); border-radius: 4px; }
-#gemini-all-model-chat-messages-area::-webkit-scrollbar-thumb:hover { background-color: var(--primary-accent-color); }
+#chatgpt-all-model-chat-messages-area::-webkit-scrollbar { width: 8px; } /* Renamed ID */
+#chatgpt-all-model-chat-messages-area::-webkit-scrollbar-track { background: var(--primary-bg); } /* Renamed ID */
+#chatgpt-all-model-chat-messages-area::-webkit-scrollbar-thumb { background-color: var(--accent-color); border-radius: 4px; } /* Renamed ID */
+#chatgpt-all-model-chat-messages-area::-webkit-scrollbar-thumb:hover { background-color: var(--primary-accent-color); } /* Renamed ID */
 
-/* Input bar styling for Gemini All Model - make it similar to others */
-#gemini-all-model-chat-input-bar {
+/* Input bar styling for ChatGPT All Model - make it similar to others */
+#chatgpt-all-model-chat-input-bar { /* Renamed ID */
     display: flex;
     align-items: center !important;
     padding: 15px !important;
-    background-color: var(--primary-bg) !important; /* Matches other chat views */
-    border-top: 1px solid var(--surface-color) !important; /* Matches other chat views */
+    background-color: var(--primary-bg) !important;
+    border-top: 1px solid var(--surface-color) !important;
     width: 100% !important;
     box-sizing: border-box !important;
-    min-height: 70px !important; /* Matches other chat views */
-    flex-shrink: 0 !important; /* Matches other chat views */
+    min-height: 70px !important;
+    flex-shrink: 0 !important;
 }
 
-#gemini-all-model-chat-input-field {
+#chatgpt-all-model-chat-input-field { /* Renamed ID */
     flex-grow: 1 !important;
     padding: 14px 20px !important;
     border: 1px solid var(--border-color) !important;
-    border-radius: 25px !important; /* Rounded like other chat inputs */
+    border-radius: 25px !important;
     background-color: var(--surface-color) !important;
     color: var(--text-color) !important;
     font-family: var(--font-primary) !important;
     margin-right: 10px !important;
     outline: none !important;
-    min-height: 48px !important; /* Standard height */
+    min-height: 48px !important;
     height: 48px !important;
     box-sizing: border-box;
 }
-#gemini-all-model-chat-input-field:focus {
+#chatgpt-all-model-chat-input-field:focus { /* Renamed ID */
     border-color: var(--action-color) !important;
-    box-shadow: 0 0 8px rgba(255, 153, 0, 0.6) !important; /* Standard focus glow */
+    box-shadow: 0 0 8px rgba(255, 153, 0, 0.6) !important;
 }
 
-#gemini-all-model-attach-file-button {
-    /* Styles were okay, ensure consistency with other attach buttons */
+#chatgpt-all-model-attach-file-button { /* Renamed ID */
     background-color: var(--surface-color);
     border: 1px solid var(--border-color);
-    width: 48px !important; /* Standard size */
-    height: 48px !important; /* Standard size */
+    width: 48px !important;
+    height: 48px !important;
     border-radius: 50% !important;
-    margin-right: 10px; /* Standard margin */
+    margin-right: 10px;
 }
-#gemini-all-model-attach-file-button:hover {
+#chatgpt-all-model-attach-file-button:hover { /* Renamed ID */
     background-color: var(--accent-color);
     border-color: var(--accent-color);
 }
-#gemini-all-model-attach-file-button:hover .icon {
+#chatgpt-all-model-attach-file-button:hover .icon { /* Renamed ID */
     fill: var(--primary-bg);
 }
 
-
-#gemini-all-model-chat-send-button {
-    background-color: var(--action-color) !important; /* Standard send button color */
-    width: 48px !important; /* Standard size */
-    height: 48px !important; /* Standard size */
+#chatgpt-all-model-chat-send-button { /* Renamed ID */
+    background-color: var(--action-color) !important;
+    width: 48px !important;
+    height: 48px !important;
     border-radius: 50% !important;
     border: none !important;
     flex-shrink: 0 !important;
 }
-#gemini-all-model-chat-send-button .icon {
+#chatgpt-all-model-chat-send-button .icon { /* Renamed ID */
     fill: var(--primary-bg) !important;
     width: 26px !important;
     height: 26px !important;
 }
-#gemini-all-model-chat-send-button:hover {
-    background-color: var(--primary-accent-color) !important; /* Standard hover */
+#chatgpt-all-model-chat-send-button:hover { /* Renamed ID */
+    background-color: var(--primary-accent-color) !important;
 }
-#gemini-all-model-chat-send-button:disabled {
+#chatgpt-all-model-chat-send-button:disabled { /* Renamed ID */
     background-color: var(--text-muted-color) !important;
     cursor: not-allowed !important;
 }
 
-/* Ensure the overall view structure for gemini-all-model-view is flex column */
-#gemini-all-model-view {
+/* Ensure the overall view structure for chatgpt-all-model-view is flex column */
+#chatgpt-all-model-view { /* Renamed ID */
     display: flex;
     flex-direction: column !important;
-    height: calc(100vh - var(--top-bar-height) - 30px) !important; /* Full height minus top bar and some padding */
+    height: calc(100vh - var(--top-bar-height) - 30px) !important;
     padding: 0 !important;
     box-sizing: border-box !important;
     background-color: var(--secondary-bg) !important;
     border-radius: 10px !important;
     overflow: hidden !important;
 }
-/* --- END OF GEMINI ALL MODEL VIEW ENHANCEMENTS --- */
+/* --- END OF CHATGPT ALL MODEL VIEW STYLES --- */
 
 
 /* --- BOX MOVIE VIEW STYLES --- */

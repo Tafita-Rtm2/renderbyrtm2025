@@ -59,6 +59,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const subViewMenuTrigger = document.getElementById('sub-view-menu-trigger');
     const sideMenu = document.getElementById('side-menu');
     const homeMenuTriggerIcon = document.getElementById('home-menu-trigger-icon');
+    const weatherDisplayContainer = document.getElementById('weather-display-container'); // Added
+    const activeViewTitleSpan = document.getElementById('active-view-title'); // Added
 
     // --- Centralized showView Function ---
     window.showView = function(viewIdToShow, bypassAdminCheck = false) {
@@ -101,30 +103,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Explicitly hide or manage AI chat components when not the target view
-        const aiChatView = document.getElementById('ai-chat-view');
-        const chatInputBar = document.getElementById('chat-input-bar'); // Assuming this is the correct ID
+        const aiChatView = document.getElementById('ai-chat-view'); // Keep for specific chat input bar logic if needed below
+        // const chatInputBar = document.getElementById('chat-input-bar'); // This was for a specific input bar, might not be needed if all chat views handle their own.
 
-        if (viewIdToShow !== 'ai-chat-view') {
-            if (aiChatView && aiChatView.style.display !== 'none') { // Check if it's not already none
-                // This is a safeguard; the main loop should handle hiding aiChatView itself.
-                // aiChatView.style.display = 'none'; // Redundant if main loop is effective
-            }
-            if (chatInputBar) {
-                // Specifically target the chat input bar to ensure it's hidden
-                chatInputBar.style.display = 'none';
-            }
-        } else { // When 'ai-chat-view' IS being shown
-            // Ensure chatInputBar is visible. Its display is part of aiChatView's flex layout.
-            // If aiChatView is set to display:flex, child elements with default display (block/flex) will show.
-            // If chatInputBar was explicitly set to display:none, it needs to be reset.
-            if (chatInputBar) {
-                 chatInputBar.style.display = 'flex'; // Or 'block' if that's its natural state in the layout
-            }
-        }
+        // Hide all chat input bars initially, then show the correct one if a chat view is active
+        document.querySelectorAll('[id$="-chat-input-bar"]').forEach(bar => bar.style.display = 'none');
+
 
         const viewToShow = document.getElementById(viewIdToShow);
         if (viewToShow) {
-            viewToShow.style.display = 'block'; // Use 'block' or 'flex' as appropriate for the view's CSS
+            viewToShow.style.display = 'block'; // Default display
             viewToShow.classList.add('active');
         } else {
             console.warn(`View with ID "${viewIdToShow}" not found. Defaulting to home-view.`);
@@ -133,17 +121,55 @@ document.addEventListener('DOMContentLoaded', () => {
                 homeView.style.display = 'block';
                 homeView.classList.add('active');
             }
-            viewIdToShow = 'home-view';
+            viewIdToShow = 'home-view'; // Update viewIdToShow to reflect the fallback
         }
-         // Special display handling for flex views
-        if (viewIdToShow === 'ai-chat-view' ||
-            viewIdToShow === 'vip-view' || /* vip-view might also be flex */
-            viewIdToShow === 'gemini-chat-view' ||
-            viewIdToShow === 'gpt4o-chat-view' ||
-            viewIdToShow === 'blackbox-ai-view' ||
-            viewIdToShow === 'deepseek-ai-view' ||
-            viewIdToShow === 'claude-haiku-view' ||
-            viewIdToShow === 'email-generator-view') {
+
+        const chatViewIds = [
+            'ai-chat-view', 'gemini-chat-view', 'gpt4o-chat-view',
+            'blackbox-ai-view', 'deepseek-ai-view', 'claude-haiku-view',
+            'chatgpt-all-model-view'
+        ];
+        const isChatView = chatViewIds.includes(viewIdToShow);
+
+        if (isChatView) {
+            if (viewToShow) {
+                viewToShow.classList.add('chat-view-fullscreen');
+                viewToShow.style.display = 'flex'; // Ensure flex display for fullscreen chat views
+                 // Make sure the specific input bar for this chat view is visible
+                const currentChatInputBar = document.getElementById(`${viewIdToShow.replace('-view', '')}-input-bar`);
+                if (currentChatInputBar) {
+                    currentChatInputBar.style.display = 'flex';
+                } else {
+                    // Fallback for the original "ai-chat-view" which has a slightly different ID for its input bar
+                    if (viewIdToShow === 'ai-chat-view') {
+                        const originalAiChatInputBar = document.getElementById('chat-input-bar');
+                        if (originalAiChatInputBar) originalAiChatInputBar.style.display = 'flex';
+                    }
+                }
+            }
+            if (weatherDisplayContainer) weatherDisplayContainer.style.display = 'none';
+            if (activeViewTitleSpan) {
+                // Try to get title from side menu link's data-translate attribute
+                const menuLink = sideMenu ? sideMenu.querySelector(`a[data-view="${viewIdToShow}"] span[data-translate]`) : null;
+                if (menuLink && menuLink.dataset.translate && translations[menuLink.dataset.translate]) {
+                    activeViewTitleSpan.textContent = translations[menuLink.dataset.translate];
+                } else {
+                    activeViewTitleSpan.textContent = viewIdToShow.replace('-view', '').split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '); // Fallback title
+                }
+                activeViewTitleSpan.style.display = 'block';
+            }
+        } else {
+            if (viewToShow && viewToShow.classList.contains('chat-view-fullscreen')) {
+                viewToShow.classList.remove('chat-view-fullscreen');
+                // Revert to default display if needed, e.g., 'block' for non-chat views
+                // viewToShow.style.display = 'block'; // Already handled by the initial display setting
+            }
+            if (weatherDisplayContainer) weatherDisplayContainer.style.display = 'flex'; // Or its default display
+            if (activeViewTitleSpan) activeViewTitleSpan.style.display = 'none';
+        }
+
+        // Special display handling for other flex views (non-chat)
+        if (viewIdToShow === 'email-generator-view') { // Example, add others if they exist
             if(viewToShow) viewToShow.style.display = 'flex';
         }
 
@@ -151,11 +177,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (viewIdToShow === 'home-view') {
             if (homeBottomAppIcons) homeBottomAppIcons.style.display = 'flex';
             if (subViewMenuTrigger) subViewMenuTrigger.style.display = 'none';
-            if (homeMenuTriggerIcon) homeMenuTriggerIcon.style.display = 'inline-flex'; // or 'block'
+            if (homeMenuTriggerIcon) homeMenuTriggerIcon.style.display = 'inline-flex';
             if (sideMenu && sideMenu.classList.contains('visible')) sideMenu.classList.remove('visible');
+            if (activeViewTitleSpan) activeViewTitleSpan.style.display = 'none'; // No title on home view
+            if (weatherDisplayContainer) weatherDisplayContainer.style.display = 'flex'; // Ensure weather is visible on home
         } else {
             if (homeBottomAppIcons) homeBottomAppIcons.style.display = 'none';
-            if (subViewMenuTrigger) subViewMenuTrigger.style.display = 'inline-flex'; // or 'block'
+            if (subViewMenuTrigger) subViewMenuTrigger.style.display = 'inline-flex';
             if (homeMenuTriggerIcon) homeMenuTriggerIcon.style.display = 'none';
         }
 
@@ -278,16 +306,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (typeof loadClaudeHaikuAiChatHistory === "function") { loadClaudeHaikuAiChatHistory(); }
             const claudeChatInputBar = document.getElementById('claude-chat-input-bar');
             if (claudeChatInputBar) claudeChatInputBar.style.display = 'flex';
-        } else if (viewIdToShow === 'gemini-all-model-view') {
-            console.log('[GEMINI ALL MODEL DIAGNOSTIC] showView called for gemini-all-model-view.');
-            if (typeof fetchAndPopulateGeminiModels === "function") { fetchAndPopulateGeminiModels(); }
-            // History loading is now handled by fetchAndPopulateGeminiModels or model selector change
-            const geminiAllModelInputBar = document.getElementById('gemini-all-model-chat-input-bar');
-            if (geminiAllModelInputBar) geminiAllModelInputBar.style.display = 'flex';
-            // Ensure the view itself is flex if not already handled by the generic flex view block
-            const geminiAllModelView = document.getElementById('gemini-all-model-view');
-            if (geminiAllModelView && geminiAllModelView.style.display !== 'flex') {
-                 geminiAllModelView.style.display = 'flex';
+        } else if (viewIdToShow === 'chatgpt-all-model-view') { // Renamed from gemini-all-model-view
+            console.log('[CHATGPT ALL MODEL DIAGNOSTIC] showView called for chatgpt-all-model-view.');
+            if (typeof fetchAndPopulateChatGptModels === "function") { fetchAndPopulateChatGptModels(); } // Renamed function
+            const chatgptAllModelInputBar = document.getElementById('chatgpt-all-model-chat-input-bar'); // Renamed ID
+            if (chatgptAllModelInputBar) chatgptAllModelInputBar.style.display = 'flex';
+            const chatgptAllModelView = document.getElementById('chatgpt-all-model-view'); // Renamed ID
+            if (chatgptAllModelView && chatgptAllModelView.style.display !== 'flex') {
+                 chatgptAllModelView.style.display = 'flex';
             }
         }
 
@@ -761,7 +787,46 @@ document.addEventListener('DOMContentLoaded', () => {
             messageWrapper.id = 'typing-indicator-message';
             currentTypingIndicator = messageWrapper;
         } else {
-            messageBubble.innerHTML = formatTextContent(message);
+            const rawMessageContent = message || "";
+            messageBubble.innerHTML = formatTextContentEnhanced(rawMessageContent); // Use enhanced formatter
+
+            if (sender === 'ai') {
+                const controlsDiv = document.createElement('div');
+                controlsDiv.className = 'message-controls';
+
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'icon-button message-copy-btn';
+                copyBtn.title = translations.copy_button_title || "Copy";
+                copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
+                copyBtn.addEventListener('click', () => {
+                    navigator.clipboard.writeText(rawMessageContent).then(() => {
+                        copyBtn.innerHTML = `<svg viewBox="0 0 24 24" class="icon"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>`;
+                        setTimeout(() => {
+                             copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
+                        }, 1500);
+                    }).catch(err => console.error('Failed to copy text: ', err));
+                });
+
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'icon-button message-download-btn';
+                downloadBtn.title = translations.download_button_title || "Download";
+                downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>';
+                downloadBtn.addEventListener('click', () => {
+                    const filename = `ai_chat_response_${Date.now()}.txt`;
+                    const blob = new Blob([rawMessageContent], { type: 'text/plain;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                });
+                controlsDiv.appendChild(copyBtn);
+                controlsDiv.appendChild(downloadBtn);
+                messageBubble.appendChild(controlsDiv);
+            }
         }
 
         messageWrapper.append(avatarContainer, messageBubble); chatMessagesArea.appendChild(messageWrapper);
@@ -1514,7 +1579,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Remove existing typing indicator before adding a new message or indicator
         if (geminiTypingIndicator && geminiTypingIndicator.parentNode) {
             geminiTypingIndicator.remove();
-            geminiTypingIndicator = null;
+            chatgptAllModelTypingIndicator = null;
         }
 
         const messageWrapper = document.createElement('div');
@@ -1536,14 +1601,53 @@ document.addEventListener('DOMContentLoaded', () => {
             messageWrapper.id = 'gemini-typing-indicator-message'; // Unique ID if needed
             geminiTypingIndicator = messageWrapper;
         } else {
-            // Sanitize and format message text
-            let formattedMessage = message ? formatTextContent(message) : ''; // formatTextContent from existing chat
+            const rawMessageContent = message || "";
+            // Sanitize and format message text - USE ENHANCED
+            let formattedMessage = formatTextContentEnhanced(rawMessageContent);
 
             if (imageUrl) {
                 // Simple image display, can be enhanced with CSS
                 formattedMessage += `<br><img src="${escapeHTML(imageUrl)}" alt="Chat Image" style="max-width: 100%; border-radius: 8px; margin-top: 8px;">`;
             }
             messageBubble.innerHTML = formattedMessage;
+
+            if (sender === 'gemini') { // Or 'ai' if that's how Gemini identifies itself
+                const controlsDiv = document.createElement('div');
+                controlsDiv.className = 'message-controls';
+
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'icon-button message-copy-btn';
+                copyBtn.title = translations.copy_button_title || "Copy";
+                copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
+                copyBtn.addEventListener('click', () => {
+                    navigator.clipboard.writeText(rawMessageContent).then(() => {
+                        copyBtn.innerHTML = `<svg viewBox="0 0 24 24" class="icon"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>`;
+                        setTimeout(() => {
+                             copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
+                        }, 1500);
+                    }).catch(err => console.error('Failed to copy text: ', err));
+                });
+
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'icon-button message-download-btn';
+                downloadBtn.title = translations.download_button_title || "Download";
+                downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>';
+                downloadBtn.addEventListener('click', () => {
+                    const filename = `gemini_chat_response_${Date.now()}.txt`;
+                    const blob = new Blob([rawMessageContent], { type: 'text/plain;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                });
+                controlsDiv.appendChild(copyBtn);
+                controlsDiv.appendChild(downloadBtn);
+                messageBubble.appendChild(controlsDiv);
+            }
         }
 
         messageWrapper.append(avatarContainer, messageBubble);
@@ -1767,11 +1871,50 @@ document.addEventListener('DOMContentLoaded', () => {
             messageWrapper.id = 'gpt4o-typing-indicator-message';
             gpt4oTypingIndicator = messageWrapper;
         } else {
-            let formattedMessage = message ? formatTextContent(message) : '';
+            const rawMessageContent = message || "";
+            let formattedMessage = formatTextContentEnhanced(rawMessageContent); // Use enhanced formatter
             if (imageUrl) {
                 formattedMessage += `<br><img src="${escapeHTML(imageUrl)}" alt="Chat Image" style="max-width: 100%; border-radius: 8px; margin-top: 8px;">`;
             }
             messageBubble.innerHTML = formattedMessage;
+
+            if (sender === 'ai') { // Check for AI sender
+                const controlsDiv = document.createElement('div');
+                controlsDiv.className = 'message-controls';
+
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'icon-button message-copy-btn';
+                copyBtn.title = translations.copy_button_title || "Copy";
+                copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
+                copyBtn.addEventListener('click', () => {
+                    navigator.clipboard.writeText(rawMessageContent).then(() => {
+                        copyBtn.innerHTML = `<svg viewBox="0 0 24 24" class="icon"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>`;
+                        setTimeout(() => {
+                             copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
+                        }, 1500);
+                    }).catch(err => console.error('Failed to copy text: ', err));
+                });
+
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'icon-button message-download-btn';
+                downloadBtn.title = translations.download_button_title || "Download";
+                downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>';
+                downloadBtn.addEventListener('click', () => {
+                    const filename = `gpt4o_chat_response_${Date.now()}.txt`;
+                    const blob = new Blob([rawMessageContent], { type: 'text/plain;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                });
+                controlsDiv.appendChild(copyBtn);
+                controlsDiv.appendChild(downloadBtn);
+                messageBubble.appendChild(controlsDiv);
+            }
         }
 
         messageWrapper.append(avatarContainer, messageBubble);
@@ -1946,7 +2089,46 @@ document.addEventListener('DOMContentLoaded', () => {
             messageWrapper.id = 'blackbox-typing-indicator-message';
             blackboxTypingIndicator = messageWrapper;
         } else {
-            messageBubble.innerHTML = formatTextContent(message);
+            const rawMessageContent = message || "";
+            messageBubble.innerHTML = formatTextContentEnhanced(rawMessageContent); // Use enhanced formatter
+
+            if (sender === 'ai') { // Check for AI sender ('ai' or specific like 'blackbox')
+                const controlsDiv = document.createElement('div');
+                controlsDiv.className = 'message-controls';
+
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'icon-button message-copy-btn';
+                copyBtn.title = translations.copy_button_title || "Copy";
+                copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
+                copyBtn.addEventListener('click', () => {
+                    navigator.clipboard.writeText(rawMessageContent).then(() => {
+                        copyBtn.innerHTML = `<svg viewBox="0 0 24 24" class="icon"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>`;
+                        setTimeout(() => {
+                             copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
+                        }, 1500);
+                    }).catch(err => console.error('Failed to copy text: ', err));
+                });
+
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'icon-button message-download-btn';
+                downloadBtn.title = translations.download_button_title || "Download";
+                downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>';
+                downloadBtn.addEventListener('click', () => {
+                    const filename = `blackbox_ai_response_${Date.now()}.txt`;
+                    const blob = new Blob([rawMessageContent], { type: 'text/plain;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                });
+                controlsDiv.appendChild(copyBtn);
+                controlsDiv.appendChild(downloadBtn);
+                messageBubble.appendChild(controlsDiv);
+            }
         }
         messageWrapper.append(avatarContainer, messageBubble);
         blackboxChatMessagesArea.appendChild(messageWrapper);
@@ -2066,7 +2248,46 @@ document.addEventListener('DOMContentLoaded', () => {
             messageWrapper.id = 'deepseek-typing-indicator-message';
             deepseekTypingIndicator = messageWrapper;
         } else {
-            messageBubble.innerHTML = formatTextContent(message);
+            const rawMessageContent = message || "";
+            messageBubble.innerHTML = formatTextContentEnhanced(rawMessageContent); // Use enhanced formatter
+
+            if (sender === 'ai') {
+                const controlsDiv = document.createElement('div');
+                controlsDiv.className = 'message-controls';
+
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'icon-button message-copy-btn';
+                copyBtn.title = translations.copy_button_title || "Copy";
+                copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
+                copyBtn.addEventListener('click', () => {
+                    navigator.clipboard.writeText(rawMessageContent).then(() => {
+                        copyBtn.innerHTML = `<svg viewBox="0 0 24 24" class="icon"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>`;
+                        setTimeout(() => {
+                             copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
+                        }, 1500);
+                    }).catch(err => console.error('Failed to copy text: ', err));
+                });
+
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'icon-button message-download-btn';
+                downloadBtn.title = translations.download_button_title || "Download";
+                downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>';
+                downloadBtn.addEventListener('click', () => {
+                    const filename = `deepseek_ai_response_${Date.now()}.txt`;
+                    const blob = new Blob([rawMessageContent], { type: 'text/plain;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                });
+                controlsDiv.appendChild(copyBtn);
+                controlsDiv.appendChild(downloadBtn);
+                messageBubble.appendChild(controlsDiv);
+            }
         }
         messageWrapper.append(avatarContainer, messageBubble);
         deepseekChatMessagesArea.appendChild(messageWrapper);
@@ -2169,7 +2390,46 @@ document.addEventListener('DOMContentLoaded', () => {
             messageWrapper.id = 'claude-typing-indicator-message';
             claudeTypingIndicator = messageWrapper;
         } else {
-            messageBubble.innerHTML = formatTextContent(message);
+            const rawMessageContent = message || "";
+            messageBubble.innerHTML = formatTextContentEnhanced(rawMessageContent); // Use enhanced formatter
+
+            if (sender === 'ai') {
+                const controlsDiv = document.createElement('div');
+                controlsDiv.className = 'message-controls';
+
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'icon-button message-copy-btn';
+                copyBtn.title = translations.copy_button_title || "Copy";
+                copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
+                copyBtn.addEventListener('click', () => {
+                    navigator.clipboard.writeText(rawMessageContent).then(() => {
+                        copyBtn.innerHTML = `<svg viewBox="0 0 24 24" class="icon"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>`;
+                        setTimeout(() => {
+                             copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
+                        }, 1500);
+                    }).catch(err => console.error('Failed to copy text: ', err));
+                });
+
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'icon-button message-download-btn';
+                downloadBtn.title = translations.download_button_title || "Download";
+                downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>';
+                downloadBtn.addEventListener('click', () => {
+                    const filename = `claude_haiku_ai_response_${Date.now()}.txt`;
+                    const blob = new Blob([rawMessageContent], { type: 'text/plain;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                });
+                controlsDiv.appendChild(copyBtn);
+                controlsDiv.appendChild(downloadBtn);
+                messageBubble.appendChild(controlsDiv);
+            }
         }
         messageWrapper.append(avatarContainer, messageBubble);
         claudeChatMessagesArea.appendChild(messageWrapper);
@@ -2246,33 +2506,34 @@ document.addEventListener('DOMContentLoaded', () => {
     if (claudeChatInputField) claudeChatInputField.addEventListener('keypress', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleClaudeHaikuAiSendMessage(); } });
     // --- END OF CLAUDE HAIKU AI CHAT LOGIC ---
 
-    // --- GEMINI ALL MODEL CHAT LOGIC ---
-    const geminiAllModelChatView = document.getElementById('gemini-all-model-view');
-    const geminiAllModelHeaderTitle = geminiAllModelChatView ? geminiAllModelChatView.querySelector('.chat-view-header h2') : null; // For potential dynamic updates
-    const geminiModelSelector = document.getElementById('gemini-model-selector');
-    const geminiAllModelChatMessagesArea = document.getElementById('gemini-all-model-chat-messages-area');
-    const geminiAllModelChatInputField = document.getElementById('gemini-all-model-chat-input-field');
-    const geminiAllModelChatSendButton = document.getElementById('gemini-all-model-chat-send-button');
-    const geminiAllModelAttachFileButton = document.getElementById('gemini-all-model-attach-file-button');
-    const geminiAllModelFileUpload = document.getElementById('gemini-all-model-file-upload');
-    const geminiAllModelFilePreviewContainer = document.getElementById('gemini-all-model-file-preview-container');
+    // --- CHATGPT ALL MODEL CHAT LOGIC --- // Renamed section
+    const chatgptAllModelChatView = document.getElementById('chatgpt-all-model-view'); // Renamed ID
+    const chatgptAllModelHeaderTitle = chatgptAllModelChatView ? chatgptAllModelChatView.querySelector('.chat-view-header h2') : null;
+    const chatgptModelSelector = document.getElementById('chatgpt-model-selector'); // Renamed ID
+    const chatgptAllModelChatMessagesArea = document.getElementById('chatgpt-all-model-chat-messages-area'); // Renamed ID
+    const chatgptAllModelChatInputField = document.getElementById('chatgpt-all-model-chat-input-field'); // Renamed ID
+    const chatgptAllModelChatSendButton = document.getElementById('chatgpt-all-model-chat-send-button'); // Renamed ID
+    const chatgptAllModelAttachFileButton = document.getElementById('chatgpt-all-model-attach-file-button'); // Renamed ID
+    const chatgptAllModelFileUpload = document.getElementById('chatgpt-all-model-file-upload'); // Renamed ID
+    const chatgptAllModelFilePreviewContainer = document.getElementById('chatgpt-all-model-file-preview-container'); // Renamed ID
 
-    const geminiAllModelHistoryKeyPrefix = 'geminiAllModelHistory_';
-    let geminiAllModelTypingIndicator = null;
-    let currentGeminiAllModelFile = null;
-    let supportedGeminiModels = [];
-    let currentSelectedGeminiModel = '';
-    const GEMINI_ALL_MODEL_DEFAULT_ROLEPLAY = "You're Gemini AI Assistant, a helpful and versatile AI model.";
+    const chatgptAllModelHistoryKeyPrefix = 'chatgptAllModelHistory_'; // Renamed key prefix
+    let chatgptAllModelTypingIndicator = null; // Renamed variable
+    let currentChatGptAllModelFile = null; // Renamed variable
+    let supportedChatGptModels = []; // Renamed variable
+    let currentSelectedChatGptModel = ''; // Renamed variable
+    const CHATGPT_ALL_MODEL_DEFAULT_ROLEPLAY = "You're ChatGPT, a helpful and versatile AI model by OpenAI."; // Updated roleplay
 
-    // Avatar for Gemini (can be reused)
-    const geminiOverallAvatarSvg = `<img src="https://www.gstatic.com/images/branding/product/2x/gemini_48dp.png" alt="Gemini" class="gemini-avatar-logo">`; // Reusing existing class for styling
+    // Avatar for ChatGPT (generic SVG for now, as per plan)
+    const chatgptOverallAvatarSvg = `<svg viewBox="0 0 24 24" class="icon chatgpt-avatar-logo"><path fill-rule="evenodd" clip-rule="evenodd" d="M12.0001 0C18.6275 0 24.0001 5.37258 24.0001 12C24.0001 18.6274 18.6275 24 12.0001 24C5.37266 24 0 18.6274 0 12C0 5.37258 5.37266 0 12.0001 0ZM6.75009 10.738L8.66259 12.0171L6.75009 13.2962V10.738ZM9.93759 15.4322L11.8501 16.7113L9.93759 17.9904V15.4322ZM9.93759 6.0437L11.8501 7.3228L9.93759 8.6019V6.0437ZM15.0001 10.738L13.0876 12.0171L15.0001 13.2962V10.738ZM17.2501 6.88469C16.0188 5.84979 14.4001 5.25 12.6001 5.25C10.8001 5.25 9.18134 5.84979 7.95009 6.88469L9.33759 7.77838C10.2563 7.01902 11.3626 6.60019 12.6001 6.60019C13.8376 6.60019 14.9438 7.01902 15.8626 7.77838L17.2501 6.88469ZM18.0001 10.1019V13.9322L19.9126 15.2113C20.3626 14.2498 20.6251 13.1721 20.6251 12C20.6251 10.8279 20.3626 9.75021 19.9126 8.7887L18.0001 10.1019ZM4.08759 8.7887C3.63759 9.75021 3.37509 10.8279 3.37509 12C3.37509 13.1721 3.63759 14.2498 4.08759 15.2113L6.00009 13.9322V10.1019L4.08759 8.7887ZM17.2501 17.1495L15.8626 16.2558C14.9438 17.0152 13.8376 17.434 12.6001 17.434C11.3626 17.434 10.2563 17.0152 9.33759 16.2558L7.95009 17.1495C9.18134 18.1844 10.8001 18.7842 12.6001 18.7842C14.4001 18.7842 16.0188 18.1844 17.2501 17.1495Z" fill="currentColor"></path></svg>`;
 
-    function addGeminiAllModelMessageToChat(message, sender, imageUrl = null, isTyping = false, messageId = null) {
-        if (!geminiAllModelChatMessagesArea) return;
+    function addChatGptAllModelMessageToChat(message, sender, imageUrl = null, isTyping = false, messageId = null) { // Renamed function
+        if (!chatgptAllModelChatMessagesArea) return;
 
-        if (geminiAllModelTypingIndicator && geminiAllModelTypingIndicator.parentNode) {
-            geminiAllModelTypingIndicator.remove();
-            geminiAllModelTypingIndicator = null;
+        // Corrected variable name here
+        if (chatgptAllModelTypingIndicator && chatgptAllModelTypingIndicator.parentNode) {
+            chatgptAllModelTypingIndicator.remove();
+            chatgptAllModelTypingIndicator = null;
         }
 
         const messageWrapper = document.createElement('div');
@@ -2282,22 +2543,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const avatarContainer = document.createElement('div');
         avatarContainer.classList.add('chat-avatar-container');
-        avatarContainer.innerHTML = sender === 'user' ? userAvatarSvg : geminiOverallAvatarSvg;
+        avatarContainer.innerHTML = sender === 'user' ? userAvatarSvg : chatgptOverallAvatarSvg; // Renamed avatar variable
 
         const messageBubble = document.createElement('div');
         messageBubble.classList.add('chat-bubble');
 
         if (isTyping) {
-            messageBubble.innerHTML = typingIndicatorHTML; // Reuse existing typing indicator
-            messageWrapper.id = 'gemini-all-model-typing-indicator';
-            geminiAllModelTypingIndicator = messageWrapper;
+            messageBubble.innerHTML = typingIndicatorHTML;
+            messageWrapper.id = 'chatgpt-all-model-typing-indicator'; // Renamed ID
+            chatgptAllModelTypingIndicator = messageWrapper; // Renamed variable
         } else {
-            // Placeholder for enhanced formatting
-            messageBubble.innerHTML = formatTextContentEnhanced(message || ""); // Use enhanced formatter
+            messageBubble.innerHTML = formatTextContentEnhanced(message || "");
             if (imageUrl) {
                  messageBubble.innerHTML += `<br><img src="${escapeHTML(imageUrl)}" alt="Chat Image" style="max-width: 100%; border-radius: 8px; margin-top: 8px;">`;
             }
-            // Add copy and download icons (basic structure for now)
             const controlsDiv = document.createElement('div');
             controlsDiv.className = 'message-controls';
 
@@ -2306,9 +2565,9 @@ document.addEventListener('DOMContentLoaded', () => {
             copyBtn.title = translations.copy_button_title || "Copy";
             copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
             copyBtn.addEventListener('click', () => {
-                const textToCopy = messageBubble.textContent || ""; // Or more sophisticated extraction
+                const textToCopy = messageBubble.textContent || "";
                 navigator.clipboard.writeText(textToCopy).then(() => {
-                    copyBtn.innerHTML = `<svg viewBox="0 0 24 24" class="icon"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>`; // Checkmark
+                    copyBtn.innerHTML = `<svg viewBox="0 0 24 24" class="icon"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>`;
                     setTimeout(() => {
                          copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
                     }, 1500);
@@ -2317,12 +2576,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const downloadBtn = document.createElement('button');
             downloadBtn.className = 'icon-button message-download-btn';
-            downloadBtn.title = translations.download_button_title || "Download"; // Add this key
+            downloadBtn.title = translations.download_button_title || "Download";
             downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>';
             downloadBtn.addEventListener('click', () => {
-                // Basic TXT download for now
                 const textContent = messageBubble.textContent || "";
-                const filename = `gemini_response_${Date.now()}.txt`;
+                const filename = `chatgpt_response_${Date.now()}.txt`; // Renamed filename
                 const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -2542,7 +2800,69 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Note: populateGeminiModelDropdown was already quite good.
-    // The main change is how fetchAndPopulateGeminiModels calls it and setInitialGeminiModelSelection.
+    // Renamed populateGeminiModelDropdown to populateChatGptModelDropdown
+    function populateChatGptModelDropdown() { // Renamed function
+        if (!chatgptModelSelector || !supportedChatGptModels || supportedChatGptModels.length === 0) return; // Renamed variables
+
+        const loadingOptionText = translations.chatgpt_model_select_default_option || 'Loading models...'; // Renamed translation key
+        const currentSelectorValue = chatgptModelSelector.value; // Renamed variable
+
+        chatgptModelSelector.innerHTML = ''; // Renamed variable
+
+        supportedChatGptModels.forEach(model => { // Renamed variable
+            const option = document.createElement('option');
+            option.value = model;
+            option.textContent = model;
+            chatgptModelSelector.appendChild(option); // Renamed variable
+        });
+
+        if (supportedChatGptModels.includes(currentSelectorValue)) { // Renamed variable
+            chatgptModelSelector.value = currentSelectorValue; // Renamed variable
+        } else if (supportedChatGptModels.length > 0) { // Renamed variable
+             const defaultModel = supportedChatGptModels.find(m => m.includes('gpt-4o-mini')) || // Prefer gpt-4o-mini
+                                  supportedChatGptModels.find(m => m.includes('gpt-3.5-turbo')) ||
+                                  supportedChatGptModels[0]; // Renamed variable
+            chatgptModelSelector.value = defaultModel; // Renamed variable
+        } else {
+            chatgptModelSelector.innerHTML = `<option value="">${loadingOptionText}</option>`; // Renamed variable
+        }
+        currentSelectedChatGptModel = chatgptModelSelector.value; // Renamed variables
+        if (currentSelectedChatGptModel) { // Renamed variable
+            localStorage.setItem('lastSelectedChatGptAllModel', currentSelectedChatGptModel); // Renamed local storage key and variable
+        }
+    }
+    // The main change is how fetchAndPopulateChatGptModels calls it and setInitialChatGptModelSelection.
+
+    function populateChatGptModelDropdown() {
+        if (!chatgptModelSelector || !supportedChatGptModels || supportedChatGptModels.length === 0) return;
+
+        const loadingOptionText = translations.chatgpt_model_select_default_option || 'Loading models...';
+        const currentSelectorValue = chatgptModelSelector.value;
+
+        chatgptModelSelector.innerHTML = '';
+
+        supportedChatGptModels.forEach(model => {
+            const option = document.createElement('option');
+            option.value = model;
+            option.textContent = model;
+            chatgptModelSelector.appendChild(option);
+        });
+
+        if (supportedChatGptModels.includes(currentSelectorValue)) {
+            chatgptModelSelector.value = currentSelectorValue;
+        } else if (supportedChatGptModels.length > 0) {
+             const defaultModel = supportedChatGptModels.find(m => m.includes('gpt-4o-mini')) ||
+                                  supportedChatGptModels.find(m => m.includes('gpt-3.5-turbo')) ||
+                                  supportedChatGptModels[0];
+            chatgptModelSelector.value = defaultModel;
+        } else {
+            chatgptModelSelector.innerHTML = `<option value="">${loadingOptionText}</option>`;
+        }
+        currentSelectedChatGptModel = chatgptModelSelector.value;
+        if (currentSelectedChatGptModel) {
+            localStorage.setItem('lastSelectedChatGptAllModel', currentSelectedChatGptModel);
+        }
+    }
 
     // Enhanced text formatting (initial version, can be expanded)
     function formatTextContentEnhanced(text) {
@@ -2553,151 +2873,132 @@ document.addEventListener('DOMContentLoaded', () => {
         resultText = resultText.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
             const languageClass = lang ? `language-${lang}` : 'language-plaintext';
             const escapedCode = escapeHTML(code.trim());
-            // data-code attribute for easy copying later
             return `<div class="code-block-wrapper"><pre><code class="${languageClass}" data-code="${escapeHTML(code.trim())}">${escapedCode}</code></pre><button class="copy-code-btn" title="${translations.copy_code_button_title || 'Copy Code'}"><svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg></button></div>`;
         });
-         // Simpler inline code `code`
         resultText = resultText.replace(/`([^`]+)`/g, '<code>$1</code>');
 
-
-        // Headings (Markdown-like)
         resultText = resultText.replace(/^### (.*$)/gim, '<h3>$1</h3>');
         resultText = resultText.replace(/^## (.*$)/gim, '<h4>$1</h4>');
-        resultText = resultText.replace(/^# (.*$)/gim, '<h2>$1</h2>'); // Added H1 support
+        resultText = resultText.replace(/^# (.*$)/gim, '<h2>$1</h2>');
 
-        // Bold text (**)
         resultText = resultText.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>');
-        // Italics text (*) - ensure it doesn't conflict if single * was meant for bold
         resultText = resultText.replace(/(?<!\*)\*([^*]+)\*(?!\*)/gim, '<em>$1</em>');
 
-
-        // Basic table formatting (very simplified, assumes simple pipe tables)
-        // This is a rudimentary attempt and might need a proper Markdown library for complex tables.
         if (resultText.includes('|')) {
             resultText = resultText.split('\n').map(line => {
                 if (line.startsWith('|') && line.endsWith('|')) {
                     const cells = line.slice(1, -1).split('|').map(cell => cell.trim());
-                    if (line.includes('---')) { // Header separator
-                        return ''; // Skip rendering separator line directly, CSS will handle it
+                    if (line.includes('---')) {
+                        return '';
                     }
-                    // Heuristic: If it's the first such line or after a separator, assume header
-                    // This logic is imperfect. A full Markdown parser is better.
-                    const cellTag = (prevLineWasHeaderSeparator || !isInsideTable) ? 'th' : 'td';
-                    // For simplicity, let's assume all are td for now and rely on CSS for first row styling
                     return `<tr>${cells.map(cell => `<td>${escapeHTML(cell)}</td>`).join('')}</tr>`;
                 }
                 return line;
             }).join('\n');
-            // Wrap recognized table rows in a table tag
             if (resultText.includes('<tr>')) {
                  resultText = resultText.replace(/((?:<tr>.*?<\/tr>\s*)+)/g, '<table><tbody>$1</tbody></table>');
             }
         }
-        // Line breaks
         resultText = resultText.replace(/\n/g, '<br>');
-
 
         return resultText;
     }
-    // Add event listener for dynamically created copy code buttons
     document.addEventListener('click', function(event) {
         if (event.target.classList.contains('copy-code-btn') || event.target.closest('.copy-code-btn')) {
             const button = event.target.closest('.copy-code-btn');
             const codeWrapper = button.closest('.code-block-wrapper');
             const codeElement = codeWrapper.querySelector('code');
-            const codeToCopy = codeElement.dataset.code || codeElement.innerText; // Use data-code for original
+            const codeToCopy = codeElement.dataset.code || codeElement.innerText;
             navigator.clipboard.writeText(codeToCopy).then(() => {
-                button.innerHTML = `<svg viewBox="0 0 24 24" class="icon"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>`; // Checkmark
+                button.innerHTML = `<svg viewBox="0 0 24 24" class="icon"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>`;
                  setTimeout(() => {
                     button.innerHTML = `<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>`;
                     button.title = translations.copy_code_button_title || 'Copy Code';
                 }, 2000);
             }).catch(err => {
                 console.error('Failed to copy code: ', err);
-                // Optionally, provide user feedback about the copy failure
             });
         }
     });
 
-
-    // File attachment logic for Gemini All Model
-    if (geminiAllModelAttachFileButton && geminiAllModelFileUpload) {
-        geminiAllModelAttachFileButton.addEventListener('click', () => geminiAllModelFileUpload.click());
-        geminiAllModelFileUpload.addEventListener('change', (event) => {
+    // File attachment logic for ChatGPT All Model
+    if (chatgptAllModelAttachFileButton && chatgptAllModelFileUpload) { // Renamed variables
+        chatgptAllModelAttachFileButton.addEventListener('click', () => chatgptAllModelFileUpload.click()); // Renamed variables
+        chatgptAllModelFileUpload.addEventListener('change', (event) => { // Renamed variable
             const file = event.target.files[0];
             if (file) {
-                currentGeminiAllModelFile = file;
-                if (geminiAllModelFilePreviewContainer) {
+                currentChatGptAllModelFile = file; // Renamed variable
+                if (chatgptAllModelFilePreviewContainer) { // Renamed variable
                     let previewHTML = `<span class="file-preview-name">${escapeHTML(file.name)} (${(file.size / 1024).toFixed(1)} KB)</span>`;
                     if (file.type.startsWith('image/')) {
                         const reader = new FileReader();
                         reader.onload = (e) => {
                             previewHTML += `<img src="${e.target.result}" alt="Preview" class="file-preview-image">`;
-                            geminiAllModelFilePreviewContainer.innerHTML = previewHTML;
+                            chatgptAllModelFilePreviewContainer.innerHTML = previewHTML; // Renamed variable
                         };
                         reader.readAsDataURL(file);
                     } else {
-                         geminiAllModelFilePreviewContainer.innerHTML = previewHTML;
+                         chatgptAllModelFilePreviewContainer.innerHTML = previewHTML; // Renamed variable
                     }
                 }
             } else {
-                currentGeminiAllModelFile = null;
-                if (geminiAllModelFilePreviewContainer) geminiAllModelFilePreviewContainer.innerHTML = "";
+                currentChatGptAllModelFile = null; // Renamed variable
+                if (chatgptAllModelFilePreviewContainer) chatgptAllModelFilePreviewContainer.innerHTML = ""; // Renamed variable
             }
         });
     }
 
-    async function handleGeminiAllModelSendMessage() {
-        if (!geminiAllModelChatInputField || !chatUID || !currentSelectedGeminiModel) {
-            if (!currentSelectedGeminiModel) alert(translations.gemini_select_model_alert || "Please select a Gemini model first.");
+    async function handleChatGptAllModelSendMessage() { // Renamed function
+        if (!chatgptAllModelChatInputField || !chatUID || !currentSelectedChatGptModel) { // Renamed variables
+            if (!currentSelectedChatGptModel) alert(translations.chatgpt_select_model_alert || "Please select a ChatGPT model first."); // Renamed variable and translation key
             return;
         }
-        const messageText = geminiAllModelChatInputField.value.trim();
-        if (!messageText && !currentGeminiAllModelFile) {
-            alert(translations.gemini_type_message_or_attach_file_alert || "Please type a message or attach a file.");
+        const messageText = chatgptAllModelChatInputField.value.trim(); // Renamed variable
+        if (!messageText && !currentChatGptAllModelFile) { // Renamed variable
+            alert(translations.chatgpt_type_message_or_attach_file_alert || "Please type a message or attach a file."); // Renamed translation key
             return;
         }
 
         let tempPreviewUrl = null;
-        if (currentGeminiAllModelFile && currentGeminiAllModelFile.type.startsWith('image/')) {
-            tempPreviewUrl = URL.createObjectURL(currentGeminiAllModelFile);
+        if (currentChatGptAllModelFile && currentChatGptAllModelFile.type.startsWith('image/')) { // Renamed variable
+            tempPreviewUrl = URL.createObjectURL(currentChatGptAllModelFile); // Renamed variable
         }
         const messageId = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        addGeminiAllModelMessageToChat(messageText || (currentGeminiAllModelFile ? `File: ${currentGeminiAllModelFile.name}`: ""), 'user', tempPreviewUrl, false, messageId);
-        saveGeminiAllModelChatHistory(messageText || (currentGeminiAllModelFile ? `File: ${currentGeminiAllModelFile.name}`: ""), 'user', tempPreviewUrl, currentSelectedGeminiModel, messageId);
+        addChatGptAllModelMessageToChat(messageText || (currentChatGptAllModelFile ? `File: ${currentChatGptAllModelFile.name}`: ""), 'user', tempPreviewUrl, false, messageId); // Renamed function and variable
+        saveChatGptAllModelChatHistory(messageText || (currentChatGptAllModelFile ? `File: ${currentChatGptAllModelFile.name}`: ""), 'user', tempPreviewUrl, currentSelectedChatGptModel, messageId); // Renamed function and variables
 
-        trackActivity('gemini_all_model_sent', {
+        trackActivity('chatgpt_all_model_sent', { // Renamed activity type
             messageLength: messageText.length,
-            hasFile: !!currentGeminiAllModelFile,
-            model: currentSelectedGeminiModel,
-            fileName: currentGeminiAllModelFile ? currentGeminiAllModelFile.name : null,
-            fileType: currentGeminiAllModelFile ? currentGeminiAllModelFile.type : null
+            hasFile: !!currentChatGptAllModelFile, // Renamed variable
+            model: currentSelectedChatGptModel, // Renamed variable
+            fileName: currentChatGptAllModelFile ? currentChatGptAllModelFile.name : null, // Renamed variable
+            fileType: currentChatGptAllModelFile ? currentChatGptAllModelFile.type : null // Renamed variable
         });
 
         const formData = new FormData();
         formData.append('uid', chatUID);
-        formData.append('model', currentSelectedGeminiModel);
+        formData.append('model', currentSelectedChatGptModel); // Renamed variable
         if (messageText) formData.append('ask', messageText);
-        if (currentGeminiAllModelFile) formData.append('file', currentGeminiAllModelFile, currentGeminiAllModelFile.name);
-        formData.append('roleplay', GEMINI_ALL_MODEL_DEFAULT_ROLEPLAY); // Or make this configurable
+        if (currentChatGptAllModelFile) formData.append('file', currentChatGptAllModelFile, currentChatGptAllModelFile.name); // Renamed variable
+        formData.append('roleplay', CHATGPT_ALL_MODEL_DEFAULT_ROLEPLAY); // Renamed variable
 
-        geminiAllModelChatInputField.value = '';
-        geminiAllModelFileUpload.value = null; // Reset file input
-        const oldFile = currentGeminiAllModelFile; // To revoke object URL later if it was an image
-        currentGeminiAllModelFile = null;
-        if (geminiAllModelFilePreviewContainer) geminiAllModelFilePreviewContainer.innerHTML = "";
+        chatgptAllModelChatInputField.value = ''; // Renamed variable
+        chatgptAllModelFileUpload.value = null; // Renamed variable
+        const oldFile = currentChatGptAllModelFile; // Renamed variable
+        currentChatGptAllModelFile = null; // Renamed variable
+        if (chatgptAllModelFilePreviewContainer) chatgptAllModelFilePreviewContainer.innerHTML = ""; // Renamed variable
 
-        geminiAllModelChatInputField.disabled = true;
-        if (geminiAllModelChatSendButton) geminiAllModelChatSendButton.disabled = true;
-        if (geminiAllModelAttachFileButton) geminiAllModelAttachFileButton.disabled = true;
-        if (geminiModelSelector) geminiModelSelector.disabled = true;
+        chatgptAllModelChatInputField.disabled = true; // Renamed variable
+        if (chatgptAllModelChatSendButton) chatgptAllModelChatSendButton.disabled = true; // Renamed variable
+        if (chatgptAllModelAttachFileButton) chatgptAllModelAttachFileButton.disabled = true; // Renamed variable
+        if (chatgptModelSelector) chatgptModelSelector.disabled = true; // Renamed variable
 
-        addGeminiAllModelMessageToChat(null, 'ai', null, true);
+        addChatGptAllModelMessageToChat(null, 'ai', null, true); // Renamed function
 
         try {
-            const response = await fetch('/api/gemini-all-model', { method: 'POST', body: formData });
-            if (geminiAllModelTypingIndicator) geminiAllModelTypingIndicator.remove();
-             if (tempPreviewUrl && oldFile && oldFile.type.startsWith('image/')) { // Revoke only if it was an image object URL
+            const response = await fetch('/api/chatgpt-all-model', { method: 'POST', body: formData }); // Renamed API endpoint
+            if (chatgptAllModelTypingIndicator) chatgptAllModelTypingIndicator.remove(); // Renamed variable
+             if (tempPreviewUrl && oldFile && oldFile.type.startsWith('image/')) {
                 URL.revokeObjectURL(tempPreviewUrl);
             }
 
@@ -2708,36 +3009,53 @@ document.addEventListener('DOMContentLoaded', () => {
             const aiResponse = await response.json();
 
             if (aiResponse.supported_models && Array.isArray(aiResponse.supported_models)) {
-                supportedGeminiModels = aiResponse.supported_models;
-                localStorage.setItem('supportedGeminiModels', JSON.stringify(supportedGeminiModels));
-                populateGeminiModelDropdown(); // Repopulate with potentially new list, preserving selection
+                supportedChatGptModels = aiResponse.supported_models; // Renamed variable
+                localStorage.setItem('supportedChatGptModels', JSON.stringify(supportedChatGptModels)); // Renamed cache key and variable
+                populateChatGptModelDropdown(); // Renamed function
             }
 
             if (aiResponse && aiResponse.response) {
                 const aiMessageId = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-                addGeminiAllModelMessageToChat(aiResponse.response, 'ai', null, false, aiMessageId); // No image URL from AI here
-                saveGeminiAllModelChatHistory(aiResponse.response, 'ai', null, aiResponse.model_used || currentSelectedGeminiModel, aiMessageId);
+                addChatGptAllModelMessageToChat(aiResponse.response, 'ai', null, false, aiMessageId); // Renamed function
+                saveChatGptAllModelChatHistory(aiResponse.response, 'ai', null, aiResponse.model_used || currentSelectedChatGptModel, aiMessageId); // Renamed function and variable
             } else {
-                throw new Error(translations.invalid_response_from_ai.replace('{aiName}', 'Gemini All Model') || "Invalid response structure from Gemini All Model AI.");
+                throw new Error(translations.invalid_response_from_ai.replace('{aiName}', 'ChatGPT All Model') || "Invalid response structure from ChatGPT All Model AI."); // Updated error message
             }
         } catch (error) {
-            console.error('Error with Gemini All Model:', error);
-            if (geminiAllModelTypingIndicator) geminiAllModelTypingIndicator.remove();
+            console.error('Error with ChatGPT All Model:', error); // Updated error message
+            if (chatgptAllModelTypingIndicator) chatgptAllModelTypingIndicator.remove(); // Renamed variable
             const errorMsg = translations.error_ai_connection || "Error: {error} Could not connect to {aiName}.";
-            addGeminiAllModelMessageToChat(errorMsg.replace('{error}', error.message).replace('{aiName}', 'Gemini All Model'), 'ai');
+            addChatGptAllModelMessageToChat(errorMsg.replace('{error}', error.message).replace('{aiName}', 'ChatGPT All Model'), 'ai'); // Renamed function and updated error message
         } finally {
-            geminiAllModelChatInputField.disabled = false;
-            if (geminiAllModelChatSendButton) geminiAllModelChatSendButton.disabled = false;
-            if (geminiAllModelAttachFileButton) geminiAllModelAttachFileButton.disabled = false;
-            if (geminiModelSelector) geminiModelSelector.disabled = false;
-            if (geminiAllModelChatInputField) geminiAllModelChatInputField.focus();
+            chatgptAllModelChatInputField.disabled = false; // Renamed variable
+            if (chatgptAllModelChatSendButton) chatgptAllModelChatSendButton.disabled = false; // Renamed variable
+            if (chatgptAllModelAttachFileButton) chatgptAllModelAttachFileButton.disabled = false; // Renamed variable
+            if (chatgptModelSelector) chatgptModelSelector.disabled = false; // Renamed variable
+            if (chatgptAllModelChatInputField) chatgptAllModelChatInputField.focus(); // Renamed variable
         }
     }
 
-    if (geminiAllModelChatSendButton) geminiAllModelChatSendButton.addEventListener('click', handleGeminiAllModelSendMessage);
-    if (geminiAllModelChatInputField) geminiAllModelChatInputField.addEventListener('keypress', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleGeminiAllModelSendMessage(); }});
-    // --- END OF GEMINI ALL MODEL CHAT LOGIC ---
+    if (chatgptAllModelChatSendButton) chatgptAllModelChatSendButton.addEventListener('click', handleChatGptAllModelSendMessage); // Renamed variables and function
+    if (chatgptAllModelChatInputField) chatgptAllModelChatInputField.addEventListener('keypress', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleChatGptAllModelSendMessage(); }}); // Renamed variables and function
+    // --- END OF CHATGPT ALL MODEL CHAT LOGIC --- // Renamed section
 
+    if (chatgptModelSelector) { // Event listener for the renamed selector
+        chatgptModelSelector.addEventListener('change', () => {
+            currentSelectedChatGptModel = chatgptModelSelector.value;
+            if (currentSelectedChatGptModel) {
+                localStorage.setItem('lastSelectedChatGptAllModel', currentSelectedChatGptModel);
+                loadChatGptAllModelChatHistory(currentSelectedChatGptModel);
+                if (chatgptAllModelChatInputField && translations.chatgpt_all_model_placeholder_dynamic) {
+                    chatgptAllModelChatInputField.placeholder = translations.chatgpt_all_model_placeholder_dynamic.replace('{modelName}', currentSelectedChatGptModel);
+                } else if (chatgptAllModelChatInputField) {
+                    chatgptAllModelChatInputField.placeholder = `Ask ${currentSelectedChatGptModel}...`;
+                }
+            } else {
+                if (chatgptAllModelChatMessagesArea) chatgptAllModelChatMessagesArea.innerHTML = "";
+                if (chatgptAllModelChatInputField) chatgptAllModelChatInputField.placeholder = translations.chatgpt_all_model_placeholder || "Ask ChatGPT (any model)...";
+            }
+        });
+    }
 
     // --- EMAIL GENERATOR LOGIC ---
     const generateTempEmailButton = document.getElementById('generate-temp-email-button');

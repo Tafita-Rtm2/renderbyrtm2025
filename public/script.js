@@ -2455,7 +2455,94 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     // Initial population attempt (might be empty until first API call)
-    // fetchAndPopulateGeminiModels(); // Call this when the view is shown
+    // fetchAndPopulateGeminiModels(); // This will be called in showView
+
+    async function fetchAndPopulateGeminiModels() {
+        if (!geminiModelSelector) return;
+
+        const cachedModels = localStorage.getItem('supportedGeminiModelsList');
+        if (cachedModels) {
+            try {
+                supportedGeminiModels = JSON.parse(cachedModels);
+                if (Array.isArray(supportedGeminiModels) && supportedGeminiModels.length > 0) {
+                    populateGeminiModelDropdown();
+                    setInitialGeminiModelSelection();
+                    return; // Models loaded from cache
+                }
+            } catch (e) {
+                console.error("Error parsing cached supportedGeminiModelsList", e);
+                localStorage.removeItem('supportedGeminiModelsList'); // Clear corrupted cache
+            }
+        }
+
+        // If not cached or cache was invalid, fetch from API
+        geminiModelSelector.innerHTML = `<option value="" data-translate="gemini_model_select_default_option">${translations.gemini_model_select_default_option || 'Loading models...'}</option>`;
+        try {
+            // Make a lightweight call to get models.
+            // Using a default cheap model and a simple query.
+            // The backend is now designed to return supported_models even if 'answer' isn't the focus.
+            const response = await fetch('/api/gemini-all-model', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ask: "Hello", // A minimal query
+                    model: "gemini-1.5-flash-latest", // A known, likely cheap default model
+                    uid: chatUID, // UID is required by the backend route
+                    roleplay: "System" // Minimal roleplay
+                })
+            });
+
+            if (!response.ok) {
+                const errData = await response.json().catch(() => null);
+                const errorMsg = errData?.error || `Failed to fetch models list: ${response.statusText}`;
+                console.error("Error fetching Gemini models list:", errorMsg);
+                geminiModelSelector.innerHTML = `<option value="">${translations.gemini_models_load_error || 'Error loading models'}</option>`;
+                return;
+            }
+
+            const data = await response.json();
+            if (data && Array.isArray(data.supported_models) && data.supported_models.length > 0) {
+                supportedGeminiModels = data.supported_models;
+                localStorage.setItem('supportedGeminiModelsList', JSON.stringify(supportedGeminiModels));
+                populateGeminiModelDropdown();
+                setInitialGeminiModelSelection();
+            } else {
+                console.warn("No supported models returned from API or list is empty.");
+                geminiModelSelector.innerHTML = `<option value="">${translations.gemini_no_models_available || 'No models available'}</option>`; // Add this key
+            }
+        } catch (error) {
+            console.error('Error in fetchAndPopulateGeminiModels:', error);
+            geminiModelSelector.innerHTML = `<option value="">${translations.gemini_models_load_error || 'Error loading models'}</option>`;
+        }
+    }
+
+    function setInitialGeminiModelSelection() {
+        if (!geminiModelSelector || supportedGeminiModels.length === 0) return;
+
+        const lastSelected = localStorage.getItem('lastSelectedGeminiAllModel');
+        if (lastSelected && supportedGeminiModels.includes(lastSelected)) {
+            geminiModelSelector.value = lastSelected;
+        } else {
+            // Default to a common flash model if available, or the first one
+            const defaultModel = supportedGeminiModels.find(m => m.includes('gemini-1.5-flash-latest')) ||
+                                 supportedGeminiModels.find(m => m.includes('gemini-1.5-flash')) ||
+                                 supportedGeminiModels[0];
+            geminiModelSelector.value = defaultModel;
+        }
+        currentSelectedGeminiModel = geminiModelSelector.value;
+        if (currentSelectedGeminiModel) {
+            localStorage.setItem('lastSelectedGeminiAllModel', currentSelectedGeminiModel);
+            loadGeminiAllModelChatHistory(currentSelectedGeminiModel); // Load history for the selected model
+            if(geminiAllModelChatInputField && translations.gemini_all_model_placeholder_dynamic) {
+                 geminiAllModelChatInputField.placeholder = translations.gemini_all_model_placeholder_dynamic.replace('{modelName}', currentSelectedGeminiModel);
+            } else if (geminiAllModelChatInputField) {
+                 geminiAllModelChatInputField.placeholder = `Ask ${currentSelectedGeminiModel}...`;
+            }
+        }
+    }
+
+    // Note: populateGeminiModelDropdown was already quite good.
+    // The main change is how fetchAndPopulateGeminiModels calls it and setInitialGeminiModelSelection.
 
     // Enhanced text formatting (initial version, can be expanded)
     function formatTextContentEnhanced(text) {

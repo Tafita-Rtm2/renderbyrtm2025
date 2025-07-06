@@ -3200,8 +3200,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- FIN DE LA LOGIQUE DU GÉNÉRATEUR D'EMAIL ---
 
     // --- ChatGPT All Models Logic ---
-    const chatGPTAllModelsView = document.getElementById('chatgpt-all-models-view');
-    const chatGPTModelSelector = document.getElementById('chatgpt-model-selector');
+    const chatGPTAllModelsView = document.getElementById('chatgpt-all-models-view'); // Added in HTML Step 5
+    const chatGPTModelSelector = document.getElementById('chatgpt-model-selector'); // Added in HTML Step 5
     const chatGPTAllModelsChatMessagesArea = document.getElementById('chatgpt-all-models-chat-messages-area');
     const chatGPTAllModelsChatInputField = document.getElementById('chatgpt-all-models-chat-input-field');
     const chatGPTAllModelsChatSendButton = document.getElementById('chatgpt-all-models-chat-send-button');

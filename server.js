@@ -6,126 +6,23 @@ const multer = require('multer'); // For handling file uploads
 const fs = require('fs'); // For file system operations like deleting files
 
 // Configure Multer for disk storage
-const GEMINI_TEMP_UPLOAD_PATH = 'public/uploads/gemini_temp/';
-const GEMINI_ALL_MODEL_UPLOAD_PATH = 'public/uploads/gemini_all_model_temp/';
+
+// Original UPLOAD_PATH for existing Gemini Vision and GPT-4o Vision
+const LEGACY_GEMINI_UPLOAD_PATH = 'public/uploads/gemini_temp/';
+// New UPLOAD_PATH for the "Gemini All Model" feature
+const GEMINI_ALL_MODEL_TEMP_UPLOAD_PATH = 'public/uploads/gemini_all_model_temp/';
 
 // Ensure upload directories exist
-[GEMINI_TEMP_UPLOAD_PATH, GEMINI_ALL_MODEL_UPLOAD_PATH].forEach(dir => {
+[LEGACY_GEMINI_UPLOAD_PATH, GEMINI_ALL_MODEL_TEMP_UPLOAD_PATH].forEach(dir => {
     if (!fs.existsSync(dir)){
         fs.mkdirSync(dir, { recursive: true });
     }
 });
 
-// --- Gemini All Model API Route ---
-app.post('/api/gemini-all-model', uploadGeminiAllModel.single('file'), async (req, res) => {
-    const { ask, model, uid, roleplay, max_tokens } = req.body;
-    let clientUploadedFileUrl = req.body.file_url; // If client sends a URL directly
-
-    let tempLocalPath = null;
-    let publicFileUrl = null; // This will be the URL passed to the haji-mix-api
-
-    if (!ask && !req.file && !clientUploadedFileUrl) {
-        return res.status(400).json({ error: 'Parameter "ask" or a file/file_url is required.' });
-    }
-    if (!uid) {
-        if (req.file) fs.unlinkSync(req.file.path); // Clean up if UID is missing early
-        return res.status(400).json({ error: 'Parameter "uid" is required.' });
-    }
-    if (!model) {
-        if (req.file) fs.unlinkSync(req.file.path);
-        return res.status(400).json({ error: 'Parameter "model" is required (e.g., gemini-1.5-flash).' });
-    }
-
-    if (req.file) {
-        tempLocalPath = req.file.path;
-        // Construct the public URL for the locally uploaded file
-        const APP_BASE_URL = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
-        publicFileUrl = new URL(`/uploads/gemini_all_model_temp/${req.file.filename}`, APP_BASE_URL).toString();
-        console.log(`Gemini All Model: File temporarily saved at ${tempLocalPath}, accessible via ${publicFileUrl}`);
-    } else if (clientUploadedFileUrl) {
-        // If client provided a URL directly, use that. Validate it lightly.
-        try {
-            const parsedUrl = new URL(clientUploadedFileUrl);
-            if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
-                throw new Error("Invalid file URL protocol.");
-            }
-            publicFileUrl = clientUploadedFileUrl;
-            console.log(`Gemini All Model: Using client-provided file URL: ${publicFileUrl}`);
-        } catch (e) {
-            console.error("Invalid file_url provided by client:", e.message);
-            return res.status(400).json({ error: `Invalid file_url: ${e.message}` });
-        }
-    }
-
-    let hajiApiUrl = `https://haji-mix-api.gleeze.com/api/gemini?uid=${encodeURIComponent(uid)}&model=${encodeURIComponent(model)}&api_key=${HAJI_MIX_GEMINI_API_KEY}`;
-    if (ask) {
-        hajiApiUrl += `&ask=${encodeURIComponent(ask)}`;
-    }
-    if (publicFileUrl) {
-        hajiApiUrl += `&file_url=${encodeURIComponent(publicFileUrl)}`;
-    }
-    if (roleplay) {
-        hajiApiUrl += `&roleplay=${encodeURIComponent(roleplay)}`;
-    }
-    if (max_tokens) {
-        hajiApiUrl += `&max_tokens=${encodeURIComponent(max_tokens)}`;
-    }
-    // Note: google_api_key is omitted as per plan, assuming haji-mix-api handles it or it's not strictly needed.
-
-    try {
-        console.log(`Calling Haji Mix Gemini API: ${hajiApiUrl.substring(0,300)}...`);
-        const apiResponse = await fetch(hajiApiUrl);
-        const responseText = await apiResponse.text();
-
-        if (tempLocalPath) { // Clean up locally uploaded file after the API call
-            fs.unlink(tempLocalPath, (err) => {
-                if (err) console.error("Error deleting temporary file for Gemini All Model:", err);
-                else console.log("Temporary file for Gemini All Model deleted:", tempLocalPath);
-            });
-        }
-
-        if (!apiResponse.ok) {
-            let errorJson = { error: `External Haji Mix Gemini API Error: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
-            try { errorJson = JSON.parse(responseText); if(!errorJson.error && !errorJson.message) { errorJson.error = `External Haji Mix Gemini API Error: ${apiResponse.status} ${apiResponse.statusText}`; } } catch (e) { /* Not JSON */ }
-            console.error("Haji Mix Gemini API Error:", errorJson);
-            return res.status(apiResponse.status).json(errorJson);
-        }
-
-        let data;
-        try { data = JSON.parse(responseText); }
-        catch (e) {
-            console.warn('Haji Mix Gemini API response was not JSON, but status was OK. Response text:', responseText);
-            return res.status(500).json({ error: 'Failed to parse response from Haji Mix Gemini API.', details: responseText });
-        }
-
-        // The API returns: user_ask, model_used, answer, supported_models
-        // We need to return at least "answer" and "model_used".
-        // "supported_models" is useful for the client to update its dropdown.
-        if (data && data.answer) {
-            res.json({
-                author: data.model_used || model, // Use model_used from response, fallback to requested model
-                response: data.answer,
-                model_used: data.model_used, // Send back the actual model used
-                supported_models: data.supported_models // Send back the list of supported models
-            });
-        } else {
-            return res.status(500).json({ error: 'Unexpected response structure from Haji Mix Gemini API.', details: data });
-        }
-
-    } catch (error) {
-        console.error('Server error while calling Haji Mix Gemini API:', error);
-        if (tempLocalPath && fs.existsSync(tempLocalPath)) { // Ensure cleanup on error too
-            fs.unlink(tempLocalPath, (err) => {
-                if (err) console.error("Error deleting temporary file for Gemini All Model on error:", err);
-            });
-        }
-        return res.status(500).json({ error: 'Server error while processing Haji Mix Gemini API request.' });
-    }
-});
-
-const storageFactory = (uploadPath) => multer.diskStorage({
+// Storage configuration for legacy Gemini Vision and GPT-4o Vision
+const legacyGeminiStorage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, uploadPath);
+        cb(null, LEGACY_GEMINI_UPLOAD_PATH);
     },
     filename: function (req, file, cb) {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -133,16 +30,27 @@ const storageFactory = (uploadPath) => multer.diskStorage({
     }
 });
 
-const geminiTempStorage = storageFactory(GEMINI_TEMP_UPLOAD_PATH);
-const geminiAllModelStorage = storageFactory(GEMINI_ALL_MODEL_UPLOAD_PATH);
-
-const uploadGeminiTemp = multer({
-    storage: geminiTempStorage,
-    limits: { fileSize: 10 * 1024 * 1024 } // Limit file size to 10MB
+// Multer instance for legacy uploads (original Gemini Vision, GPT-4o Vision)
+const uploadLegacyVision = multer({
+    storage: legacyGeminiStorage,
+    limits: { fileSize: 10 * 1024 * 1024 } // Original limit 10MB
 });
+
+// Storage configuration for the new "Gemini All Model" feature
+const geminiAllModelStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, GEMINI_ALL_MODEL_TEMP_UPLOAD_PATH);
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+// Multer instance for "Gemini All Model" uploads
 const uploadGeminiAllModel = multer({
     storage: geminiAllModelStorage,
-    limits: { fileSize: 20 * 1024 * 1024 } // Limit file size to 20MB for potentially larger files
+    limits: { fileSize: 20 * 1024 * 1024 } // Limit file size to 20MB for this feature
 });
 
 
@@ -151,22 +59,22 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 // Serve static files from the upload directories
-app.use('/uploads/gemini_temp', express.static(path.join(__dirname, GEMINI_TEMP_UPLOAD_PATH)));
-app.use('/uploads/gemini_all_model_temp', express.static(path.join(__dirname, GEMINI_ALL_MODEL_UPLOAD_PATH)));
+app.use('/uploads/gemini_temp', express.static(path.join(__dirname, LEGACY_GEMINI_UPLOAD_PATH))); // For legacy
+app.use('/uploads/gemini_all_model_temp', express.static(path.join(__dirname, GEMINI_ALL_MODEL_TEMP_UPLOAD_PATH))); // For new Gemini All Model
 // Serve main public files
 app.use(express.static(path.join(__dirname, 'public')));
 // JSON parsing middleware
 app.use(express.json());
 
 
-// API Keys (can be here or further down, as long as before use in routes if routes are defined later)
+// API Keys
 const WEATHER_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
 const CHAT_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
 const IMAGE_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
 const GEMINI_API_URL = 'https://kaiz-apis.gleeze.com/api/gemini-vision';
-const GEMINI_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6'; // Votre clé API fournie
+const GEMINI_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
 const GPT4O_LATEST_API_URL = 'https://kaiz-apis.gleeze.com/api/gpt4o-latest';
-const GPT4O_LATEST_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6'; // Même clé API
+const GPT4O_LATEST_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
 
 // New AI Model API Keys
 const BLACKBOX_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
@@ -180,14 +88,14 @@ const TMDB_API_KEY = '973515c7684f56d1472bba67b13d676b';
 const TMDB_ACCESS_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI5NzM1MTVjNzY4NGY1NmQxNDcyYmJhNjdiMTNkNjc2YiIsIm5iZiI6MTc1MDc1NDgwNy41OTksInN1YiI6IjY4NWE2NWY3OWM3M2UyMWMzYWU2NGJmNSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.qofUiAxiL4ed8ONCxljkTqbsddbvFyVB4_Jwp_HyDnM';
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 
-// MongoDB Connection (can be here)
+// MongoDB Connection
 const mongoUri = "mongodb+srv://rtmtafita:tafitaniaina1206@rtmchat.pzebpqh.mongodb.net/?retryWrites=true&w=majority&appName=rtmchat";
 const client = new MongoClient(mongoUri);
 
 let portfolioDb;
 let commentsCollection;
-let userActivitiesCollection; // Added for user activity tracking
-let usersCollection; // For storing user names and UIDs
+let userActivitiesCollection;
+let usersCollection;
 
 async function connectDB() {
     try {
@@ -195,34 +103,19 @@ async function connectDB() {
         portfolioDb = client.db("portfolioDb");
         commentsCollection = portfolioDb.collection("comments");
         userActivitiesCollection = portfolioDb.collection("userActivities");
-        usersCollection = portfolioDb.collection("users"); // Initialize users collection
+        usersCollection = portfolioDb.collection("users");
         console.log("Successfully connected to MongoDB Atlas!");
 
-        // Indexes for commentsCollection
         await commentsCollection.createIndex({ createdAt: -1 });
-        console.log("Indexes ensured for comments collection.");
-
-        // Indexes for userActivitiesCollection
         await userActivitiesCollection.createIndex({ uid: 1 });
         await userActivitiesCollection.createIndex({ timestamp: -1 });
         await userActivitiesCollection.createIndex({ activityType: 1 });
-        console.log("Indexes ensured for userActivities collection.");
-
-        // Indexes for usersCollection
         await usersCollection.createIndex({ uid: 1 }, { unique: true });
         await usersCollection.createIndex({ name: 1 }, { unique: true });
-        console.log("Unique indexes ensured for uid and name in users collection.");
+        console.log("Indexes ensured for collections.");
 
     } catch (err) {
         console.error("Failed to connect to MongoDB Atlas or ensure indexes", err);
-        if (err.code === 11000 && err.keyPattern && err.keyPattern.name) {
-            console.warn("Warning: Duplicate name index error during setup. This might be okay if you are re-running after a partial setup, but ensure names are unique.");
-        } else if (err.code === 11000 && err.keyPattern && err.keyPattern.uid) {
-            console.warn("Warning: Duplicate UID index error during setup. This is highly unusual and might indicate a problem if UIDs are not unique from the client.");
-        }
-        // Decide if process should exit for all errors or just critical ones
-        // For now, let's keep process.exit(1) for general DB connection/setup failures
-        // process.exit(1); // Commenting out to allow server to start even if index creation has non-critical issues on re-run
     }
 }
 
@@ -231,23 +124,16 @@ const ADMIN_VERIFICATION_CODE = '2201018280';
 
 // --- ROUTES ---
 
-// --- Admin Verification API Route ---
+// Admin Verification
 app.post('/api/verify-admin', (req, res) => {
     const { adminCode } = req.body;
-
-    if (!adminCode) {
-        return res.status(400).json({ success: false, message: "Admin code is required" });
-    }
-
-    if (adminCode === ADMIN_VERIFICATION_CODE) {
-        return res.json({ success: true });
-    } else {
-        return res.status(401).json({ success: false, message: "Invalid admin code" });
-    }
+    if (!adminCode) return res.status(400).json({ success: false, message: "Admin code is required" });
+    if (adminCode === ADMIN_VERIFICATION_CODE) return res.json({ success: true });
+    return res.status(401).json({ success: false, message: "Invalid admin code" });
 });
 
-// --- Weather API Route ---
-app.get('/api/weather', async (req, res) => { /* ... existing unchanged code ... */
+// Weather
+app.get('/api/weather', async (req, res) => {
     const location = req.query.location;
     if (!location) { return res.status(400).json({ error: 'Location query parameter is required' }); }
     const weatherApiUrl = `https://kaiz-apis.gleeze.com/api/weather?q=${encodeURIComponent(location)}&apikey=${WEATHER_API_KEY}`;
@@ -267,567 +153,161 @@ app.get('/api/weather', async (req, res) => { /* ... existing unchanged code ...
     }
 });
 
-// GET /api/activities - Fetch user activities (for admin panel)
+// User Activities (Admin)
 app.get('/api/activities', async (req, res) => {
-    if (!userActivitiesCollection) {
-        return res.status(503).json({ error: "Database service not available." });
-    }
+    if (!userActivitiesCollection) return res.status(503).json({ error: "Database service not available." });
     try {
         const { uid, limit = 50, page = 1 } = req.query;
         const query = uid ? { uid } : {};
         const nLimit = parseInt(limit);
         const nPage = parseInt(page);
-
-        const options = {
-            sort: { timestamp: -1 },
-            limit: nLimit,
-            skip: (nPage - 1) * nLimit
-        };
-
+        const options = { sort: { timestamp: -1 }, limit: nLimit, skip: (nPage - 1) * nLimit };
         const activities = await userActivitiesCollection.find(query, options).toArray();
         const totalActivities = await userActivitiesCollection.countDocuments(query);
-
-        let uniqueVisitors = undefined; // Only calculate if no specific UID is queried
-        if (!uid) {
-            const distinctUIDs = await userActivitiesCollection.distinct('uid', {}); // Query all documents for distinct UIDs
-            uniqueVisitors = distinctUIDs.length;
-        }
-
-        res.status(200).json({
-            activities,
-            totalActivities, // This is total for the current query (all activities if no UID)
-            currentPage: nPage,
-            totalPages: Math.ceil(totalActivities / nLimit),
-            uniqueVisitors // This will be undefined if a UID was specified in query
-        });
-
+        let uniqueVisitors = uid ? undefined : (await userActivitiesCollection.distinct('uid', {})).length;
+        res.status(200).json({ activities, totalActivities, currentPage: nPage, totalPages: Math.ceil(totalActivities / nLimit), uniqueVisitors });
     } catch (error) {
         console.error("Error fetching activities:", error);
         res.status(500).json({ error: "Failed to fetch activities due to server error." });
     }
 });
 
-// POST /api/comments/:commentId/reply - Add/update admin reply to a comment
+// Admin Reply to Comment
 app.post('/api/comments/:commentId/reply', async (req, res) => {
-    if (!commentsCollection) {
-        return res.status(503).json({ error: "Database not connected." });
-    }
+    if (!commentsCollection) return res.status(503).json({ error: "Database not connected." });
     try {
         const { commentId } = req.params;
         const { replyText } = req.body;
-
-        if (!ObjectId.isValid(commentId)) {
-            return res.status(400).json({ error: "Invalid comment ID format." });
-        }
-        // replyText can be an empty string (to clear a reply)
-        if (replyText === undefined || typeof replyText !== 'string') {
-            return res.status(400).json({ error: 'Reply text must be a string.' });
-        }
-
-        const mongoDbCommentId = new ObjectId(commentId);
-        const updateFields = {
-            adminReplyText: replyText.trim(), // Store trimmed reply
-            adminReplyTimestamp: new Date()
-        };
-
-        // If replyText is empty, it effectively clears the reply.
-        // We still update the timestamp to know when it was last actioned.
-        // If you wanted to truly "remove" the reply fields, you'd use $unset here.
-        // For simplicity, setting to empty string is fine.
-
-        const updateResult = await commentsCollection.updateOne(
-            { _id: mongoDbCommentId },
-            { $set: updateFields }
-        );
-
-        if (updateResult.matchedCount === 0) {
-            return res.status(404).json({ error: "Comment not found." });
-        }
-
-        // Fetch the updated comment to return it
-        const updatedComment = await commentsCollection.findOne({ _id: mongoDbCommentId });
+        if (!ObjectId.isValid(commentId)) return res.status(400).json({ error: "Invalid comment ID format." });
+        if (replyText === undefined || typeof replyText !== 'string') return res.status(400).json({ error: 'Reply text must be a string.' });
+        const updateResult = await commentsCollection.updateOne({ _id: new ObjectId(commentId) }, { $set: { adminReplyText: replyText.trim(), adminReplyTimestamp: new Date() } });
+        if (updateResult.matchedCount === 0) return res.status(404).json({ error: "Comment not found." });
+        const updatedComment = await commentsCollection.findOne({ _id: new ObjectId(commentId) });
         res.status(200).json(updatedComment);
-
     } catch (error) {
         console.error("Error posting admin reply:", error);
         res.status(500).json({ error: "Failed to post admin reply due to server error." });
     }
 });
 
-// --- AI Chat API Route ---
+// Generic AI Chat / Story Generator
 app.post('/api/chat', async (req, res) => {
-    const { ask, uid, webSearch, isStoryRequestFlag } = req.body; // Added isStoryRequestFlag
-    if (!ask || !uid) { return res.status(400).json({ error: 'Parameters "ask" and "uid" are required.' }); }
-
+    const { ask, uid, webSearch, isStoryRequestFlag } = req.body;
+    if (!ask || !uid) return res.status(400).json({ error: 'Parameters "ask" and "uid" are required.' });
     const storyKeywords = ["create a short story about", "generate a story about", "write a story about", "tell me a story about", "story about"];
-    // Check both the flag and keywords for robustness
     const isStoryRequest = isStoryRequestFlag || storyKeywords.some(keyword => ask.toLowerCase().startsWith(keyword));
-
-    if (isStoryRequest) {
-        const storyApiUrl = `https://kaiz-apis.gleeze.com/api/gpt4o-latest?ask=${encodeURIComponent(ask)}&uid=${encodeURIComponent(uid)}&imageUrl=&apikey=${CHAT_API_KEY}`;
-        try {
-            const apiResponse = await fetch(storyApiUrl);
-            const responseText = await apiResponse.text(); // Get text first for better error handling
-            if (!apiResponse.ok) {
-                let errorJson = { error: `External Story API Error: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
-                try { errorJson = JSON.parse(responseText); if(!errorJson.error && !errorJson.message) { errorJson.error = `External Story API Error: ${apiResponse.status} ${apiResponse.statusText}`; } } catch (e) { /* Not JSON */ }
-                return res.status(apiResponse.status).json(errorJson);
-            }
-            let data;
-            try { data = JSON.parse(responseText); } catch (e) { return res.status(500).json({ error: 'Failed to parse response from Story API.', details: responseText }); }
-
-            if (data && data.response) {
-                // Ensure the response structure matches what the client expects for stories
-                res.json({ author: data.author || "Kaizenji", response: data.response });
-            } else {
-                return res.status(500).json({ error: 'Unexpected response structure from Story API.', details: data });
-            }
-        } catch (error) {
-            console.error('Server error while calling Story API:', error);
-            return res.status(500).json({ error: 'Server error while processing story generation request.' });
+    const apiTargetUrl = isStoryRequest ?
+        `https://kaiz-apis.gleeze.com/api/gpt4o-latest?ask=${encodeURIComponent(ask)}&uid=${encodeURIComponent(uid)}&imageUrl=&apikey=${CHAT_API_KEY}` :
+        `https://kaiz-apis.gleeze.com/api/gpt-4o?ask=${encodeURIComponent(ask)}&uid=${encodeURIComponent(uid)}&webSearch=${(webSearch === true || String(webSearch).toLowerCase() === 'on') ? 'on' : 'off'}&apikey=${CHAT_API_KEY}`;
+    const errorSource = isStoryRequest ? "Story API" : "Chat API";
+    try {
+        const apiResponse = await fetch(apiTargetUrl);
+        const responseText = await apiResponse.text();
+        if (!apiResponse.ok) {
+            let errorJson = { error: `External ${errorSource} Error: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
+            try { errorJson = JSON.parse(responseText); if(!errorJson.error && !errorJson.message) { errorJson.error = `External ${errorSource} Error: ${apiResponse.status} ${apiResponse.statusText}`; } } catch (e) { /* Not JSON */ }
+            return res.status(apiResponse.status).json(errorJson);
         }
-    } else {
-        // Existing chat logic using gpt-4o
-        const webSearchParam = (webSearch === true || String(webSearch).toLowerCase() === 'on') ? 'on' : 'off';
-        const chatApiUrl = `https://kaiz-apis.gleeze.com/api/gpt-4o?ask=${encodeURIComponent(ask)}&uid=${encodeURIComponent(uid)}&webSearch=${webSearchParam}&apikey=${CHAT_API_KEY}`;
-        try {
-            const apiResponse = await fetch(chatApiUrl);
-            const responseText = await apiResponse.text();
-            if (!apiResponse.ok) {
-                let errorJson = { error: `External Chat API Error: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
-                try { errorJson = JSON.parse(responseText); if (!errorJson.error && !errorJson.message) { errorJson.error = `External Chat API Error: ${apiResponse.status} ${apiResponse.statusText}`; } } catch (e) { /* Not JSON */ }
-                return res.status(apiResponse.status).json(errorJson);
-            }
-            let data;
-            try { data = JSON.parse(responseText); } catch (e) { return res.status(500).json({ error: 'Failed to parse response from Chat API.', details: responseText }); }
-            if (data && data.response) { res.json({ author: data.author || "Kaizenji", response: data.response }); }
-            else { return res.status(500).json({ error: 'Unexpected response structure from Chat API.', details: data }); }
-        } catch (error) {
-            console.error('Server error while calling Chat API:', error);
-            return res.status(500).json({ error: 'Server error while processing chat request.' });
-        }
+        let data;
+        try { data = JSON.parse(responseText); } catch (e) { return res.status(500).json({ error: `Failed to parse response from ${errorSource}.`, details: responseText }); }
+        if (data && data.response) res.json({ author: data.author || "Kaizenji", response: data.response });
+        else return res.status(500).json({ error: `Unexpected response structure from ${errorSource}.`, details: data });
+    } catch (error) {
+        console.error(`Server error while calling ${errorSource}:`, error);
+        return res.status(500).json({ error: `Server error while processing ${isStoryRequest ? 'story generation' : 'chat'} request.` });
     }
 });
 
-// --- Gemini Chat API Route ---
-// Apply multer middleware for single file upload, field name 'imageFile'
-app.post('/api/gemini-chat', upload.single('imageFile'), async (req, res) => {
-    // 'imageFile' should match the name attribute in FormData on the client-side
+// Gemini Vision Chat (Legacy)
+app.post('/api/gemini-chat', uploadLegacyVision.single('imageFile'), async (req, res) => {
     const { q, uid } = req.body;
-    let tempImagePath = null; // To store path of temporarily saved file
+    let tempImagePath = null;
     let publicImageUrl = null;
-
     if (req.file) {
         tempImagePath = req.file.path;
-        // Construct the public URL. This assumes the server is running at the root.
-        // For a robust solution, req.protocol and req.get('host') should be used if the app is behind a proxy or has a complex setup.
-        // For simplicity here, we'll use a relative path which the client might need to resolve, or an assumed absolute if deployed.
-        // The API likely needs an absolute public URL.
-        // NOTE: This URL will only be valid if the server is publicly accessible.
-        // And the path must match the one configured in app.use(express.static(...))
-        publicImageUrl = `/uploads/gemini_temp/${req.file.filename}`;
-        console.log(`Image temporarily saved at ${tempImagePath}, accessible via ${publicImageUrl}`);
+        const APP_BASE_URL = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+        publicImageUrl = new URL(`/uploads/gemini_temp/${req.file.filename}`, APP_BASE_URL).toString();
+        console.log(`Gemini Vision: Image temporarily saved at ${tempImagePath}, accessible via ${publicImageUrl}`);
     }
-
     if (!uid) {
-        if (tempImagePath) fs.unlinkSync(tempImagePath); // Clean up uploaded file if UID is missing
+        if (tempImagePath) fs.unlinkSync(tempImagePath);
         return res.status(400).json({ error: 'Parameter "uid" is required.' });
     }
-
     const questionText = q ? q.trim() : "";
     if (questionText === "" && !publicImageUrl) {
-        if (tempImagePath) fs.unlinkSync(tempImagePath); // Clean up
+        if (tempImagePath) fs.unlinkSync(tempImagePath);
         return res.status(400).json({ error: 'Either a question ("q") or an image file is required.' });
     }
-
     let fullApiUrl = `${GEMINI_API_URL}?uid=${encodeURIComponent(uid)}&apikey=${GEMINI_API_KEY}`;
-    if (questionText) {
-        fullApiUrl += `&q=${encodeURIComponent(questionText)}`;
-    }
-    if (publicImageUrl) {
-        // IMPORTANT: The API needs an ABSOLUTE URL.
-        // For now, sending the relative one. This will likely fail if the API is external
-        // unless the API client (this server) resolves it to its own public absolute URL.
-        // This needs to be adjusted based on actual deployment.
-        // A placeholder for where the app's public base URL would be.
-        const APP_BASE_URL = process.env.APP_URL || `${req.protocol}://${req.get('host')}`; // Attempt to get base URL
-        const absolutePublicImageUrl = new URL(publicImageUrl, APP_BASE_URL).toString();
-        fullApiUrl += `&imageUrl=${encodeURIComponent(absolutePublicImageUrl)}`;
-        console.log("Attempting to use absolute image URL for API:", absolutePublicImageUrl);
-    }
-
+    if (questionText) fullApiUrl += `&q=${encodeURIComponent(questionText)}`;
+    if (publicImageUrl) fullApiUrl += `&imageUrl=${encodeURIComponent(publicImageUrl)}`;
     try {
         const apiResponse = await fetch(fullApiUrl);
         const responseText = await apiResponse.text();
-
-        if (tempImagePath) { // Clean up the uploaded file after the API call
-            fs.unlink(tempImagePath, (err) => {
-                if (err) console.error("Error deleting temporary image file:", err);
-                else console.log("Temporary image file deleted:", tempImagePath);
-            });
-        }
-
+        if (tempImagePath) fs.unlink(tempImagePath, (err) => { if (err) console.error("Error deleting temp image for Gemini Vision:", err); else console.log("Temp image for Gemini Vision deleted:", tempImagePath); });
         if (!apiResponse.ok) {
             let errorJson = { error: `External Gemini API Error: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
             try { errorJson = JSON.parse(responseText); if(!errorJson.error && !errorJson.message) { errorJson.error = `External Gemini API Error: ${apiResponse.status} ${apiResponse.statusText}`; } } catch (e) { /* Not JSON */ }
             return res.status(apiResponse.status).json(errorJson);
         }
-
         let data;
         try { data = JSON.parse(responseText); }
-        catch (e) {
-            console.warn('Gemini API response was not JSON, but status was OK. Response text:', responseText);
-            return res.status(500).json({ error: 'Failed to parse response from Gemini API.', details: responseText });
-        }
-
-        if (data && data.response) {
-            res.json({ author: data.author || "Gemini (Kaizenji)", response: data.response });
-        } else {
-            return res.status(500).json({ error: 'Unexpected response structure from Gemini API.', details: data });
-        }
-
+        catch (e) { return res.status(500).json({ error: 'Failed to parse response from Gemini API.', details: responseText }); }
+        if (data && data.response) res.json({ author: data.author || "Gemini (Kaizenji)", response: data.response });
+        else return res.status(500).json({ error: 'Unexpected response structure from Gemini API.', details: data });
     } catch (error) {
         console.error('Server error while calling Gemini API:', error);
-        if (tempImagePath && fs.existsSync(tempImagePath)) { // Ensure cleanup on error too
-            fs.unlink(tempImagePath, (err) => {
-                if (err) console.error("Error deleting temporary image file on error:", err);
-            });
-        }
+        if (tempImagePath && fs.existsSync(tempImagePath)) fs.unlink(tempImagePath, (err) => { if (err) console.error("Error deleting temp image for Gemini Vision on error:", err); });
         return res.status(500).json({ error: 'Server error while processing Gemini chat request.' });
     }
 });
 
-// --- GPT-4o Latest Chat API Route (similar to Gemini for file handling) ---
-app.post('/api/gpt4o-chat', upload.single('imageFile'), async (req, res) => {
+// GPT-4o Vision Chat (Legacy, though uses gpt4o-latest endpoint)
+app.post('/api/gpt4o-chat', uploadLegacyVision.single('imageFile'), async (req, res) => {
     const { q, uid } = req.body;
     let tempImagePath = null;
     let publicImageUrl = null;
-
     if (req.file) {
         tempImagePath = req.file.path;
-        // Construct public URL for the temporarily saved image
         const APP_BASE_URL = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
-        publicImageUrl = new URL(`/uploads/gemini_temp/${req.file.filename}`, APP_BASE_URL).toString();
-        console.log(`GPT-4o: Image temporarily saved at ${tempImagePath}, accessible via ${publicImageUrl}`);
+        publicImageUrl = new URL(`/uploads/gemini_temp/${req.file.filename}`, APP_BASE_URL).toString(); // Uses legacy path for consistency with original
+        console.log(`GPT-4o Vision: Image temporarily saved at ${tempImagePath}, accessible via ${publicImageUrl}`);
     }
-
     if (!uid) {
-        if (tempImagePath) fs.unlinkSync(tempImagePath); // Clean up
+        if (tempImagePath) fs.unlinkSync(tempImagePath);
         return res.status(400).json({ error: 'Parameter "uid" is required.' });
     }
-
     const questionText = q ? q.trim() : "";
     if (questionText === "" && !publicImageUrl) {
-        if (tempImagePath) fs.unlinkSync(tempImagePath); // Clean up
+        if (tempImagePath) fs.unlinkSync(tempImagePath);
         return res.status(400).json({ error: 'Either a question ("q") or an image file is required for GPT-4o chat.' });
     }
-
     let fullApiUrl = `${GPT4O_LATEST_API_URL}?uid=${encodeURIComponent(uid)}&apikey=${GPT4O_LATEST_API_KEY}`;
-    if (questionText) {
-        fullApiUrl += `&ask=${encodeURIComponent(questionText)}`; // API uses 'ask' not 'q'
-    }
-    if (publicImageUrl) {
-        fullApiUrl += `&imageUrl=${encodeURIComponent(publicImageUrl)}`;
-    }
-    // console.log("Calling GPT-4o API with URL (first 200 chars):", fullApiUrl.substring(0, 200));
-
-
+    if (questionText) fullApiUrl += `&ask=${encodeURIComponent(questionText)}`;
+    if (publicImageUrl) fullApiUrl += `&imageUrl=${encodeURIComponent(publicImageUrl)}`;
     try {
         const apiResponse = await fetch(fullApiUrl);
         const responseText = await apiResponse.text();
-
-        if (tempImagePath) {
-            fs.unlink(tempImagePath, (err) => {
-                if (err) console.error("Error deleting temporary image file for GPT-4o:", err);
-                else console.log("Temporary image file for GPT-4o deleted:", tempImagePath);
-            });
-        }
-
+        if (tempImagePath) fs.unlink(tempImagePath, (err) => { if (err) console.error("Error deleting temp image for GPT-4o Vision:", err); else console.log("Temp image for GPT-4o Vision deleted:", tempImagePath); });
         if (!apiResponse.ok) {
             let errorJson = { error: `External GPT-4o API Error: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
             try { errorJson = JSON.parse(responseText); if(!errorJson.error && !errorJson.message) { errorJson.error = `External GPT-4o API Error: ${apiResponse.status} ${apiResponse.statusText}`; } } catch (e) { /* Not JSON */ }
             return res.status(apiResponse.status).json(errorJson);
         }
-
         let data;
         try { data = JSON.parse(responseText); }
-        catch (e) {
-            console.warn('GPT-4o API response was not JSON, but status was OK. Response text:', responseText);
-            return res.status(500).json({ error: 'Failed to parse response from GPT-4o API.', details: responseText });
-        }
-
-        if (data && data.response) { // Expecting { "author": "Kaizenji", "response": "..." }
-            res.json({ author: data.author || "GPT-4o (Kaizenji)", response: data.response });
-        } else {
-            return res.status(500).json({ error: 'Unexpected response structure from GPT-4o API.', details: data });
-        }
-
+        catch (e) { return res.status(500).json({ error: 'Failed to parse response from GPT-4o API.', details: responseText }); }
+        if (data && data.response) res.json({ author: data.author || "GPT-4o (Kaizenji)", response: data.response });
+        else return res.status(500).json({ error: 'Unexpected response structure from GPT-4o API.', details: data });
     } catch (error) {
         console.error('Server error while calling GPT-4o API:', error);
-        if (tempImagePath && fs.existsSync(tempImagePath)) {
-            fs.unlink(tempImagePath, (err) => {
-                if (err) console.error("Error deleting temporary image file for GPT-4o on error:", err);
-            });
-        }
+        if (tempImagePath && fs.existsSync(tempImagePath)) fs.unlink(tempImagePath, (err) => { if (err) console.error("Error deleting temp image for GPT-4o Vision on error:", err); });
         return res.status(500).json({ error: 'Server error while processing GPT-4o chat request.' });
     }
 });
 
-
-// --- Weather API Route ---
-app.get('/api/weather', async (req, res) => { /* ... existing unchanged code ... */
-    const location = req.query.location;
-    if (!location) { return res.status(400).json({ error: 'Location query parameter is required' }); }
-    const weatherApiUrl = `https://kaiz-apis.gleeze.com/api/weather?q=${encodeURIComponent(location)}&apikey=${WEATHER_API_KEY}`;
-    try {
-        const apiResponse = await fetch(weatherApiUrl);
-        if (!apiResponse.ok) {
-            let errorText = `External API Error: ${apiResponse.status} ${apiResponse.statusText}`;
-            try { const errorBody = await apiResponse.json(); if (errorBody && errorBody.message) errorText = `External API Error: ${errorBody.message}`; else if (typeof errorBody === 'string' && errorBody.length > 0) errorText = `External API Error: ${errorBody}`; } catch (e) { /* ignore */ }
-            return res.status(apiResponse.status).json({ error: errorText, details: `Failed to fetch weather for ${location}` });
-        }
-        const data = await apiResponse.json();
-        if (data && data["0"]) { res.json(data["0"]); }
-        else { return res.status(500).json({ error: 'Unexpected response structure from weather API.' }); }
-    } catch (error) {
-        console.error('Server error while fetching weather:', error);
-        return res.status(500).json({ error: 'Failed to fetch weather data due to server error.' });
-    }
-});
-
-// GET /api/activities - Fetch user activities (for admin panel)
-app.get('/api/activities', async (req, res) => {
-    if (!userActivitiesCollection) {
-        return res.status(503).json({ error: "Database service not available." });
-    }
-    try {
-        const { uid, limit = 50, page = 1 } = req.query;
-        const query = uid ? { uid } : {};
-        const nLimit = parseInt(limit);
-        const nPage = parseInt(page);
-
-        const options = {
-            sort: { timestamp: -1 },
-            limit: nLimit,
-            skip: (nPage - 1) * nLimit
-        };
-
-        const activities = await userActivitiesCollection.find(query, options).toArray();
-        const totalActivities = await userActivitiesCollection.countDocuments(query);
-
-        let uniqueVisitors = undefined; // Only calculate if no specific UID is queried
-        if (!uid) {
-            const distinctUIDs = await userActivitiesCollection.distinct('uid', {}); // Query all documents for distinct UIDs
-            uniqueVisitors = distinctUIDs.length;
-        }
-
-        res.status(200).json({
-            activities,
-            totalActivities, // This is total for the current query (all activities if no UID)
-            currentPage: nPage,
-            totalPages: Math.ceil(totalActivities / nLimit),
-            uniqueVisitors // This will be undefined if a UID was specified in query
-        });
-
-    } catch (error) {
-        console.error("Error fetching activities:", error);
-        res.status(500).json({ error: "Failed to fetch activities due to server error." });
-    }
-});
-
-// POST /api/comments/:commentId/reply - Add/update admin reply to a comment
-app.post('/api/comments/:commentId/reply', async (req, res) => {
-    if (!commentsCollection) {
-        return res.status(503).json({ error: "Database not connected." });
-    }
-    try {
-        const { commentId } = req.params;
-        const { replyText } = req.body;
-
-        if (!ObjectId.isValid(commentId)) {
-            return res.status(400).json({ error: "Invalid comment ID format." });
-        }
-        // replyText can be an empty string (to clear a reply)
-        if (replyText === undefined || typeof replyText !== 'string') {
-            return res.status(400).json({ error: 'Reply text must be a string.' });
-        }
-
-        const mongoDbCommentId = new ObjectId(commentId);
-        const updateFields = {
-            adminReplyText: replyText.trim(), // Store trimmed reply
-            adminReplyTimestamp: new Date()
-        };
-
-        // If replyText is empty, it effectively clears the reply.
-        // We still update the timestamp to know when it was last actioned.
-        // If you wanted to truly "remove" the reply fields, you'd use $unset here.
-        // For simplicity, setting to empty string is fine.
-
-        const updateResult = await commentsCollection.updateOne(
-            { _id: mongoDbCommentId },
-            { $set: updateFields }
-        );
-
-        if (updateResult.matchedCount === 0) {
-            return res.status(404).json({ error: "Comment not found." });
-        }
-
-        // Fetch the updated comment to return it
-        const updatedComment = await commentsCollection.findOne({ _id: mongoDbCommentId });
-        res.status(200).json(updatedComment);
-
-    } catch (error) {
-        console.error("Error posting admin reply:", error);
-        res.status(500).json({ error: "Failed to post admin reply due to server error." });
-    }
-});
-
-// --- AI Chat API Route ---
-app.post('/api/chat', async (req, res) => {
-    const { ask, uid, webSearch, isStoryRequestFlag } = req.body; // Added isStoryRequestFlag
-    if (!ask || !uid) { return res.status(400).json({ error: 'Parameters "ask" and "uid" are required.' }); }
-
-    const storyKeywords = ["create a short story about", "generate a story about", "write a story about", "tell me a story about", "story about"];
-    // Check both the flag and keywords for robustness
-    const isStoryRequest = isStoryRequestFlag || storyKeywords.some(keyword => ask.toLowerCase().startsWith(keyword));
-
-    if (isStoryRequest) {
-        const storyApiUrl = `https://kaiz-apis.gleeze.com/api/gpt-4o-pro?ask=${encodeURIComponent(ask)}&uid=${encodeURIComponent(uid)}&imageUrl=&apikey=${CHAT_API_KEY}`;
-        try {
-            const apiResponse = await fetch(storyApiUrl);
-            const responseText = await apiResponse.text(); // Get text first for better error handling
-            if (!apiResponse.ok) {
-                let errorJson = { error: `External Story API Error: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
-                try { errorJson = JSON.parse(responseText); if(!errorJson.error && !errorJson.message) { errorJson.error = `External Story API Error: ${apiResponse.status} ${apiResponse.statusText}`; } } catch (e) { /* Not JSON */ }
-                return res.status(apiResponse.status).json(errorJson);
-            }
-            let data;
-            try { data = JSON.parse(responseText); } catch (e) { return res.status(500).json({ error: 'Failed to parse response from Story API.', details: responseText }); }
-
-            if (data && data.response) {
-                // Ensure the response structure matches what the client expects for stories
-                res.json({ author: data.author || "Kaizenji", response: data.response });
-            } else {
-                return res.status(500).json({ error: 'Unexpected response structure from Story API.', details: data });
-            }
-        } catch (error) {
-            console.error('Server error while calling Story API:', error);
-            return res.status(500).json({ error: 'Server error while processing story generation request.' });
-        }
-    } else {
-        // Existing chat logic using gpt-4o
-        const webSearchParam = (webSearch === true || String(webSearch).toLowerCase() === 'on') ? 'on' : 'off';
-        const chatApiUrl = `https://kaiz-apis.gleeze.com/api/gpt-4o?ask=${encodeURIComponent(ask)}&uid=${encodeURIComponent(uid)}&webSearch=${webSearchParam}&apikey=${CHAT_API_KEY}`;
-        try {
-            const apiResponse = await fetch(chatApiUrl);
-            const responseText = await apiResponse.text();
-            if (!apiResponse.ok) {
-                let errorJson = { error: `External Chat API Error: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
-                try { errorJson = JSON.parse(responseText); if (!errorJson.error && !errorJson.message) { errorJson.error = `External Chat API Error: ${apiResponse.status} ${apiResponse.statusText}`; } } catch (e) { /* Not JSON */ }
-                return res.status(apiResponse.status).json(errorJson);
-            }
-            let data;
-            try { data = JSON.parse(responseText); } catch (e) { return res.status(500).json({ error: 'Failed to parse response from Chat API.', details: responseText }); }
-            if (data && data.response) { res.json({ author: data.author || "Kaizenji", response: data.response }); }
-            else { return res.status(500).json({ error: 'Unexpected response structure from Chat API.', details: data }); }
-        } catch (error) {
-            console.error('Server error while calling Chat API:', error);
-            return res.status(500).json({ error: 'Server error while processing chat request.' });
-        }
-    }
-});
-
-// --- Gemini Chat API Route ---
-// Apply multer middleware for single file upload, field name 'imageFile'
-app.post('/api/gemini-chat', upload.single('imageFile'), async (req, res) => {
-    // 'imageFile' should match the name attribute in FormData on the client-side
-    const { q, uid } = req.body;
-    let tempImagePath = null; // To store path of temporarily saved file
-    let publicImageUrl = null;
-
-    if (req.file) {
-        tempImagePath = req.file.path;
-        // Construct the public URL. This assumes the server is running at the root.
-        // For a robust solution, req.protocol and req.get('host') should be used if the app is behind a proxy or has a complex setup.
-        // For simplicity here, we'll use a relative path which the client might need to resolve, or an assumed absolute if deployed.
-        // The API likely needs an absolute public URL.
-        // NOTE: This URL will only be valid if the server is publicly accessible.
-        // And the path must match the one configured in app.use(express.static(...))
-        publicImageUrl = `/uploads/gemini_temp/${req.file.filename}`;
-        console.log(`Image temporarily saved at ${tempImagePath}, accessible via ${publicImageUrl}`);
-    }
-
-    if (!uid) {
-        if (tempImagePath) fs.unlinkSync(tempImagePath); // Clean up uploaded file if UID is missing
-        return res.status(400).json({ error: 'Parameter "uid" is required.' });
-    }
-
-    const questionText = q ? q.trim() : "";
-    if (questionText === "" && !publicImageUrl) {
-        if (tempImagePath) fs.unlinkSync(tempImagePath); // Clean up
-        return res.status(400).json({ error: 'Either a question ("q") or an image file is required.' });
-    }
-
-    let fullApiUrl = `${GEMINI_API_URL}?uid=${encodeURIComponent(uid)}&apikey=${GEMINI_API_KEY}`;
-    if (questionText) {
-        fullApiUrl += `&q=${encodeURIComponent(questionText)}`;
-    }
-    if (publicImageUrl) {
-        // IMPORTANT: The API needs an ABSOLUTE URL.
-        // For now, sending the relative one. This will likely fail if the API is external
-        // unless the API client (this server) resolves it to its own public absolute URL.
-        // This needs to be adjusted based on actual deployment.
-        // A placeholder for where the app's public base URL would be.
-        const APP_BASE_URL = process.env.APP_URL || `${req.protocol}://${req.get('host')}`; // Attempt to get base URL
-        const absolutePublicImageUrl = new URL(publicImageUrl, APP_BASE_URL).toString();
-        fullApiUrl += `&imageUrl=${encodeURIComponent(absolutePublicImageUrl)}`;
-        console.log("Attempting to use absolute image URL for API:", absolutePublicImageUrl);
-    }
-
-    try {
-        const apiResponse = await fetch(fullApiUrl);
-        const responseText = await apiResponse.text();
-
-        if (tempImagePath) { // Clean up the uploaded file after the API call
-            fs.unlink(tempImagePath, (err) => {
-                if (err) console.error("Error deleting temporary image file:", err);
-                else console.log("Temporary image file deleted:", tempImagePath);
-            });
-        }
-
-        if (!apiResponse.ok) {
-            let errorJson = { error: `External Gemini API Error: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
-            try { errorJson = JSON.parse(responseText); if(!errorJson.error && !errorJson.message) { errorJson.error = `External Gemini API Error: ${apiResponse.status} ${apiResponse.statusText}`; } } catch (e) { /* Not JSON */ }
-            return res.status(apiResponse.status).json(errorJson);
-        }
-
-        let data;
-        try { data = JSON.parse(responseText); }
-        catch (e) {
-            console.warn('Gemini API response was not JSON, but status was OK. Response text:', responseText);
-            return res.status(500).json({ error: 'Failed to parse response from Gemini API.', details: responseText });
-        }
-
-        if (data && data.response) {
-            res.json({ author: data.author || "Gemini (Kaizenji)", response: data.response });
-        } else {
-            return res.status(500).json({ error: 'Unexpected response structure from Gemini API.', details: data });
-        }
-
-    } catch (error) {
-        console.error('Server error while calling Gemini API:', error);
-        if (tempImagePath && fs.existsSync(tempImagePath)) { // Ensure cleanup on error too
-            fs.unlink(tempImagePath, (err) => {
-                if (err) console.error("Error deleting temporary image file on error:", err);
-            });
-        }
-        return res.status(500).json({ error: 'Server error while processing Gemini chat request.' });
-    }
-});
-
-
-// --- Image Generation API Route ---
-app.post('/api/generate-image', async (req, res) => { /* ... existing unchanged code ... */
+// Image Generation
+app.post('/api/generate-image', async (req, res) => {
     const { prompt } = req.body;
     if (!prompt) { return res.status(400).json({ error: 'Parameter "prompt" is required.' }); }
     const imageApiUrl = `https://kaiz-apis.gleeze.com/api/flux?prompt=${encodeURIComponent(prompt)}&apikey=${IMAGE_API_KEY}`;
@@ -848,171 +328,97 @@ app.post('/api/generate-image', async (req, res) => { /* ... existing unchanged 
     }
 });
 
-// DELETE /api/comments/:commentId - Delete a comment
+// Delete Comment
 app.delete('/api/comments/:commentId', async (req, res) => {
-    if (!commentsCollection) {
-        return res.status(503).json({ error: "Database not connected. Please try again later." });
-    }
+    if (!commentsCollection) return res.status(503).json({ error: "Database not connected." });
     try {
         const { commentId } = req.params;
-        if (!ObjectId.isValid(commentId)) {
-            return res.status(400).json({ error: "Invalid comment ID format." });
-        }
-        const mongoDbCommentId = new ObjectId(commentId);
-
-        const result = await commentsCollection.deleteOne({ _id: mongoDbCommentId });
-
-        if (result.deletedCount === 0) {
-            return res.status(404).json({ error: "Comment not found." });
-        }
-
+        if (!ObjectId.isValid(commentId)) return res.status(400).json({ error: "Invalid comment ID format." });
+        const result = await commentsCollection.deleteOne({ _id: new ObjectId(commentId) });
+        if (result.deletedCount === 0) return res.status(404).json({ error: "Comment not found." });
         res.status(200).json({ message: "Comment deleted successfully.", deletedCount: result.deletedCount });
-
     } catch (error) {
         console.error("Error deleting comment:", error);
         res.status(500).json({ error: "Failed to delete comment due to server error." });
     }
 });
 
-
-// --- New Comment Routes (Phase 4B) ---
-
-// POST /api/comments - Add a new comment
+// Post Comment
 app.post('/api/comments', async (req, res) => {
-    if (!commentsCollection) {
-        return res.status(503).json({ error: "Database not connected. Please try again later." });
-    }
+    if (!commentsCollection) return res.status(503).json({ error: "Database not connected." });
     try {
-        const { name: clientProvidedName, text, uid } = req.body; // Expect uid from client
-
-        if (!uid) {
-            return res.status(400).json({ error: 'User ID (uid) is required to post a comment.' });
-        }
-        if (!text || typeof text !== 'string' || text.trim() === '') {
-            return res.status(400).json({ error: 'Text is required and must be a non-empty string.' });
-        }
-        // Name validation can be less strict here if we prioritize the server-verified name
-        if (!clientProvidedName || typeof clientProvidedName !== 'string' || clientProvidedName.trim() === '') {
-            return res.status(400).json({ error: 'Name is required (even if prefilled).' });
-        }
-
+        const { name: clientProvidedName, text, uid } = req.body;
+        if (!uid) return res.status(400).json({ error: 'User ID (uid) is required to post a comment.' });
+        if (!text || typeof text !== 'string' || text.trim() === '') return res.status(400).json({ error: 'Text is required.' });
+        if (!clientProvidedName || typeof clientProvidedName !== 'string' || clientProvidedName.trim() === '') return res.status(400).json({ error: 'Name is required.' });
         let finalName = clientProvidedName.trim();
-        let userVerified = false;
-
-        // Fetch user from usersCollection to get the authoritative name
-        if (usersCollection) { // Check if usersCollection is available
+        if (usersCollection) {
             const user = await usersCollection.findOne({ uid: uid });
-            if (user && user.name) {
-                finalName = user.name; // Prioritize registered name
-                userVerified = true;
-                console.log(`Comment submitted by verified user: ${finalName} (UID: ${uid})`);
-            } else {
-                console.warn(`Comment submitted by UID: ${uid} but user not found or has no name in usersCollection. Using client-provided name: ${clientProvidedName}`);
-                // Fallback to client-provided name if user not found, but log this.
-                // Or, you could choose to reject the comment if UID must be verified:
-                // return res.status(403).json({ error: 'User not verified. Cannot post comment.' });
-            }
-        } else {
-            console.warn("usersCollection not available. Using client-provided name for comment.");
-        }
-
-
-        const newComment = {
-            uid: uid, // Store the UID
-            name: finalName, // Store the (preferably verified) name
-            text: text.trim(),
-            createdAt: new Date(),
-            likes: { count: 0, users: [] },
-            dislikes: { count: 0, users: [] },
-            adminReplyText: "", // Initialize admin reply fields
-            adminReplyTimestamp: null
-        };
-
+            if (user && user.name) finalName = user.name;
+            else console.warn(`Comment by UID: ${uid}, but user/name not in usersCollection. Using client name: ${clientProvidedName}`);
+        } else console.warn("usersCollection not available for comment name verification.");
+        const newComment = { uid, name: finalName, text: text.trim(), createdAt: new Date(), likes: { count: 0, users: [] }, dislikes: { count: 0, users: [] }, adminReplyText: "", adminReplyTimestamp: null };
         const result = await commentsCollection.insertOne(newComment);
-        const createdComment = { _id: result.insertedId, ...newComment };
-        res.status(201).json(createdComment);
-
+        res.status(201).json({ _id: result.insertedId, ...newComment });
     } catch (error) {
         console.error("Error posting comment:", error);
         res.status(500).json({ error: "Failed to post comment due to server error." });
     }
 });
 
-// POST /api/comments/:commentId/like - Like a comment
+// Like Comment
 app.post('/api/comments/:commentId/like', async (req, res) => {
     if (!commentsCollection) return res.status(503).json({ error: "Database not connected." });
     try {
         const { commentId } = req.params;
-        const { uid } = req.body; // User's UID performing the action
-
+        const { uid } = req.body;
         if (!ObjectId.isValid(commentId)) return res.status(400).json({ error: "Invalid comment ID." });
         if (!uid) return res.status(400).json({ error: "User ID is required." });
-
-        const mongoCommentId = new ObjectId(commentId);
-        const comment = await commentsCollection.findOne({ _id: mongoCommentId });
+        const comment = await commentsCollection.findOne({ _id: new ObjectId(commentId) });
         if (!comment) return res.status(404).json({ error: "Comment not found." });
-
-        // Ensure likes/dislikes fields exist (for older comments)
         comment.likes = comment.likes || { count: 0, users: [] };
         comment.dislikes = comment.dislikes || { count: 0, users: [] };
-
         const hasLiked = comment.likes.users.includes(uid);
         const hasDisliked = comment.dislikes.users.includes(uid);
-
-        if (hasLiked) { // User wants to unlike
+        if (hasLiked) {
             comment.likes.users = comment.likes.users.filter(userId => userId !== uid);
-            comment.likes.count = comment.likes.users.length;
-        } else { // User wants to like
+        } else {
             comment.likes.users.push(uid);
-            comment.likes.count = comment.likes.users.length;
-            if (hasDisliked) { // If previously disliked, remove dislike
-                comment.dislikes.users = comment.dislikes.users.filter(userId => userId !== uid);
-                comment.dislikes.count = comment.dislikes.users.length;
-            }
+            if (hasDisliked) comment.dislikes.users = comment.dislikes.users.filter(userId => userId !== uid);
         }
-
-        await commentsCollection.updateOne({ _id: mongoCommentId }, { $set: { likes: comment.likes, dislikes: comment.dislikes } });
-        res.status(200).json(comment); // Return updated comment
+        comment.likes.count = comment.likes.users.length;
+        comment.dislikes.count = comment.dislikes.users.length;
+        await commentsCollection.updateOne({ _id: new ObjectId(commentId) }, { $set: { likes: comment.likes, dislikes: comment.dislikes } });
+        res.status(200).json(comment);
     } catch (error) {
         console.error("Error liking comment:", error);
         res.status(500).json({ error: "Server error while liking comment." });
     }
 });
 
-// POST /api/comments/:commentId/dislike - Dislike a comment
+// Dislike Comment
 app.post('/api/comments/:commentId/dislike', async (req, res) => {
     if (!commentsCollection) return res.status(503).json({ error: "Database not connected." });
     try {
         const { commentId } = req.params;
         const { uid } = req.body;
-
         if (!ObjectId.isValid(commentId)) return res.status(400).json({ error: "Invalid comment ID." });
         if (!uid) return res.status(400).json({ error: "User ID is required." });
-
-        const mongoCommentId = new ObjectId(commentId);
-        const comment = await commentsCollection.findOne({ _id: mongoCommentId });
+        const comment = await commentsCollection.findOne({ _id: new ObjectId(commentId) });
         if (!comment) return res.status(404).json({ error: "Comment not found." });
-
-        // Ensure likes/dislikes fields exist (for older comments)
         comment.likes = comment.likes || { count: 0, users: [] };
         comment.dislikes = comment.dislikes || { count: 0, users: [] };
-
         const hasLiked = comment.likes.users.includes(uid);
         const hasDisliked = comment.dislikes.users.includes(uid);
-
-        if (hasDisliked) { // User wants to un-dislike
+        if (hasDisliked) {
             comment.dislikes.users = comment.dislikes.users.filter(userId => userId !== uid);
-            comment.dislikes.count = comment.dislikes.users.length;
-        } else { // User wants to dislike
+        } else {
             comment.dislikes.users.push(uid);
-            comment.dislikes.count = comment.dislikes.users.length;
-            if (hasLiked) { // If previously liked, remove like
-                comment.likes.users = comment.likes.users.filter(userId => userId !== uid);
-                comment.likes.count = comment.likes.users.length;
-            }
+            if (hasLiked) comment.likes.users = comment.likes.users.filter(userId => userId !== uid);
         }
-
-        await commentsCollection.updateOne({ _id: mongoCommentId }, { $set: { likes: comment.likes, dislikes: comment.dislikes } });
+        comment.likes.count = comment.likes.users.length;
+        comment.dislikes.count = comment.dislikes.users.length;
+        await commentsCollection.updateOne({ _id: new ObjectId(commentId) }, { $set: { likes: comment.likes, dislikes: comment.dislikes } });
         res.status(200).json(comment);
     } catch (error) {
         console.error("Error disliking comment:", error);
@@ -1020,244 +426,97 @@ app.post('/api/comments/:commentId/dislike', async (req, res) => {
     }
 });
 
-// --- User Registration and Check API Routes ---
-
-// POST /api/users/register - Register a new user or log them in if UID exists with same name
+// User Registration
 app.post('/api/users/register', async (req, res) => {
-    if (!usersCollection) {
-        return res.status(503).json({ message: "User service not available." });
-    }
+    if (!usersCollection) return res.status(503).json({ message: "User service not available." });
     try {
         const { uid, name } = req.body;
-
-        if (!uid || typeof uid !== 'string' || uid.trim() === '') {
-            return res.status(400).json({ message: 'User ID (uid) is required.' });
-        }
-        if (!name || typeof name !== 'string' || name.trim() === '') {
-            return res.status(400).json({ message: 'Name is required.' });
-        }
-
+        if (!uid || typeof uid !== 'string' || uid.trim() === '') return res.status(400).json({ message: 'User ID (uid) is required.' });
+        if (!name || typeof name !== 'string' || name.trim() === '') return res.status(400).json({ message: 'Name is required.' });
         const trimmedName = name.trim();
-        if (trimmedName.length < 3) {
-             return res.status(400).json({ message: 'Name must be at least 3 characters long.' });
-        }
-
-
-        // Check if UID already exists
+        if (trimmedName.length < 3) return res.status(400).json({ message: 'Name must be at least 3 characters long.' });
         const existingUserByUID = await usersCollection.findOne({ uid: uid });
-
         if (existingUserByUID) {
-            // UID exists. Check if the name matches.
-            if (existingUserByUID.name === trimmedName) {
-                // Same UID, same name - consider it a login/re-confirmation.
-                return res.status(200).json({ uid: existingUserByUID.uid, name: existingUserByUID.name, message: "Welcome back!" });
-            } else {
-                // Same UID, different name. This is problematic.
-                // For now, let's prevent name changes via this route.
-                // A separate "update profile" route would be better for name changes.
-                return res.status(409).json({ message: "This User ID is already associated with a different name. Please contact support if you believe this is an error." });
-            }
+            if (existingUserByUID.name === trimmedName) return res.status(200).json({ uid: existingUserByUID.uid, name: existingUserByUID.name, message: "Welcome back!" });
+            return res.status(409).json({ message: "This User ID is already associated with a different name." });
         }
-
-        // UID is new, now check if the name is already taken by another UID
         const existingUserByName = await usersCollection.findOne({ name: trimmedName });
-        if (existingUserByName) {
-            // Name is taken by a different UID
-            return res.status(409).json({ message: "This name is already taken. Please choose a different name." });
-        }
-
-        // UID is new and Name is available, proceed to register
-        const newUser = {
-            uid: uid,
-            name: trimmedName,
-            createdAt: new Date()
-        };
-        const result = await usersCollection.insertOne(newUser);
-        // const createdUser = await usersCollection.findOne({ _id: result.insertedId }); // Re-fetch to confirm
-
-        // Return the newly created user data (or at least uid and name)
+        if (existingUserByName) return res.status(409).json({ message: "This name is already taken." });
+        const newUser = { uid: uid, name: trimmedName, createdAt: new Date() };
+        await usersCollection.insertOne(newUser);
         res.status(201).json({ uid: newUser.uid, name: newUser.name, message: "User registered successfully." });
-
     } catch (error) {
         console.error("Error during user registration:", error);
-        if (error.code === 11000) { // Duplicate key error (either uid or name from index)
-             if (error.message.includes('index: name_1')) { // Check if it's the name index
-                return res.status(409).json({ message: "This name is already taken. Please choose a different name." });
-            } else if (error.message.includes('index: uid_1')) { // Check if it's the uid index (should be caught by findOne earlier but as a safeguard)
-                 return res.status(409).json({ message: "This User ID is already registered." });
-            }
+        if (error.code === 11000) {
+            if (error.message.includes('index: name_1')) return res.status(409).json({ message: "This name is already taken." });
+            if (error.message.includes('index: uid_1')) return res.status(409).json({ message: "This User ID is already registered." });
         }
         res.status(500).json({ message: "Server error during user registration." });
     }
 });
 
-// GET /api/users/check/:uid - Check if a user is registered and get their name
+// Check User Registration
 app.get('/api/users/check/:uid', async (req, res) => {
-    if (!usersCollection) {
-        return res.status(503).json({ message: "User service not available." });
-    }
+    if (!usersCollection) return res.status(503).json({ message: "User service not available." });
     try {
         const { uid } = req.params;
-        if (!uid) {
-            return res.status(400).json({ message: 'User ID (uid) is required in path.' });
-        }
-
+        if (!uid) return res.status(400).json({ message: 'User ID (uid) is required in path.' });
         const user = await usersCollection.findOne({ uid: uid });
-
-        if (user) {
-            res.status(200).json({ uid: user.uid, name: user.name });
-        } else {
-            res.status(404).json({ message: "User not found or name not registered yet." });
-        }
+        if (user) res.status(200).json({ uid: user.uid, name: user.name });
+        else res.status(404).json({ message: "User not found or name not registered yet." });
     } catch (error) {
         console.error("Error checking user:", error);
         res.status(500).json({ message: "Server error while checking user." });
     }
 });
 
-// --- End of User Registration and Check API Routes ---
-
-
-// --- TMDB API Routes ---
-// Helper function to fetch data from TMDB
-async function fetchTMDB(path, queryParams = {}) {
-    const url = new URL(`${TMDB_BASE_URL}${path}`);
+// TMDB Helper
+async function fetchTMDB(endpoint, queryParams = {}) {
+    const url = new URL(`${TMDB_BASE_URL}${endpoint}`);
     url.searchParams.append('api_key', TMDB_API_KEY);
-    // Add any other default params, e.g., language=en-US
-    // url.searchParams.append('language', 'en-US'); // Or 'fr-FR' based on user preference
-    for (const key in queryParams) {
-        url.searchParams.append(key, queryParams[key]);
-    }
-
+    for (const key in queryParams) url.searchParams.append(key, queryParams[key]);
     try {
-        const response = await fetch(url.toString(), {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${TMDB_ACCESS_TOKEN}`,
-                'Content-Type': 'application/json;charset=utf-8'
-            }
-        });
+        const response = await fetch(url.toString(), { method: 'GET', headers: { 'Authorization': `Bearer ${TMDB_ACCESS_TOKEN}`, 'Content-Type': 'application/json;charset=utf-8' } });
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({ status_message: `TMDB API error: ${response.statusText}` }));
-            console.error(`TMDB API Error for path ${path}:`, errorData.status_message || response.statusText);
-            throw { status: response.status, message: errorData.status_message || `Failed to fetch from TMDB: ${path}` };
+            throw { status: response.status, message: errorData.status_message || `Failed to fetch from TMDB: ${endpoint}` };
         }
         return await response.json();
     } catch (error) {
-        console.error(`Error in fetchTMDB for ${path}:`, error);
-        throw error; // Re-throw to be handled by route
+        console.error(`Error in fetchTMDB for ${endpoint}:`, error);
+        throw error;
     }
 }
+// TMDB Routes (Popular, Search, Details, Videos)
+app.get('/api/movies/popular', async (req, res) => { try { const data = await fetchTMDB('/movie/popular', { page: req.query.page || '1' }); res.json(data); } catch (e) { res.status(e.status || 500).json({m: e.message}); }});
+app.get('/api/movies/search', async (req, res) => { const {query, page} = req.query; if(!query) return res.status(400).json({m:'Query required.'}); try {const d = await fetchTMDB('/search/movie', {query, page:page||'1'});res.json(d);}catch(e){res.status(e.status||500).json({m:e.message});}});
+app.get('/api/movies/details/:id', async (req, res) => { const {id}=req.params; if(!id) return res.status(400).json({m:'ID required.'}); try {const d=await fetchTMDB(`/movie/${id}`); res.json(d);}catch(e){res.status(e.status||500).json({m:e.message});}});
+app.get('/api/movies/details/:id/videos', async (req, res) => { const {id}=req.params; if(!id) return res.status(400).json({m:'ID required.'}); try {const d=await fetchTMDB(`/movie/${id}/videos`);res.json(d);}catch(e){res.status(e.status||500).json({m:e.message});}});
 
-// GET /api/movies/popular
-app.get('/api/movies/popular', async (req, res) => {
-    try {
-        const data = await fetchTMDB('/movie/popular', { page: req.query.page || '1' });
-        res.json(data);
-    } catch (error) {
-        res.status(error.status || 500).json({ message: error.message || 'Failed to fetch popular movies.' });
-    }
-});
-
-// GET /api/movies/search
-app.get('/api/movies/search', async (req, res) => {
-    const { query, page } = req.query;
-    if (!query) {
-        return res.status(400).json({ message: 'Search query is required.' });
-    }
-    try {
-        const data = await fetchTMDB('/search/movie', { query: query, page: page || '1' });
-        res.json(data);
-    } catch (error) {
-        res.status(error.status || 500).json({ message: error.message || 'Failed to search movies.' });
-    }
-});
-
-// GET /api/movies/details/:id
-app.get('/api/movies/details/:id', async (req, res) => {
-    const { id } = req.params;
-    if (!id) {
-        return res.status(400).json({ message: 'Movie ID is required.' });
-    }
-    try {
-        // Fetch main details and credits simultaneously if desired
-        const movieDetails = await fetchTMDB(`/movie/${id}`);
-        // Example: Fetch credits (cast/crew)
-        // const credits = await fetchTMDB(`/movie/${id}/credits`);
-        // movieDetails.credits = credits; // Attach credits to the response
-        res.json(movieDetails);
-    } catch (error) {
-        res.status(error.status || 500).json({ message: error.message || 'Failed to fetch movie details.' });
-    }
-});
-
-// GET /api/movies/details/:id/videos - Fetch videos for a movie
-app.get('/api/movies/details/:id/videos', async (req, res) => {
-    const { id } = req.params;
-    if (!id) {
-        return res.status(400).json({ message: 'Movie ID is required.' });
-    }
-    try {
-        const videoData = await fetchTMDB(`/movie/${id}/videos`);
-        res.json(videoData); // TMDB already returns {id, results: [...]}
-    } catch (error) {
-        res.status(error.status || 500).json({ message: error.message || 'Failed to fetch movie videos.' });
-    }
-});
-// --- END OF TMDB API Routes ---
-
-
-// POST /api/activity - Track user activity
+// Track User Activity
 app.post('/api/activity', async (req, res) => {
-    if (!userActivitiesCollection) {
-        return res.status(503).json({ error: "Database service not available." });
-    }
+    if (!userActivitiesCollection) return res.status(503).json({ error: "Database service not available." });
     try {
         const { uid, activityType, details, timestamp, url } = req.body;
-        if (!uid || !activityType || !timestamp) {
-            return res.status(400).json({ error: 'UID, activityType, and timestamp are required.' });
-        }
-
-        let userName = "Unknown"; // Default if user not found or name not set
+        if (!uid || !activityType || !timestamp) return res.status(400).json({ error: 'UID, activityType, and timestamp are required.' });
+        let userName = "Unknown";
         if (usersCollection) {
             const user = await usersCollection.findOne({ uid: uid });
-            if (user && user.name) {
-                userName = user.name;
-            } else {
-                console.warn(`Activity tracking: User name not found for UID: ${uid}. Storing activity with name 'Unknown'.`);
-            }
-        } else {
-            console.warn("Activity tracking: usersCollection not available. Storing activity with name 'Unknown'.");
+            if (user && user.name) userName = user.name;
         }
-
-        const newActivity = {
-            uid,
-            name: userName, // Add the user's name
-            activityType,
-            details: details || {},
-            timestamp: new Date(timestamp), // Ensure it's a Date object
-            url: url || ''
-        };
-
-        await userActivitiesCollection.insertOne(newActivity);
+        await userActivitiesCollection.insertOne({ uid, name: userName, activityType, details: details || {}, timestamp: new Date(timestamp), url: url || '' });
         res.status(201).json({ message: 'Activity tracked successfully.' });
-
     } catch (error) {
         console.error("Error tracking activity:", error);
         res.status(500).json({ error: "Failed to track activity due to server error." });
     }
 });
 
-
-// GET /api/comments - Fetch all comments
+// Get All Comments
 app.get('/api/comments', async (req, res) => {
-    if (!commentsCollection) {
-        return res.status(503).json({ error: "Database not connected. Please try again later." });
-    }
+    if (!commentsCollection) return res.status(503).json({ error: "Database not connected." });
     try {
-        const comments = await commentsCollection.find({})
-                                             .sort({ createdAt: -1 }) // Sort by newest first
-                                             .toArray();
+        const comments = await commentsCollection.find({}).sort({ createdAt: -1 }).toArray();
         res.status(200).json(comments);
     } catch (error) {
         console.error("Error fetching comments:", error);
@@ -1265,164 +524,105 @@ app.get('/api/comments', async (req, res) => {
     }
 });
 
-// --- Temp Email API Routes ---
+// Temp Email Routes
 const TEMPMAIL_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
-
 app.get('/api/tempmail/create', async (req, res) => {
     const apiUrl = `https://kaiz-apis.gleeze.com/api/tempmail-create?apikey=${TEMPMAIL_API_KEY}`;
     try {
-        const apiResponse = await fetch(apiUrl);
-        const responseText = await apiResponse.text(); // Get text first for better error handling
-
-        if (!apiResponse.ok) {
-            let errorJson = { error: `API externe (tempmail-create) Erreur: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
-            try { errorJson = JSON.parse(responseText); if(!errorJson.error && !errorJson.message) { errorJson.error = `API externe (tempmail-create) Erreur: ${apiResponse.status} ${apiResponse.statusText}`; } } catch (e) { /* Not JSON */ }
-            console.error("Erreur de l'API tempmail-create:", errorJson);
-            return res.status(apiResponse.status).json(errorJson);
-        }
-        const data = JSON.parse(responseText); // Assume response is JSON if OK
-        res.json(data);
-    } catch (error) {
-        console.error('Erreur serveur lors de l\'appel à tempmail-create:', error);
-        res.status(500).json({ error: 'Erreur serveur lors de la création de l\'e-mail temporaire.' });
-    }
+        const r = await fetch(apiUrl); const t = await r.text(); if(!r.ok){let e={e:`API (tempmail-create) Err: ${r.status} ${r.statusText}`,d:t};try{e=JSON.parse(t);if(!e.e&&!e.m)e.e=`API (tempmail-create) Err: ${r.status} ${r.statusText}`; }catch(c){} return res.status(r.status).json(e);} res.json(JSON.parse(t));
+    } catch (e) { console.error('Tempmail-create err:', e); res.status(500).json({e:'Server error creating temp mail.'});}
 });
-
 app.get('/api/tempmail/inbox', async (req, res) => {
-    const { token } = req.query;
-    if (!token) {
-        return res.status(400).json({ error: 'Le paramètre "token" est requis.' });
-    }
+    const { token } = req.query; if(!token)return res.status(400).json({e:'Token required.'});
     const apiUrl = `https://kaiz-apis.gleeze.com/api/tempmail-inbox?token=${encodeURIComponent(token)}&apikey=${TEMPMAIL_API_KEY}`;
     try {
-        const apiResponse = await fetch(apiUrl);
-        const responseText = await apiResponse.text(); // Get text first
-
-        if (!apiResponse.ok) {
-            let errorJson = { error: `API externe (tempmail-inbox) Erreur: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
-            try { errorJson = JSON.parse(responseText); if(!errorJson.error && !errorJson.message) { errorJson.error = `API externe (tempmail-inbox) Erreur: ${apiResponse.status} ${apiResponse.statusText}`; } } catch (e) { /* Not JSON */ }
-            console.error("Erreur de l'API tempmail-inbox:", errorJson);
-            return res.status(apiResponse.status).json(errorJson);
-        }
-        const data = JSON.parse(responseText); // Assume response is JSON if OK
-        res.json(data);
-    } catch (error) {
-        console.error('Erreur serveur lors de l\'appel à tempmail-inbox:', error);
-        res.status(500).json({ error: 'Erreur serveur lors de la récupération de la boîte de réception.' });
-    }
+        const r = await fetch(apiUrl); const t = await r.text(); if(!r.ok){let e={e:`API (tempmail-inbox) Err: ${r.status} ${r.statusText}`,d:t};try{e=JSON.parse(t);if(!e.e&&!e.m)e.e=`API (tempmail-inbox) Err: ${r.status} ${r.statusText}`; }catch(c){} return res.status(r.status).json(e);} res.json(JSON.parse(t));
+    } catch (e) { console.error('Tempmail-inbox err:', e); res.status(500).json({e:'Server error fetching inbox.'});}
 });
-// --- Fin des routes API Temp Email ---
 
-// --- Blackbox AI API Route ---
+// Blackbox AI
 app.post('/api/blackbox-ai', async (req, res) => {
     const { ask, uid, webSearch } = req.body;
-    if (!ask || !uid) {
-        return res.status(400).json({ error: 'Parameters "ask" and "uid" are required for Blackbox AI.' });
-    }
-
+    if (!ask || !uid) return res.status(400).json({ error: 'Parameters "ask" and "uid" are required for Blackbox AI.' });
     const webSearchParam = (webSearch === true || String(webSearch).toLowerCase() === 'on') ? 'on' : 'off';
-    const blackboxApiUrl = `https://kaiz-apis.gleeze.com/api/blackbox?ask=${encodeURIComponent(ask)}&uid=${encodeURIComponent(uid)}&webSearch=${webSearchParam}&apikey=${BLACKBOX_API_KEY}`;
-
+    const apiUrl = `https://kaiz-apis.gleeze.com/api/blackbox?ask=${encodeURIComponent(ask)}&uid=${encodeURIComponent(uid)}&webSearch=${webSearchParam}&apikey=${BLACKBOX_API_KEY}`;
     try {
-        const apiResponse = await fetch(blackboxApiUrl);
-        const responseText = await apiResponse.text(); // Get text first for better error handling
-
-        if (!apiResponse.ok) {
-            let errorJson = { error: `External Blackbox API Error: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
-            try { errorJson = JSON.parse(responseText); if(!errorJson.error && !errorJson.message) { errorJson.error = `External Blackbox API Error: ${apiResponse.status} ${apiResponse.statusText}`; } } catch (e) { /* Not JSON */ }
-            console.error("Blackbox API Error:", errorJson);
-            return res.status(apiResponse.status).json(errorJson);
-        }
-        let data;
-        try { data = JSON.parse(responseText); }
-        catch (e) { return res.status(500).json({ error: 'Failed to parse response from Blackbox API.', details: responseText }); }
-
-        if (data && data.response) {
-            res.json({ author: data.author || "Blackbox AI (Kaizenji)", response: data.response });
-        } else {
-            return res.status(500).json({ error: 'Unexpected response structure from Blackbox API.', details: data });
-        }
-    } catch (error) {
-        console.error('Server error while calling Blackbox API:', error);
-        return res.status(500).json({ error: 'Server error while processing Blackbox AI request.' });
-    }
+        const r = await fetch(apiUrl); const t = await r.text(); if(!r.ok){let e={e:`Blackbox API Err: ${r.status} ${r.statusText}`,d:t};try{e=JSON.parse(t);if(!e.e&&!e.m)e.e=`Blackbox API Err: ${r.status} ${r.statusText}`;}catch(c){} return res.status(r.status).json(e);} const d=JSON.parse(t); if(d&&d.response)res.json({author:d.author||"Blackbox AI",response:d.response}); else return res.status(500).json({e:'Unexpected Blackbox API response.',d});
+    } catch (e) { console.error('Blackbox API server err:', e); return res.status(500).json({ error: 'Server error (Blackbox AI).' }); }
 });
 
-// --- Deepseek AI API Route ---
+// Deepseek AI
 app.post('/api/deepseek-ai', async (req, res) => {
-    const { ask } = req.body;
-    if (!ask) {
-        return res.status(400).json({ error: 'Parameter "ask" is required for Deepseek AI.' });
-    }
-
-    const deepseekApiUrl = `https://kaiz-apis.gleeze.com/api/deepseek-v3?ask=${encodeURIComponent(ask)}&apikey=${DEEPSEEK_API_KEY}`;
-
+    const { ask } = req.body; if (!ask) return res.status(400).json({ error: '"ask" required for Deepseek AI.' });
+    const apiUrl = `https://kaiz-apis.gleeze.com/api/deepseek-v3?ask=${encodeURIComponent(ask)}&apikey=${DEEPSEEK_API_KEY}`;
     try {
-        const apiResponse = await fetch(deepseekApiUrl);
-        const responseText = await apiResponse.text();
-
-        if (!apiResponse.ok) {
-            let errorJson = { error: `External Deepseek API Error: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
-            try { errorJson = JSON.parse(responseText); if(!errorJson.error && !errorJson.message) { errorJson.error = `External Deepseek API Error: ${apiResponse.status} ${apiResponse.statusText}`; } } catch (e) { /* Not JSON */ }
-            console.error("Deepseek API Error:", errorJson);
-            return res.status(apiResponse.status).json(errorJson);
-        }
-        let data;
-        try { data = JSON.parse(responseText); }
-        catch (e) { return res.status(500).json({ error: 'Failed to parse response from Deepseek API.', details: responseText }); }
-
-        if (data && data.response) {
-            res.json({ author: data.author || "Deepseek AI (Kaizenji)", response: data.response });
-        } else {
-            return res.status(500).json({ error: 'Unexpected response structure from Deepseek API.', details: data });
-        }
-    } catch (error) {
-        console.error('Server error while calling Deepseek API:', error);
-        return res.status(500).json({ error: 'Server error while processing Deepseek AI request.' });
-    }
+        const r = await fetch(apiUrl); const t = await r.text(); if(!r.ok){let e={e:`Deepseek API Err: ${r.status} ${r.statusText}`,d:t};try{e=JSON.parse(t);if(!e.e&&!e.m)e.e=`Deepseek API Err: ${r.status} ${r.statusText}`;}catch(c){} return res.status(r.status).json(e);} const d=JSON.parse(t); if(d&&d.response)res.json({author:d.author||"Deepseek AI",response:d.response}); else return res.status(500).json({e:'Unexpected Deepseek API response.',d});
+    } catch (e) { console.error('Deepseek API server err:', e); return res.status(500).json({ error: 'Server error (Deepseek AI).' }); }
 });
 
-// --- Claude Haiku AI API Route ---
+// Claude Haiku AI
 app.post('/api/claude-haiku-ai', async (req, res) => {
-    const { ask } = req.body;
-    if (!ask) {
-        return res.status(400).json({ error: 'Parameter "ask" is required for Claude Haiku AI.' });
-    }
-
-    const claudeApiUrl = `https://kaiz-apis.gleeze.com/api/claude3-haiku?ask=${encodeURIComponent(ask)}&apikey=${CLAUDE_HAIKU_API_KEY}`;
-
+    const { ask } = req.body; if (!ask) return res.status(400).json({ error: '"ask" required for Claude Haiku AI.' });
+    const apiUrl = `https://kaiz-apis.gleeze.com/api/claude3-haiku?ask=${encodeURIComponent(ask)}&apikey=${CLAUDE_HAIKU_API_KEY}`;
     try {
-        const apiResponse = await fetch(claudeApiUrl);
-        const responseText = await apiResponse.text();
-
-        if (!apiResponse.ok) {
-            let errorJson = { error: `External Claude Haiku API Error: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
-            try { errorJson = JSON.parse(responseText); if(!errorJson.error && !errorJson.message) { errorJson.error = `External Claude Haiku API Error: ${apiResponse.status} ${apiResponse.statusText}`; } } catch (e) { /* Not JSON */ }
-            console.error("Claude Haiku API Error:", errorJson);
-            return res.status(apiResponse.status).json(errorJson);
-        }
-        let data;
-        try { data = JSON.parse(responseText); }
-        catch (e) { return res.status(500).json({ error: 'Failed to parse response from Claude Haiku API.', details: responseText }); }
-
-        if (data && data.response) {
-            res.json({ author: data.author || "Claude Haiku AI (Kaizenji)", response: data.response });
-        } else {
-            return res.status(500).json({ error: 'Unexpected response structure from Claude Haiku API.', details: data });
-        }
-    } catch (error) {
-        console.error('Server error while calling Claude Haiku API:', error);
-        return res.status(500).json({ error: 'Server error while processing Claude Haiku AI request.' });
-    }
+        const r = await fetch(apiUrl); const t = await r.text(); if(!r.ok){let e={e:`Claude API Err: ${r.status} ${r.statusText}`,d:t};try{e=JSON.parse(t);if(!e.e&&!e.m)e.e=`Claude API Err: ${r.status} ${r.statusText}`;}catch(c){} return res.status(r.status).json(e);} const d=JSON.parse(t); if(d&&d.response)res.json({author:d.author||"Claude Haiku AI",response:d.response}); else return res.status(500).json({e:'Unexpected Claude API response.',d});
+    } catch (e) { console.error('Claude API server err:', e); return res.status(500).json({ error: 'Server error (Claude Haiku AI).' }); }
 });
 
+// Gemini All Model API Route
+app.post('/api/gemini-all-model', uploadGeminiAllModel.single('file'), async (req, res) => {
+    const { ask, model, uid, roleplay, max_tokens } = req.body;
+    let clientUploadedFileUrl = req.body.file_url;
+    let tempLocalPath = null;
+    let publicFileUrl = null;
+
+    if (!ask && !req.file && !clientUploadedFileUrl) return res.status(400).json({ error: '"ask" or file/file_url required.' });
+    if (!uid) { if (req.file) fs.unlinkSync(req.file.path); return res.status(400).json({ error: '"uid" required.' }); }
+    if (!model) { if (req.file) fs.unlinkSync(req.file.path); return res.status(400).json({ error: '"model" required.' }); }
+
+    if (req.file) {
+        tempLocalPath = req.file.path;
+        const APP_BASE_URL = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+        publicFileUrl = new URL(`/uploads/gemini_all_model_temp/${req.file.filename}`, APP_BASE_URL).toString();
+        console.log(`Gemini All Model: File temp saved at ${tempLocalPath}, public URL ${publicFileUrl}`);
+    } else if (clientUploadedFileUrl) {
+        try {
+            const parsedUrl = new URL(clientUploadedFileUrl);
+            if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") throw new Error("Invalid file URL protocol.");
+            publicFileUrl = clientUploadedFileUrl;
+        } catch (e) { return res.status(400).json({ error: `Invalid file_url: ${e.message}` }); }
+    }
+
+    let hajiApiUrl = `https://haji-mix-api.gleeze.com/api/gemini?uid=${encodeURIComponent(uid)}&model=${encodeURIComponent(model)}&api_key=${HAJI_MIX_GEMINI_API_KEY}`;
+    if (ask) hajiApiUrl += `&ask=${encodeURIComponent(ask)}`;
+    if (publicFileUrl) hajiApiUrl += `&file_url=${encodeURIComponent(publicFileUrl)}`;
+    if (roleplay) hajiApiUrl += `&roleplay=${encodeURIComponent(roleplay)}`;
+    if (max_tokens) hajiApiUrl += `&max_tokens=${encodeURIComponent(max_tokens)}`;
+
+    try {
+        const apiResponse = await fetch(hajiApiUrl);
+        const responseText = await apiResponse.text();
+        if (tempLocalPath) fs.unlink(tempLocalPath, (err) => { if (err) console.error("Error deleting temp file for Gemini All Model:", err); });
+        if (!apiResponse.ok) {
+            let eJson={e:`Haji Mix Gemini API Err: ${apiResponse.status} ${apiResponse.statusText}`,d:responseText}; try{eJson=JSON.parse(responseText);if(!eJson.e&&!eJson.m)eJson.e=`Haji Mix Gemini API Err: ${apiResponse.status} ${apiResponse.statusText}`;}catch(c){} return res.status(apiResponse.status).json(eJson);
+        }
+        let data; try { data = JSON.parse(responseText); } catch (e) { return res.status(500).json({ error: 'Failed to parse Haji Mix Gemini API response.', details: responseText }); }
+        if (data && data.answer) {
+            res.json({ author: data.model_used || model, response: data.answer, model_used: data.model_used, supported_models: data.supported_models });
+        } else { return res.status(500).json({ error: 'Unexpected Haji Mix Gemini API response structure.', details: data }); }
+    } catch (error) {
+        console.error('Server error (Haji Mix Gemini API):', error);
+        if (tempLocalPath && fs.existsSync(tempLocalPath)) fs.unlink(tempLocalPath, (err) => { if (err) console.error("Error deleting temp file (Gemini All Model) on error:", err); });
+        return res.status(500).json({ error: 'Server error processing Haji Mix Gemini API request.' });
+    }
+});
 
 // Fallback to index.html
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Start server after DB connection
+// Start server
 async function startServer() {
     await connectDB();
     app.listen(PORT, () => {

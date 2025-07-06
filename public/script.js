@@ -60,13 +60,36 @@ document.addEventListener('DOMContentLoaded', () => {
     const sideMenu = document.getElementById('side-menu');
     const homeMenuTriggerIcon = document.getElementById('home-menu-trigger-icon');
     const weatherDisplayContainer = document.getElementById('weather-display-container');
-    const activeViewTitleSpan = document.getElementById('active-view-title');
+    const chatTitleDisplay = document.getElementById('chat-title-display');
+
+    // Helper function to get the display name for a chat view
+    function getChatViewTitle(viewId, modelName = null) {
+        const viewElement = document.querySelector(`#side-menu a[data-view="${viewId}"]`);
+        let baseTitle = viewElement ? (viewElement.querySelector('span:not(.menu-item-description)')?.textContent.trim() || viewId) : viewId;
+
+        // Remove "Chat" if it's part of the base title to avoid "Gemini All Models Chat Chat"
+        if (baseTitle.toLowerCase().endsWith(" chat")) {
+            baseTitle = baseTitle.substring(0, baseTitle.length - 5);
+        }
+
+        if (modelName) {
+            return `${baseTitle} - ${modelName}`;
+        }
+        // For specific views that don't have dynamic models but are chats
+        if (viewId === 'ai-chat-view') return "AI Chat";
+        if (viewId === 'gemini-chat-view') return "Gemini Vision"; // Or specific model if known
+        if (viewId === 'gpt4o-chat-view') return "GPT-4o Vision";
+        if (viewId === 'blackbox-ai-view') return "Blackbox AI";
+        if (viewId === 'deepseek-ai-view') return "Deepseek AI";
+        if (viewId === 'claude-haiku-view') return "Claude Haiku AI";
+        return baseTitle; // Fallback to the view's name from side menu
+    }
 
 
     // --- Centralized showView Function ---
     window.showView = function(viewIdToShow, bypassAdminCheck = false) {
         if (viewIdToShow === 'admin-panel-view' && !bypassAdminCheck) {
-            const enteredCode = prompt('Enter admin code:');
+            const enteredCode = prompt(translations.admin_code_prompt || 'Enter admin code:');
             if (enteredCode) {
                 fetch('/api/verify-admin', {
                     method: 'POST',
@@ -103,13 +126,29 @@ document.addEventListener('DOMContentLoaded', () => {
             view.style.display = 'none';
         });
 
-        // Explicitly hide or manage AI chat components when not the target view
-        const aiChatView = document.getElementById('ai-chat-view'); // Keep for specific chat input bar logic if needed below
-        // const chatInputBar = document.getElementById('chat-input-bar'); // This was for a specific input bar, might not be needed if all chat views handle their own.
+        const isChatView = [
+            'ai-chat-view', 'gemini-chat-view', 'gpt4o-chat-view',
+            'blackbox-ai-view', 'deepseek-ai-view', 'claude-haiku-view',
+            'gemini-all-model-view', // Removed 'chatgpt-all-models-view' for now as it's not implemented
+        ].includes(viewIdToShow);
 
-        // Hide all chat input bars initially, then show the correct one if a chat view is active
-        document.querySelectorAll('[id$="-chat-input-bar"]').forEach(bar => bar.style.display = 'none');
+        if (isChatView) {
+            if (weatherDisplayContainer) weatherDisplayContainer.style.display = 'none';
+            if (chatTitleDisplay) {
+                let modelName = null;
+                if (viewIdToShow === 'gemini-all-model-view' && typeof currentSelectedGeminiModel !== 'undefined' && currentSelectedGeminiModel) {
+                    modelName = currentSelectedGeminiModel;
+                }
+                // Add similar conditions for other chat views if they have dynamic model names
+                // e.g., else if (viewIdToShow === 'new-chatgpt-view' && currentSelectedChatGPTModel) modelName = currentSelectedChatGPTModel;
 
+                chatTitleDisplay.textContent = getChatViewTitle(viewIdToShow, modelName);
+                chatTitleDisplay.style.display = 'block'; // Or 'flex' if it's a flex item
+            }
+        } else {
+            if (weatherDisplayContainer) weatherDisplayContainer.style.display = 'flex'; // Assuming flex is its default
+            if (chatTitleDisplay) chatTitleDisplay.style.display = 'none';
+        }
 
         const viewToShow = document.getElementById(viewIdToShow);
         if (viewToShow) {
@@ -122,61 +161,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 homeView.style.display = 'block';
                 homeView.classList.add('active');
             }
-            viewIdToShow = 'home-view'; // Update viewIdToShow to reflect the fallback
+            viewIdToShow = 'home-view'; // Update to actual shown view
         }
 
-        const chatViewIds = [
+        // Special display handling for flex-based views (all chat views are flex)
+        const flexViews = [
             'ai-chat-view', 'gemini-chat-view', 'gpt4o-chat-view',
             'blackbox-ai-view', 'deepseek-ai-view', 'claude-haiku-view',
-            'chatgpt-all-model-view' // Added new chat view
+            'gemini-all-model-view', 'chatgpt-all-models-view', // Future view
+            'email-generator-view'
         ];
-        const isChatView = chatViewIds.includes(viewIdToShow);
-
-        if (isChatView) {
-            if (viewToShow) {
-                viewToShow.classList.add('chat-view-fullscreen');
-                viewToShow.style.display = 'flex'; // Ensure flex display for fullscreen chat views
-                 // Make sure the specific input bar for this chat view is visible
-                const currentChatInputBarId = viewIdToShow.replace('-view', '') + '-chat-input-bar';
-                let currentChatInputBar = document.getElementById(currentChatInputBarId);
-
-                // Fallback for the original "ai-chat-view" which has a slightly different ID for its input bar
-                if (viewIdToShow === 'ai-chat-view' && !currentChatInputBar) {
-                    currentChatInputBar = document.getElementById('chat-input-bar');
-                }
-
-                if (currentChatInputBar) {
-                    currentChatInputBar.style.display = 'flex';
-                }
-            }
-            if (weatherDisplayContainer) weatherDisplayContainer.style.display = 'none';
-            if (activeViewTitleSpan) {
-                const menuLink = sideMenu ? sideMenu.querySelector(`a[data-view="${viewIdToShow}"] span[data-translate]`) : null;
-                let titleText = viewIdToShow.replace('-view', '').split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '); // Fallback title
-                if (menuLink && menuLink.dataset.translate && translations[menuLink.dataset.translate]) {
-                    titleText = translations[menuLink.dataset.translate];
-                } else { // Try to get title from feature highlight if not in side menu (e.g. if side menu is hidden)
-                    const featureHighlightItem = document.querySelector(`.feature-highlight-item[data-view="${viewIdToShow}"] h3[data-translate]`);
-                    if (featureHighlightItem && featureHighlightItem.dataset.translate && translations[featureHighlightItem.dataset.translate]) {
-                         titleText = translations[featureHighlightItem.dataset.translate];
-                    } else if (featureHighlightItem) { // Fallback to h3 text content if data-translate is missing
-                        titleText = featureHighlightItem.textContent || titleText;
-                    }
-                }
-                activeViewTitleSpan.textContent = titleText;
-                activeViewTitleSpan.style.display = 'block';
-            }
-        } else { // Not a chat view
-            if (viewToShow && viewToShow.classList.contains('chat-view-fullscreen')) {
-                viewToShow.classList.remove('chat-view-fullscreen');
-            }
-            if (weatherDisplayContainer) weatherDisplayContainer.style.display = 'flex';
-            if (activeViewTitleSpan) activeViewTitleSpan.style.display = 'none';
-        }
-
-        // Special display handling for other flex views (non-chat)
-        if (viewIdToShow === 'email-generator-view') {
-            if(viewToShow) viewToShow.style.display = 'flex';
+        if (flexViews.includes(viewIdToShow) && viewToShow) {
+            viewToShow.style.display = 'flex'; // Ensure flex display for these views
         }
 
 
@@ -185,8 +181,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (subViewMenuTrigger) subViewMenuTrigger.style.display = 'none';
             if (homeMenuTriggerIcon) homeMenuTriggerIcon.style.display = 'inline-flex';
             if (sideMenu && sideMenu.classList.contains('visible')) sideMenu.classList.remove('visible');
-            if (activeViewTitleSpan) activeViewTitleSpan.style.display = 'none';
-            if (weatherDisplayContainer) weatherDisplayContainer.style.display = 'flex';
         } else {
             if (homeBottomAppIcons) homeBottomAppIcons.style.display = 'none';
             if (subViewMenuTrigger) subViewMenuTrigger.style.display = 'inline-flex';
@@ -196,14 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Feature-specific load calls
         if (viewIdToShow === 'home-view' && typeof loadComments === 'function') loadComments();
         else if (viewIdToShow === 'ai-chat-view') {
-            console.log('[AI CHAT DIAGNOSTIC] showView called for ai-chat-view.');
-            // Logs for checking elements when ai-chat-view is shown
-            console.log('[AI CHAT DIAGNOSTIC] Checking #chat-input-bar in DOM:', document.getElementById('chat-input-bar'));
-            console.log('[AI CHAT DIAGNOSTIC] Checking #chat-input-field in DOM:', document.getElementById('chat-input-field'));
-            console.log('[AI CHAT DIAGNOSTIC] Checking #chat-send-button in DOM:', document.getElementById('chat-send-button'));
-            console.log('[AI CHAT DIAGNOSTIC] Checking #web-search-toggle in DOM:', document.getElementById('web-search-toggle'));
-            console.log('[AI CHAT DIAGNOSTIC] Checking .web-search-container in DOM (within #ai-chat-view):', document.querySelector('#ai-chat-view .web-search-container'));
-
+            // console.log('[AI CHAT DIAGNOSTIC] showView called for ai-chat-view.');
             if (typeof loadChatHistory === 'function') loadChatHistory();
             if (typeof loadWebSearchToggleState === 'function') loadWebSearchToggleState();
         } else if (viewIdToShow === 'image-generator-view' && typeof loadImagePromptHistory === 'function') loadImagePromptHistory();
@@ -795,36 +782,35 @@ document.addEventListener('DOMContentLoaded', () => {
             messageWrapper.id = 'typing-indicator-message';
             currentTypingIndicator = messageWrapper;
         } else {
-            const rawMessageContent = message || ""; // Store raw message for copy/download
-            messageBubble.innerHTML = formatTextContentEnhanced(rawMessageContent); // Use enhanced formatter
+            messageBubble.innerHTML = formatTextContentEnhanced(message); // Use enhanced formatter
 
             if (sender === 'ai') {
                 const controlsDiv = document.createElement('div');
                 controlsDiv.className = 'message-controls';
 
-                // Copy Button
                 const copyBtn = document.createElement('button');
                 copyBtn.className = 'icon-button message-copy-btn';
-                copyBtn.title = translations.copy_button_title || "Copy";
+                copyBtn.title = (typeof translations !== 'undefined' && translations.copy_button_title) ? translations.copy_button_title : 'Copy';
                 copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
                 copyBtn.addEventListener('click', () => {
-                    navigator.clipboard.writeText(rawMessageContent).then(() => { // Use rawMessageContent
+                    const textToCopy = messageBubble.textContent || ""; // Extracts text content, might need refinement for complex HTML
+                    navigator.clipboard.writeText(textToCopy.replace(/\s*Copy\s*Download\s*$/, '').trim()).then(() => { // Attempt to remove button text
                         copyBtn.innerHTML = `<svg viewBox="0 0 24 24" class="icon"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>`; // Checkmark
                         setTimeout(() => {
-                             copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
+                            copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
                         }, 1500);
                     }).catch(err => console.error('Failed to copy text: ', err));
                 });
 
-                // Download Button
                 const downloadBtn = document.createElement('button');
                 downloadBtn.className = 'icon-button message-download-btn';
-                downloadBtn.title = translations.download_button_title || "Download";
+                downloadBtn.title = (typeof translations !== 'undefined' && translations.download_button_title) ? translations.download_button_title : 'Download';
                 downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>';
                 downloadBtn.addEventListener('click', () => {
-                    // For now, only TXT. PDF/DOCS can be a modal later.
-                    const filename = `ai_chat_response_${Date.now()}.txt`;
-                    const blob = new Blob([rawMessageContent], { type: 'text/plain;charset=utf-8' }); // Use rawMessageContent
+                    const textContent = messageBubble.textContent || "";
+                     // Basic TXT download
+                    const filename = `ai_response_${Date.now()}.txt`;
+                    const blob = new Blob([textContent.replace(/\s*Copy\s*Download\s*$/, '').trim()], { type: 'text/plain;charset=utf-8' });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
@@ -833,10 +819,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     a.click();
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
+                    // TODO: Implement modal for PDF/DOCX options
                 });
+
                 controlsDiv.appendChild(copyBtn);
                 controlsDiv.appendChild(downloadBtn);
-                messageBubble.appendChild(controlsDiv); // Append controls to the bubble
+                messageBubble.appendChild(controlsDiv);
             }
         }
 
@@ -1612,38 +1600,41 @@ document.addEventListener('DOMContentLoaded', () => {
             messageWrapper.id = 'gemini-typing-indicator-message'; // Unique ID if needed
             geminiTypingIndicator = messageWrapper;
         } else {
-            const rawMessageContent = message || "";
-            let formattedMessage = formatTextContentEnhanced(rawMessageContent); // Use enhanced formatter
+            // Sanitize and format message text
+            let formattedMessage = message ? formatTextContentEnhanced(message) : ''; // USE ENHANCED
 
             if (imageUrl) {
+                // Simple image display, can be enhanced with CSS
                 formattedMessage += `<br><img src="${escapeHTML(imageUrl)}" alt="Chat Image" style="max-width: 100%; border-radius: 8px; margin-top: 8px;">`;
             }
             messageBubble.innerHTML = formattedMessage;
 
-            if (sender === 'gemini' || sender === 'ai') { // Assuming Gemini might use 'gemini' or 'ai'
+            if (sender === 'ai') {
                 const controlsDiv = document.createElement('div');
                 controlsDiv.className = 'message-controls';
 
                 const copyBtn = document.createElement('button');
                 copyBtn.className = 'icon-button message-copy-btn';
-                copyBtn.title = translations.copy_button_title || "Copy";
+                copyBtn.title = (typeof translations !== 'undefined' && translations.copy_button_title) ? translations.copy_button_title : 'Copy';
                 copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
                 copyBtn.addEventListener('click', () => {
-                    navigator.clipboard.writeText(rawMessageContent).then(() => {
+                    const textToCopy = messageBubble.textContent || "";
+                    navigator.clipboard.writeText(textToCopy.replace(/\s*Copy\s*Download\s*$/, '').trim()).then(() => {
                         copyBtn.innerHTML = `<svg viewBox="0 0 24 24" class="icon"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>`;
                         setTimeout(() => {
-                             copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
+                            copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
                         }, 1500);
                     }).catch(err => console.error('Failed to copy text: ', err));
                 });
 
                 const downloadBtn = document.createElement('button');
                 downloadBtn.className = 'icon-button message-download-btn';
-                downloadBtn.title = translations.download_button_title || "Download";
+                downloadBtn.title = (typeof translations !== 'undefined' && translations.download_button_title) ? translations.download_button_title : 'Download';
                 downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>';
                 downloadBtn.addEventListener('click', () => {
-                    const filename = `gemini_chat_response_${Date.now()}.txt`;
-                    const blob = new Blob([rawMessageContent], { type: 'text/plain;charset=utf-8' });
+                    const textContent = messageBubble.textContent || "";
+                    const filename = `gemini_response_${Date.now()}.txt`;
+                    const blob = new Blob([textContent.replace(/\s*Copy\s*Download\s*$/, '').trim()], { type: 'text/plain;charset=utf-8' });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
@@ -1880,37 +1871,38 @@ document.addEventListener('DOMContentLoaded', () => {
             messageWrapper.id = 'gpt4o-typing-indicator-message';
             gpt4oTypingIndicator = messageWrapper;
         } else {
-            const rawMessageContent = message || ""; // Store raw message
-            let formattedMessage = formatTextContentEnhanced(rawMessageContent); // Use enhanced formatter
+            let formattedMessage = message ? formatTextContentEnhanced(message) : ''; // USE ENHANCED
             if (imageUrl) {
                 formattedMessage += `<br><img src="${escapeHTML(imageUrl)}" alt="Chat Image" style="max-width: 100%; border-radius: 8px; margin-top: 8px;">`;
             }
             messageBubble.innerHTML = formattedMessage;
 
-            if (sender === 'ai' || sender === 'gpt4o') { // Check for 'ai' or specific 'gpt4o' sender
+            if (sender === 'ai') {
                 const controlsDiv = document.createElement('div');
                 controlsDiv.className = 'message-controls';
 
                 const copyBtn = document.createElement('button');
                 copyBtn.className = 'icon-button message-copy-btn';
-                copyBtn.title = translations.copy_button_title || "Copy";
+                copyBtn.title = (typeof translations !== 'undefined' && translations.copy_button_title) ? translations.copy_button_title : 'Copy';
                 copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
                 copyBtn.addEventListener('click', () => {
-                    navigator.clipboard.writeText(rawMessageContent).then(() => {
+                    const textToCopy = messageBubble.textContent || "";
+                    navigator.clipboard.writeText(textToCopy.replace(/\s*Copy\s*Download\s*$/, '').trim()).then(() => {
                         copyBtn.innerHTML = `<svg viewBox="0 0 24 24" class="icon"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>`;
                         setTimeout(() => {
-                             copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
+                            copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
                         }, 1500);
                     }).catch(err => console.error('Failed to copy text: ', err));
                 });
 
                 const downloadBtn = document.createElement('button');
                 downloadBtn.className = 'icon-button message-download-btn';
-                downloadBtn.title = translations.download_button_title || "Download";
+                downloadBtn.title = (typeof translations !== 'undefined' && translations.download_button_title) ? translations.download_button_title : 'Download';
                 downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>';
                 downloadBtn.addEventListener('click', () => {
-                    const filename = `gpt4o_chat_response_${Date.now()}.txt`;
-                    const blob = new Blob([rawMessageContent], { type: 'text/plain;charset=utf-8' });
+                    const textContent = messageBubble.textContent || "";
+                    const filename = `gpt4o_response_${Date.now()}.txt`;
+                    const blob = new Blob([textContent.replace(/\s*Copy\s*Download\s*$/, '').trim()], { type: 'text/plain;charset=utf-8' });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
@@ -2098,45 +2090,34 @@ document.addEventListener('DOMContentLoaded', () => {
             messageWrapper.id = 'blackbox-typing-indicator-message';
             blackboxTypingIndicator = messageWrapper;
         } else {
-            const rawMessageContent = message || "";
-            messageBubble.innerHTML = formatTextContentEnhanced(rawMessageContent); // Use enhanced formatter
-
-            if (sender === 'ai' || sender === 'blackbox') { // Assuming sender can be 'ai' or 'blackbox'
+            messageBubble.innerHTML = formatTextContentEnhanced(message); // USE ENHANCED
+             if (sender === 'ai') {
                 const controlsDiv = document.createElement('div');
                 controlsDiv.className = 'message-controls';
-
                 const copyBtn = document.createElement('button');
                 copyBtn.className = 'icon-button message-copy-btn';
-                copyBtn.title = translations.copy_button_title || "Copy";
+                copyBtn.title = (typeof translations !== 'undefined' && translations.copy_button_title) ? translations.copy_button_title : 'Copy';
                 copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
                 copyBtn.addEventListener('click', () => {
-                    navigator.clipboard.writeText(rawMessageContent).then(() => {
+                    const textToCopy = messageBubble.textContent || "";
+                    navigator.clipboard.writeText(textToCopy.replace(/\s*Copy\s*Download\s*$/, '').trim()).then(() => {
                         copyBtn.innerHTML = `<svg viewBox="0 0 24 24" class="icon"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>`;
-                        setTimeout(() => {
-                             copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
-                        }, 1500);
+                        setTimeout(() => { copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>'; }, 1500);
                     }).catch(err => console.error('Failed to copy text: ', err));
                 });
-
                 const downloadBtn = document.createElement('button');
                 downloadBtn.className = 'icon-button message-download-btn';
-                downloadBtn.title = translations.download_button_title || "Download";
+                downloadBtn.title = (typeof translations !== 'undefined' && translations.download_button_title) ? translations.download_button_title : 'Download';
                 downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>';
                 downloadBtn.addEventListener('click', () => {
-                    const filename = `blackbox_ai_response_${Date.now()}.txt`;
-                    const blob = new Blob([rawMessageContent], { type: 'text/plain;charset=utf-8' });
+                    const textContent = messageBubble.textContent || "";
+                    const filename = `blackbox_response_${Date.now()}.txt`;
+                    const blob = new Blob([textContent.replace(/\s*Copy\s*Download\s*$/, '').trim()], { type: 'text/plain;charset=utf-8' });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
-                    a.href = url;
-                    a.download = filename;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
+                    a.href = url; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
                 });
-                controlsDiv.appendChild(copyBtn);
-                controlsDiv.appendChild(downloadBtn);
-                messageBubble.appendChild(controlsDiv);
+                controlsDiv.appendChild(copyBtn); controlsDiv.appendChild(downloadBtn); messageBubble.appendChild(controlsDiv);
             }
         }
         messageWrapper.append(avatarContainer, messageBubble);
@@ -2257,45 +2238,34 @@ document.addEventListener('DOMContentLoaded', () => {
             messageWrapper.id = 'deepseek-typing-indicator-message';
             deepseekTypingIndicator = messageWrapper;
         } else {
-            const rawMessageContent = message || "";
-            messageBubble.innerHTML = formatTextContentEnhanced(rawMessageContent); // Use enhanced formatter
-
-            if (sender === 'ai' || sender === 'deepseek') { // Assuming sender can be 'ai' or 'deepseek'
+            messageBubble.innerHTML = formatTextContentEnhanced(message); // USE ENHANCED
+            if (sender === 'ai') {
                 const controlsDiv = document.createElement('div');
                 controlsDiv.className = 'message-controls';
-
                 const copyBtn = document.createElement('button');
                 copyBtn.className = 'icon-button message-copy-btn';
-                copyBtn.title = translations.copy_button_title || "Copy";
+                copyBtn.title = (typeof translations !== 'undefined' && translations.copy_button_title) ? translations.copy_button_title : 'Copy';
                 copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
                 copyBtn.addEventListener('click', () => {
-                    navigator.clipboard.writeText(rawMessageContent).then(() => {
+                    const textToCopy = messageBubble.textContent || "";
+                    navigator.clipboard.writeText(textToCopy.replace(/\s*Copy\s*Download\s*$/, '').trim()).then(() => {
                         copyBtn.innerHTML = `<svg viewBox="0 0 24 24" class="icon"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>`;
-                        setTimeout(() => {
-                             copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
-                        }, 1500);
+                        setTimeout(() => { copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>'; }, 1500);
                     }).catch(err => console.error('Failed to copy text: ', err));
                 });
-
                 const downloadBtn = document.createElement('button');
                 downloadBtn.className = 'icon-button message-download-btn';
-                downloadBtn.title = translations.download_button_title || "Download";
+                downloadBtn.title = (typeof translations !== 'undefined' && translations.download_button_title) ? translations.download_button_title : 'Download';
                 downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>';
                 downloadBtn.addEventListener('click', () => {
-                    const filename = `deepseek_ai_response_${Date.now()}.txt`;
-                    const blob = new Blob([rawMessageContent], { type: 'text/plain;charset=utf-8' });
+                    const textContent = messageBubble.textContent || "";
+                    const filename = `deepseek_response_${Date.now()}.txt`;
+                    const blob = new Blob([textContent.replace(/\s*Copy\s*Download\s*$/, '').trim()], { type: 'text/plain;charset=utf-8' });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
-                    a.href = url;
-                    a.download = filename;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
+                    a.href = url; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
                 });
-                controlsDiv.appendChild(copyBtn);
-                controlsDiv.appendChild(downloadBtn);
-                messageBubble.appendChild(controlsDiv);
+                controlsDiv.appendChild(copyBtn); controlsDiv.appendChild(downloadBtn); messageBubble.appendChild(controlsDiv);
             }
         }
         messageWrapper.append(avatarContainer, messageBubble);
@@ -2399,45 +2369,34 @@ document.addEventListener('DOMContentLoaded', () => {
             messageWrapper.id = 'claude-typing-indicator-message';
             claudeTypingIndicator = messageWrapper;
         } else {
-            const rawMessageContent = message || "";
-            messageBubble.innerHTML = formatTextContentEnhanced(rawMessageContent); // Use enhanced formatter
-
-            if (sender === 'ai' || sender === 'claude') { // Assuming sender can be 'ai' or 'claude'
+            messageBubble.innerHTML = formatTextContentEnhanced(message); // USE ENHANCED
+            if (sender === 'ai') {
                 const controlsDiv = document.createElement('div');
                 controlsDiv.className = 'message-controls';
-
                 const copyBtn = document.createElement('button');
                 copyBtn.className = 'icon-button message-copy-btn';
-                copyBtn.title = translations.copy_button_title || "Copy";
+                copyBtn.title = (typeof translations !== 'undefined' && translations.copy_button_title) ? translations.copy_button_title : 'Copy';
                 copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
                 copyBtn.addEventListener('click', () => {
-                    navigator.clipboard.writeText(rawMessageContent).then(() => {
+                    const textToCopy = messageBubble.textContent || "";
+                    navigator.clipboard.writeText(textToCopy.replace(/\s*Copy\s*Download\s*$/, '').trim()).then(() => {
                         copyBtn.innerHTML = `<svg viewBox="0 0 24 24" class="icon"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>`;
-                        setTimeout(() => {
-                             copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
-                        }, 1500);
+                        setTimeout(() => { copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>'; }, 1500);
                     }).catch(err => console.error('Failed to copy text: ', err));
                 });
-
                 const downloadBtn = document.createElement('button');
                 downloadBtn.className = 'icon-button message-download-btn';
-                downloadBtn.title = translations.download_button_title || "Download";
+                downloadBtn.title = (typeof translations !== 'undefined' && translations.download_button_title) ? translations.download_button_title : 'Download';
                 downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>';
                 downloadBtn.addEventListener('click', () => {
-                    const filename = `claude_haiku_ai_response_${Date.now()}.txt`;
-                    const blob = new Blob([rawMessageContent], { type: 'text/plain;charset=utf-8' });
+                    const textContent = messageBubble.textContent || "";
+                    const filename = `claude_response_${Date.now()}.txt`;
+                    const blob = new Blob([textContent.replace(/\s*Copy\s*Download\s*$/, '').trim()], { type: 'text/plain;charset=utf-8' });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
-                    a.href = url;
-                    a.download = filename;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
+                    a.href = url; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
                 });
-                controlsDiv.appendChild(copyBtn);
-                controlsDiv.appendChild(downloadBtn);
-                messageBubble.appendChild(controlsDiv);
+                controlsDiv.appendChild(copyBtn); controlsDiv.appendChild(downloadBtn); messageBubble.appendChild(controlsDiv);
             }
         }
         messageWrapper.append(avatarContainer, messageBubble);
@@ -2561,40 +2520,39 @@ document.addEventListener('DOMContentLoaded', () => {
             messageWrapper.id = 'gemini-all-model-typing-indicator';
             geminiAllModelTypingIndicator = messageWrapper;
         } else {
-            // Placeholder for enhanced formatting
-            messageBubble.innerHTML = formatTextContentEnhanced(message || ""); // Use enhanced formatter
+            messageBubble.innerHTML = formatTextContentEnhanced(message || ""); // Already using enhanced formatter
             if (imageUrl) {
                  messageBubble.innerHTML += `<br><img src="${escapeHTML(imageUrl)}" alt="Chat Image" style="max-width: 100%; border-radius: 8px; margin-top: 8px;">`;
             }
-            // Add copy and download icons (basic structure for now)
-            const controlsDiv = document.createElement('div');
-            controlsDiv.className = 'message-controls';
 
-            const copyBtn = document.createElement('button');
-            copyBtn.className = 'icon-button message-copy-btn';
-            copyBtn.title = translations.copy_button_title || "Copy";
-            copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
-            copyBtn.addEventListener('click', () => {
-                const textToCopy = messageBubble.textContent || ""; // Or more sophisticated extraction
-                navigator.clipboard.writeText(textToCopy).then(() => {
-                    copyBtn.innerHTML = `<svg viewBox="0 0 24 24" class="icon"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>`; // Checkmark
-                    setTimeout(() => {
-                         copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
-                    }, 1500);
-                }).catch(err => console.error('Failed to copy text: ', err));
-            });
+            if (sender === 'ai') { // Ensure controls are only for AI messages
+                const controlsDiv = document.createElement('div');
+                controlsDiv.className = 'message-controls';
 
-            const downloadBtn = document.createElement('button');
-            downloadBtn.className = 'icon-button message-download-btn';
-            downloadBtn.title = translations.download_button_title || "Download"; // Add this key
-            downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>';
-            downloadBtn.addEventListener('click', () => {
-                // Basic TXT download for now
-                const textContent = messageBubble.textContent || "";
-                const filename = `gemini_response_${Date.now()}.txt`;
-                const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'icon-button message-copy-btn';
+                copyBtn.title = (typeof translations !== 'undefined' && translations.copy_button_title) ? translations.copy_button_title : 'Copy';
+                copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
+                copyBtn.addEventListener('click', () => {
+                    const textToCopy = messageBubble.textContent || "";
+                    navigator.clipboard.writeText(textToCopy.replace(/\s*Copy\s*Download\s*$/, '').trim()).then(() => { // Clean button text
+                        copyBtn.innerHTML = `<svg viewBox="0 0 24 24" class="icon"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>`; // Checkmark
+                        setTimeout(() => {
+                            copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
+                        }, 1500);
+                    }).catch(err => console.error('Failed to copy text: ', err));
+                });
+
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'icon-button message-download-btn';
+                downloadBtn.title = (typeof translations !== 'undefined' && translations.download_button_title) ? translations.download_button_title : 'Download';
+                downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>';
+                downloadBtn.addEventListener('click', () => {
+                    const textContent = messageBubble.textContent || "";
+                    const filename = `gemini_all_model_response_${Date.now()}.txt`; // Specific filename
+                    const blob = new Blob([textContent.replace(/\s*Copy\s*Download\s*$/, '').trim()], { type: 'text/plain;charset=utf-8' }); // Clean button text
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
                 a.href = url;
                 a.download = filename;
                 document.body.appendChild(a);
@@ -2750,14 +2708,14 @@ document.addEventListener('DOMContentLoaded', () => {
             // Make a lightweight call to get models.
             // Using a default cheap model and a simple query.
             // The backend is now designed to return supported_models even if 'answer' isn't the focus.
-            const response = await fetch('/api/gemini-all-model', { // This still correctly points to the Gemini backend route
+            const response = await fetch('/api/gemini-all-model', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     ask: "Hello", // A minimal query
                     model: "gemini-1.5-flash-latest", // A known, likely cheap default model
-                    uid: chatUID,
-                    roleplay: "System"
+                    uid: chatUID, // UID is required by the backend route
+                    roleplay: "System" // Minimal roleplay
                 })
             });
 
@@ -2813,435 +2771,114 @@ document.addEventListener('DOMContentLoaded', () => {
     // Note: populateGeminiModelDropdown was already quite good.
     // The main change is how fetchAndPopulateGeminiModels calls it and setInitialGeminiModelSelection.
 
-    // --- END OF GEMINI ALL MODEL CHAT LOGIC --- (This was the duplicated section end, now inserting ChatGPT logic)
-
-    // --- CHATGPT ALL MODEL CHAT LOGIC ---
-    const chatgptAllModelChatView = document.getElementById('chatgpt-all-model-view');
-    const chatgptAllModelHeaderTitle = chatgptAllModelChatView ? chatgptAllModelChatView.querySelector('.chat-view-header h2') : null;
-    const chatgptModelSelector = document.getElementById('chatgpt-model-selector');
-    const chatgptAllModelChatMessagesArea = document.getElementById('chatgpt-all-model-chat-messages-area');
-    const chatgptAllModelChatInputField = document.getElementById('chatgpt-all-model-chat-input-field');
-    const chatgptAllModelChatSendButton = document.getElementById('chatgpt-all-model-chat-send-button');
-    const chatgptAllModelAttachFileButton = document.getElementById('chatgpt-all-model-attach-file-button');
-    const chatgptAllModelFileUpload = document.getElementById('chatgpt-all-model-file-upload');
-    const chatgptAllModelFilePreviewContainer = document.getElementById('chatgpt-all-model-file-preview-container');
-
-    const chatgptAllModelHistoryKeyPrefix = 'chatgptAllModelHistory_';
-    let chatgptAllModelTypingIndicator = null;
-    let currentChatGptAllModelFile = null;
-    let supportedChatGptModels = [];
-    let currentSelectedChatGptModel = '';
-    const CHATGPT_ALL_MODEL_DEFAULT_ROLEPLAY = "You're ChatGPT, a helpful and versatile AI model by OpenAI.";
-
-    const chatgptOverallAvatarSvg = `<svg viewBox="0 0 24 24" class="icon chatgpt-avatar-logo"><path fill-rule="evenodd" clip-rule="evenodd" d="M12.0001 0C18.6275 0 24.0001 5.37258 24.0001 12C24.0001 18.6274 18.6275 24 12.0001 24C5.37266 24 0 18.6274 0 12C0 5.37258 5.37266 0 12.0001 0ZM6.75009 10.738L8.66259 12.0171L6.75009 13.2962V10.738ZM9.93759 15.4322L11.8501 16.7113L9.93759 17.9904V15.4322ZM9.93759 6.0437L11.8501 7.3228L9.93759 8.6019V6.0437ZM15.0001 10.738L13.0876 12.0171L15.0001 13.2962V10.738ZM17.2501 6.88469C16.0188 5.84979 14.4001 5.25 12.6001 5.25C10.8001 5.25 9.18134 5.84979 7.95009 6.88469L9.33759 7.77838C10.2563 7.01902 11.3626 6.60019 12.6001 6.60019C13.8376 6.60019 14.9438 7.01902 15.8626 7.77838L17.2501 6.88469ZM18.0001 10.1019V13.9322L19.9126 15.2113C20.3626 14.2498 20.6251 13.1721 20.6251 12C20.6251 10.8279 20.3626 9.75021 19.9126 8.7887L18.0001 10.1019ZM4.08759 8.7887C3.63759 9.75021 3.37509 10.8279 3.37509 12C3.37509 13.1721 3.63759 14.2498 4.08759 15.2113L6.00009 13.9322V10.1019L4.08759 8.7887ZM17.2501 17.1495L15.8626 16.2558C14.9438 17.0152 13.8376 17.434 12.6001 17.434C11.3626 17.434 10.2563 17.0152 9.33759 16.2558L7.95009 17.1495C9.18134 18.1844 10.8001 18.7842 12.6001 18.7842C14.4001 18.7842 16.0188 18.1844 17.2501 17.1495Z" fill="currentColor"></path></svg>`;
-
-    function addChatGptAllModelMessageToChat(message, sender, imageUrl = null, isTyping = false, messageId = null) {
-        if (!chatgptAllModelChatMessagesArea) return;
-
-        if (chatgptAllModelTypingIndicator && chatgptAllModelTypingIndicator.parentNode) {
-            chatgptAllModelTypingIndicator.remove();
-            chatgptAllModelTypingIndicator = null;
-        }
-
-        const messageWrapper = document.createElement('div');
-        messageWrapper.classList.add('chat-message-wrapper', sender === 'user' ? 'user' : 'ai');
-        if (messageId) messageWrapper.dataset.messageId = messageId;
-
-
-        const avatarContainer = document.createElement('div');
-        avatarContainer.classList.add('chat-avatar-container');
-        avatarContainer.innerHTML = sender === 'user' ? userAvatarSvg : chatgptOverallAvatarSvg;
-
-        const messageBubble = document.createElement('div');
-        messageBubble.classList.add('chat-bubble');
-
-        if (isTyping) {
-            messageBubble.innerHTML = typingIndicatorHTML;
-            messageWrapper.id = 'chatgpt-all-model-typing-indicator';
-            chatgptAllModelTypingIndicator = messageWrapper;
-        } else {
-            const rawMessageContent = message || "";
-            messageBubble.innerHTML = formatTextContentEnhanced(rawMessageContent);
-            if (imageUrl) {
-                 messageBubble.innerHTML += `<br><img src="${escapeHTML(imageUrl)}" alt="Chat Image" style="max-width: 100%; border-radius: 8px; margin-top: 8px;">`;
-            }
-
-            if (sender === 'ai') {
-                const controlsDiv = document.createElement('div');
-                controlsDiv.className = 'message-controls';
-
-                const copyBtn = document.createElement('button');
-                copyBtn.className = 'icon-button message-copy-btn';
-                copyBtn.title = translations.copy_button_title || "Copy";
-                copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
-                copyBtn.addEventListener('click', () => {
-                    navigator.clipboard.writeText(rawMessageContent).then(() => {
-                        copyBtn.innerHTML = `<svg viewBox="0 0 24 24" class="icon"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>`;
-                        setTimeout(() => {
-                             copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
-                        }, 1500);
-                    }).catch(err => console.error('Failed to copy text: ', err));
-                });
-
-                const downloadBtn = document.createElement('button');
-                downloadBtn.className = 'icon-button message-download-btn';
-                downloadBtn.title = translations.download_button_title || "Download";
-                downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>';
-                downloadBtn.addEventListener('click', () => {
-                    const filename = `chatgpt_response_${Date.now()}.txt`;
-                    const blob = new Blob([rawMessageContent], { type: 'text/plain;charset=utf-8' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = filename;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                });
-
-                controlsDiv.appendChild(copyBtn);
-                controlsDiv.appendChild(downloadBtn);
-                messageBubble.appendChild(controlsDiv);
-            }
-        }
-        messageWrapper.append(avatarContainer, messageBubble);
-        chatgptAllModelChatMessagesArea.appendChild(messageWrapper);
-        chatgptAllModelChatMessagesArea.scrollTop = chatgptAllModelChatMessagesArea.scrollHeight;
-    }
-
-    function saveChatGptAllModelChatHistory(message, sender, imageUrl, modelName, messageId = null) {
-        if (!chatUID || !modelName) return;
-        const historyKey = `${chatgptAllModelHistoryKeyPrefix}${chatUID}_${modelName}`;
-        let history = [];
-        try { const stored = localStorage.getItem(historyKey); if (stored) history = JSON.parse(stored); } catch (e) { console.error(e); }
-
-        history.push({ message, sender, imageUrl, timestamp: new Date().toISOString(), messageId: messageId || Date.now().toString() });
-        if (history.length > 100) history = history.slice(history.length - 100);
-        try { localStorage.setItem(historyKey, JSON.stringify(history)); } catch (e) { console.error(e); }
-    }
-
-    function loadChatGptAllModelChatHistory(modelName) {
-        if (!chatgptAllModelChatMessagesArea || !chatUID || !modelName) {
-            if(chatgptAllModelChatMessagesArea) chatgptAllModelChatMessagesArea.innerHTML = "";
-            return;
-        }
-        chatgptAllModelChatMessagesArea.innerHTML = "";
-        const historyKey = `${chatgptAllModelHistoryKeyPrefix}${chatUID}_${modelName}`;
-        let history = [];
-        try { const stored = localStorage.getItem(historyKey); if (stored) history = JSON.parse(stored); } catch (e) { console.error(e); }
-
-        if (history.length === 0) {
-            const welcomeMsg = translations.chatgpt_all_model_welcome_message || `Welcome to ChatGPT {modelName}! Ask anything or upload a file.`;
-            addChatGptAllModelMessageToChat(welcomeMsg.replace('{modelName}', modelName), 'ai');
-        } else {
-            history.forEach(item => addChatGptAllModelMessageToChat(item.message, item.sender, item.imageUrl, false, item.messageId));
-        }
-        if (chatgptAllModelChatMessagesArea) chatgptAllModelChatMessagesArea.scrollTop = chatgptAllModelChatMessagesArea.scrollHeight;
-    }
-
-    async function fetchAndPopulateChatGptModels() {
-        if (!chatgptModelSelector) return;
-
-        const cachedModelsKey = 'supportedChatGptModelsList'; // Use a distinct key for ChatGPT models
-        const cachedModels = localStorage.getItem(cachedModelsKey);
-        if (cachedModels) {
-            try {
-                supportedChatGptModels = JSON.parse(cachedModels);
-                if (Array.isArray(supportedChatGptModels) && supportedChatGptModels.length > 0) {
-                    populateChatGptModelDropdown();
-                    setInitialChatGptModelSelection();
-                    return;
-                }
-            } catch (e) {
-                console.error("Error parsing cached " + cachedModelsKey, e);
-                localStorage.removeItem(cachedModelsKey);
-            }
-        }
-
-        chatgptModelSelector.innerHTML = `<option value="" data-translate="chatgpt_model_select_default_option">${translations.chatgpt_model_select_default_option || 'Loading models...'}</option>`;
-        try {
-            const response = await fetch('/api/chatgpt-all-model', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    ask: "List available models",
-                    model: "gpt-3.5-turbo", // Default model to initiate the call
-                    uid: chatUID,
-                })
-            });
-
-            if (!response.ok) {
-                const errData = await response.json().catch(() => null);
-                const errorMsg = errData?.error || `Failed to fetch ChatGPT models list: ${response.statusText}`;
-                console.error("Error fetching ChatGPT models list:", errorMsg);
-                chatgptModelSelector.innerHTML = `<option value="">${translations.chatgpt_models_load_error || 'Error loading models'}</option>`;
-                return;
-            }
-
-            const data = await response.json();
-            if (data && Array.isArray(data.supported_models) && data.supported_models.length > 0) {
-                supportedChatGptModels = data.supported_models;
-                localStorage.setItem(cachedModelsKey, JSON.stringify(supportedChatGptModels));
-                populateChatGptModelDropdown();
-                setInitialChatGptModelSelection();
-            } else {
-                console.warn("No supported ChatGPT models returned from API or list is empty.");
-                chatgptModelSelector.innerHTML = `<option value="">${translations.chatgpt_no_models_available || 'No models available'}</option>`;
-            }
-        } catch (error) {
-            console.error('Error in fetchAndPopulateChatGptModels:', error);
-            chatgptModelSelector.innerHTML = `<option value="">${translations.chatgpt_models_load_error || 'Error loading models'}</option>`;
-        }
-    }
-
-    function setInitialChatGptModelSelection() {
-        if (!chatgptModelSelector || supportedChatGptModels.length === 0) return;
-
-        const lastSelectedKey = 'lastSelectedChatGptAllModel'; // Distinct key
-        const lastSelected = localStorage.getItem(lastSelectedKey);
-        if (lastSelected && supportedChatGptModels.includes(lastSelected)) {
-            chatgptModelSelector.value = lastSelected;
-        } else {
-            const defaultModel = supportedChatGptModels.find(m => m.includes('gpt-4o-mini')) ||
-                                 supportedChatGptModels.find(m => m.includes('gpt-3.5-turbo')) ||
-                                 supportedChatGptModels[0];
-            chatgptModelSelector.value = defaultModel;
-        }
-        currentSelectedChatGptModel = chatgptModelSelector.value;
-        if (currentSelectedChatGptModel) {
-            localStorage.setItem(lastSelectedKey, currentSelectedChatGptModel);
-            loadChatGptAllModelChatHistory(currentSelectedChatGptModel);
-            if(chatgptAllModelChatInputField && translations.chatgpt_all_model_placeholder_dynamic) {
-                 chatgptAllModelChatInputField.placeholder = translations.chatgpt_all_model_placeholder_dynamic.replace('{modelName}', currentSelectedChatGptModel);
-            } else if (chatgptAllModelChatInputField) {
-                 chatgptAllModelChatInputField.placeholder = `Ask ${currentSelectedChatGptModel}...`;
-            }
-        }
-    }
-
-    function populateChatGptModelDropdown() {
-        if (!chatgptModelSelector || !supportedChatGptModels || supportedChatGptModels.length === 0) return;
-
-        const loadingOptionText = translations.chatgpt_model_select_default_option || 'Loading models...';
-        const currentSelectorValue = chatgptModelSelector.value;
-
-        chatgptModelSelector.innerHTML = '';
-
-        supportedChatGptModels.forEach(model => {
-            const option = document.createElement('option');
-            option.value = model;
-            option.textContent = model;
-            chatgptModelSelector.appendChild(option);
-        });
-
-        if (supportedChatGptModels.includes(currentSelectorValue)) {
-            chatgptModelSelector.value = currentSelectorValue;
-        } else if (supportedChatGptModels.length > 0) {
-             const defaultModel = supportedChatGptModels.find(m => m.includes('gpt-4o-mini')) ||
-                                  supportedChatGptModels.find(m => m.includes('gpt-3.5-turbo')) ||
-                                  supportedChatGptModels[0];
-            chatgptModelSelector.value = defaultModel;
-        } else {
-            chatgptModelSelector.innerHTML = `<option value="">${loadingOptionText}</option>`;
-        }
-        currentSelectedChatGptModel = chatgptModelSelector.value;
-        if (currentSelectedChatGptModel) {
-            localStorage.setItem('lastSelectedChatGptAllModel', currentSelectedChatGptModel);
-        }
-    }
-
-    if (chatgptAllModelAttachFileButton && chatgptAllModelFileUpload) {
-        chatgptAllModelAttachFileButton.addEventListener('click', () => chatgptAllModelFileUpload.click());
-        chatgptAllModelFileUpload.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                currentChatGptAllModelFile = file;
-                if (chatgptAllModelFilePreviewContainer) {
-                    let previewHTML = `<span class="file-preview-name">${escapeHTML(file.name)} (${(file.size / 1024).toFixed(1)} KB)</span>`;
-                    if (file.type.startsWith('image/')) {
-                        const reader = new FileReader();
-                        reader.onload = (e) => {
-                            previewHTML += `<img src="${e.target.result}" alt="Preview" class="file-preview-image">`;
-                            chatgptAllModelFilePreviewContainer.innerHTML = previewHTML;
-                        };
-                        reader.readAsDataURL(file);
-                    } else {
-                         chatgptAllModelFilePreviewContainer.innerHTML = previewHTML;
-                    }
-                }
-            } else {
-                currentChatGptAllModelFile = null;
-                if (chatgptAllModelFilePreviewContainer) chatgptAllModelFilePreviewContainer.innerHTML = "";
-            }
-        });
-    }
-
-    async function handleChatGptAllModelSendMessage() {
-        if (!chatgptAllModelChatInputField || !chatUID || !currentSelectedChatGptModel) {
-            if (!currentSelectedChatGptModel) alert(translations.chatgpt_select_model_alert || "Please select a ChatGPT model first.");
-            return;
-        }
-        const messageText = chatgptAllModelChatInputField.value.trim();
-        if (!messageText && !currentChatGptAllModelFile) {
-            alert(translations.chatgpt_type_message_or_attach_file_alert || "Please type a message or attach a file.");
-            return;
-        }
-
-        let tempPreviewUrl = null;
-        if (currentChatGptAllModelFile && currentChatGptAllModelFile.type.startsWith('image/')) {
-            tempPreviewUrl = URL.createObjectURL(currentChatGptAllModelFile);
-        }
-        const messageId = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        addChatGptAllModelMessageToChat(messageText || (currentChatGptAllModelFile ? `File: ${currentChatGptAllModelFile.name}`: ""), 'user', tempPreviewUrl, false, messageId);
-        saveChatGptAllModelChatHistory(messageText || (currentChatGptAllModelFile ? `File: ${currentChatGptAllModelFile.name}`: ""), 'user', tempPreviewUrl, currentSelectedChatGptModel, messageId);
-
-        trackActivity('chatgpt_all_model_sent', {
-            messageLength: messageText.length,
-            hasFile: !!currentChatGptAllModelFile,
-            model: currentSelectedChatGptModel,
-            fileName: currentChatGptAllModelFile ? currentChatGptAllModelFile.name : null,
-            fileType: currentChatGptAllModelFile ? currentChatGptAllModelFile.type : null
-        });
-
-        const formData = new FormData();
-        formData.append('uid', chatUID);
-        formData.append('model', currentSelectedChatGptModel);
-        if (messageText) formData.append('ask', messageText);
-        if (currentChatGptAllModelFile) formData.append('file', currentChatGptAllModelFile, currentChatGptAllModelFile.name);
-        formData.append('roleplay', CHATGPT_ALL_MODEL_DEFAULT_ROLEPLAY);
-
-        chatgptAllModelChatInputField.value = '';
-        chatgptAllModelFileUpload.value = null;
-        const oldFile = currentChatGptAllModelFile;
-        currentChatGptAllModelFile = null;
-        if (chatgptAllModelFilePreviewContainer) chatgptAllModelFilePreviewContainer.innerHTML = "";
-
-        chatgptAllModelChatInputField.disabled = true;
-        if (chatgptAllModelChatSendButton) chatgptAllModelChatSendButton.disabled = true;
-        if (chatgptAllModelAttachFileButton) chatgptAllModelAttachFileButton.disabled = true;
-        if (chatgptModelSelector) chatgptModelSelector.disabled = true;
-
-        addChatGptAllModelMessageToChat(null, 'ai', null, true);
-
-        try {
-            const response = await fetch('/api/chatgpt-all-model', { method: 'POST', body: formData });
-            if (chatgptAllModelTypingIndicator) chatgptAllModelTypingIndicator.remove();
-             if (tempPreviewUrl && oldFile && oldFile.type.startsWith('image/')) {
-                URL.revokeObjectURL(tempPreviewUrl);
-            }
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ error: `Server error: ${response.status}` }));
-                throw new Error(errorData.error || `API request failed: ${response.status}`);
-            }
-            const aiResponse = await response.json();
-
-            if (aiResponse.supported_models && Array.isArray(aiResponse.supported_models)) {
-                supportedChatGptModels = aiResponse.supported_models;
-                localStorage.setItem('supportedChatGptModelsList', JSON.stringify(supportedChatGptModels));
-                populateChatGptModelDropdown();
-            }
-
-            if (aiResponse && aiResponse.response) {
-                const aiMessageId = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-                addChatGptAllModelMessageToChat(aiResponse.response, 'ai', null, false, aiMessageId);
-                saveChatGptAllModelChatHistory(aiResponse.response, 'ai', null, aiResponse.model_used || currentSelectedChatGptModel, aiMessageId);
-            } else {
-                throw new Error(translations.invalid_response_from_ai.replace('{aiName}', 'ChatGPT All Model') || "Invalid response structure from ChatGPT All Model AI.");
-            }
-        } catch (error) {
-            console.error('Error with ChatGPT All Model:', error);
-            if (chatgptAllModelTypingIndicator) chatgptAllModelTypingIndicator.remove();
-            const errorMsg = translations.error_ai_connection || "Error: {error} Could not connect to {aiName}.";
-            addChatGptAllModelMessageToChat(errorMsg.replace('{error}', error.message).replace('{aiName}', 'ChatGPT All Model'), 'ai');
-        } finally {
-            chatgptAllModelChatInputField.disabled = false;
-            if (chatgptAllModelChatSendButton) chatgptAllModelChatSendButton.disabled = false;
-            if (chatgptAllModelAttachFileButton) chatgptAllModelAttachFileButton.disabled = false;
-            if (chatgptModelSelector) chatgptModelSelector.disabled = false;
-            if (chatgptAllModelChatInputField) chatgptAllModelChatInputField.focus();
-        }
-    }
-
-    if (chatgptAllModelChatSendButton) chatgptAllModelChatSendButton.addEventListener('click', handleChatGptAllModelSendMessage);
-    if (chatgptAllModelChatInputField) chatgptAllModelChatInputField.addEventListener('keypress', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleChatGptAllModelSendMessage(); }});
-
-    if (chatgptModelSelector) {
-        chatgptModelSelector.addEventListener('change', () => {
-            currentSelectedChatGptModel = chatgptModelSelector.value;
-            if (currentSelectedChatGptModel) {
-                localStorage.setItem('lastSelectedChatGptAllModel', currentSelectedChatGptModel);
-                loadChatGptAllModelChatHistory(currentSelectedChatGptModel);
-                if (chatgptAllModelChatInputField && translations.chatgpt_all_model_placeholder_dynamic) {
-                    chatgptAllModelChatInputField.placeholder = translations.chatgpt_all_model_placeholder_dynamic.replace('{modelName}', currentSelectedChatGptModel);
-                } else if (chatgptAllModelChatInputField) {
-                    chatgptAllModelChatInputField.placeholder = `Ask ${currentSelectedChatGptModel}...`;
-                }
-            } else {
-                if (chatgptAllModelChatMessagesArea) chatgptAllModelChatMessagesArea.innerHTML = "";
-                if (chatgptAllModelChatInputField) chatgptAllModelChatInputField.placeholder = translations.chatgpt_all_model_placeholder || "Ask ChatGPT (any model)...";
-            }
-        });
-    }
-    // --- END OF CHATGPT ALL MODEL CHAT LOGIC ---
-
-
-    // Enhanced text formatting (initial version, can be expanded)
+    // Enhanced text formatting
     function formatTextContentEnhanced(text) {
         if (typeof text !== 'string') return '';
-        let resultText = text;
 
-        // Code blocks ( ```[lang]\ncode\n``` or ```\ncode\n``` )
-        resultText = resultText.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
+        let html = text;
+
+        // 0. Initial escape of basic HTML characters to prevent XSS if raw HTML is in 'text'.
+        // This should ideally be done more robustly, e.g. by a sanitizer library if complex HTML input is possible.
+        // For now, assuming 'text' is mostly markdown-like.
+        html = escapeHTML(html); // Apply basic escaping first.
+
+        // 1. Code blocks ( ```[lang]\ncode\n``` or ```\ncode\n``` )
+        // Must be processed first. The content inside code blocks should NOT be further processed by other rules.
+        html = html.replace(/```(\w*)\n([\s\S]*?)```\n?/g, (match, lang, code) => {
             const languageClass = lang ? `language-${lang}` : 'language-plaintext';
-            const escapedCode = escapeHTML(code.trim());
-            // data-code attribute for easy copying later
-            return `<div class="code-block-wrapper"><pre><code class="${languageClass}" data-code="${escapeHTML(code.trim())}">${escapedCode}</code></pre><button class="copy-code-btn" title="${translations.copy_code_button_title || 'Copy Code'}"><svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg></button></div>`;
+            // Code is already escaped by the initial escapeHTML. If not, escape 'code' here.
+            const copyButtonTitle = (typeof translations !== 'undefined' && translations.copy_code_button_title) ? translations.copy_code_button_title : 'Copy Code';
+            return `<div class="code-block-wrapper"><pre><code class="${languageClass}" data-code="${escapeHTML(code.trim())}">${code.trim()}</code></pre><button class="copy-code-btn" title="${copyButtonTitle}"><svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg></button></div>`;
         });
-         // Simpler inline code `code`
-        resultText = resultText.replace(/`([^`]+)`/g, '<code>$1</code>');
 
+        // 2. Headings (Markdown-like: ## title -> <h4>)
+        html = html.replace(/^## (.*$)/gim, '<h4>$1</h4>');
+        // html = html.replace(/^# (.*$)/gim, '<h3>$1</h3>'); // Example for H3
 
-        // Headings (Markdown-like)
-        resultText = resultText.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-        resultText = resultText.replace(/^## (.*$)/gim, '<h4>$1</h4>');
-        resultText = resultText.replace(/^# (.*$)/gim, '<h2>$1</h2>'); // Added H1 support
-
-        // Bold text (**)
-        resultText = resultText.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>');
-        // Italics text (*) - ensure it doesn't conflict if single * was meant for bold
-        resultText = resultText.replace(/(?<!\*)\*([^*]+)\*(?!\*)/gim, '<em>$1</em>');
-
-
-        // Basic table formatting (very simplified, assumes simple pipe tables)
-        // This is a rudimentary attempt and might need a proper Markdown library for complex tables.
-        if (resultText.includes('|')) {
-            resultText = resultText.split('\n').map(line => {
-                if (line.startsWith('|') && line.endsWith('|')) {
-                    const cells = line.slice(1, -1).split('|').map(cell => cell.trim());
-                    if (line.includes('---')) { // Header separator
-                        return ''; // Skip rendering separator line directly, CSS will handle it
-                    }
-                    // Heuristic: If it's the first such line or after a separator, assume header
-                    // This logic is imperfect. A full Markdown parser is better.
-                    const cellTag = (prevLineWasHeaderSeparator || !isInsideTable) ? 'th' : 'td';
-                    // For simplicity, let's assume all are td for now and rely on CSS for first row styling
-                    return `<tr>${cells.map(cell => `<td>${escapeHTML(cell)}</td>`).join('')}</tr>`;
+        // 3. Paragraphs and Line Breaks
+        // Process remaining text. Split into paragraphs by \n\n.
+        // Then, within each paragraph, replace \n with <br>.
+        html = html.split(/\n\s*\n/) // Split by one or more empty lines (paragraph breaks)
+            .map(paragraph => {
+                paragraph = paragraph.trim();
+                if (paragraph === '') return '';
+                // Avoid wrapping already processed HTML blocks (like code blocks or headings) in <p>
+                if (paragraph.match(/^<(h[1-6]|div|pre|table|ul|ol|blockquote)/i)) {
+                    return paragraph;
                 }
-                return line;
-            }).join('\n');
-            // Wrap recognized table rows in a table tag
-            if (resultText.includes('<tr>')) {
-                 resultText = resultText.replace(/((?:<tr>.*?<\/tr>\s*)+)/g, '<table><tbody>$1</tbody></table>');
+                // For regular text paragraphs, replace single newlines with <br> and wrap in <p>
+                // Ensure ** and ` are processed after this.
+                return '<p>' + paragraph.replace(/\n/g, '<br>') + '</p>';
+            })
+            .join('');
+
+        // 4. Bold text (**) - applied after paragraph wrapping
+        html = html.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>');
+
+        // 5. Simpler inline code `code` (after block code and paragraphs)
+        html = html.replace(/`([^`]+?)`/g, '<code>$1</code>');
+
+
+        // 7. Basic table formatting (very simplified)
+        // This regex-based approach is fragile. A proper Markdown parser is recommended for robust table support.
+        // This attempts to find sections that look like tables.
+        html = html.replace(/((?:\|.*?\|\n)+)/g, (tableMatch) => {
+            const rows = tableMatch.trim().split('\n');
+            if (rows.length < 1) return tableMatch; // Not a table if no rows
+
+            let tableOutput = '<table>';
+            let headerProcessed = false;
+            let inTbody = false;
+
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i].trim();
+                if (!row.startsWith('|') || !row.endsWith('|')) continue; // Skip malformed rows
+
+                const cellsRaw = row.slice(1, -1).split('|');
+
+                if (i === 1 && cellsRaw.every(cell => cell.trim().match(/^--+$/))) { // Header separator
+                    if(tableOutput.includes('<tr>')) { // Assumes previous row was header cells
+                         tableOutput += '<thead>' + tableOutput.substring(tableOutput.lastIndexOf('<tr>'));
+                         tableOutput = tableOutput.replace(/<td>/g, '<th>').replace(/<\/td>/g, '</th>');
+                         tableOutput += '</thead><tbody>';
+                         inTbody = true;
+                         headerProcessed = true;
+                    }
+                    continue;
+                }
+
+                tableOutput += '<tr>';
+                cellsRaw.forEach(cell => {
+                    // If it's the first data row and no separator was found, treat it as header
+                    const cellTag = (i === 0 && !headerProcessed) ? 'th' : 'td';
+                    tableOutput += `<${cellTag}>${escapeHTML(cell.trim())}</${cellTag}>`;
+                });
+                tableOutput += '</tr>';
+
+                if (i === 0 && !headerProcessed) { // If first row is header without separator
+                    tableOutput += '</thead><tbody>'; // Close thead, open tbody
+                    inTbody = true;
+                    headerProcessed = true; // Mark header as processed
+                }
             }
-        }
-        // Line breaks
-        resultText = resultText.replace(/\n/g, '<br>');
+            if (inTbody) tableOutput += '</tbody>';
+            else if (!headerProcessed && tableOutput !== '<table>') tableOutput += '<tbody></tbody>'; // Ensure valid table structure if only one row
+
+            tableOutput += '</table>';
+            return tableOutput;
+        });
+
+        // Cleanup: Remove empty <p> tags that might have been created
+        html = html.replace(/<p>\s*<\/p>/gi, '');
+        // Remove <br> tags that are immediately inside <p> and at the start/end, or if <p> only contains <br>
+        html = html.replace(/<p><br\s*\/?>\s*<\/p>/gi, '');
+        html = html.replace(/<p>(<br\s*\/?>)+/gi, '<p>');
+        html = html.replace(/(<br\s*\/?>)+<\/p>/gi, '</p>');
 
 
-        return resultText;
+        return html;
     }
+
     // Add event listener for dynamically created copy code buttons
     document.addEventListener('click', function(event) {
         if (event.target.classList.contains('copy-code-btn') || event.target.closest('.copy-code-btn')) {
@@ -3379,775 +3016,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (geminiAllModelChatSendButton) geminiAllModelChatSendButton.addEventListener('click', handleGeminiAllModelSendMessage);
     if (geminiAllModelChatInputField) geminiAllModelChatInputField.addEventListener('keypress', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleGeminiAllModelSendMessage(); }});
-    if (geminiModelSelector) {
-        geminiModelSelector.addEventListener('change', () => {
-            currentSelectedGeminiModel = geminiModelSelector.value;
-            if (currentSelectedGeminiModel) {
-                localStorage.setItem('lastSelectedGeminiAllModel', currentSelectedGeminiModel);
-                loadGeminiAllModelChatHistory(currentSelectedGeminiModel);
-                const placeholderKey = "gemini_all_model_placeholder_dynamic";
-                if (geminiAllModelChatInputField && translations[placeholderKey]) {
-                    geminiAllModelChatInputField.placeholder = translations[placeholderKey].replace('{modelName}', currentSelectedGeminiModel);
-                } else if (geminiAllModelChatInputField) {
-                    geminiAllModelChatInputField.placeholder = `Ask ${currentSelectedGeminiModel}...`;
-                }
-            } else {
-                if (geminiAllModelChatMessagesArea) geminiAllModelChatMessagesArea.innerHTML = "";
-                const placeholderKey = "gemini_all_model_placeholder";
-                if (geminiAllModelChatInputField) geminiAllModelChatInputField.placeholder = translations[placeholderKey] || "Ask Gemini (any model)...";
-            }
-        });
-    }
-     // --- END OF GEMINI ALL MODEL CHAT LOGIC ---
-
-    // --- CHATGPT ALL MODEL CHAT LOGIC ---
-    const chatgptAllModelChatView = document.getElementById('chatgpt-all-model-view');
-    const chatgptAllModelHeaderTitle = chatgptAllModelChatView ? chatgptAllModelChatView.querySelector('.chat-view-header h2') : null;
-    const chatgptModelSelector = document.getElementById('chatgpt-model-selector');
-    const chatgptAllModelChatMessagesArea = document.getElementById('chatgpt-all-model-chat-messages-area');
-    const chatgptAllModelChatInputField = document.getElementById('chatgpt-all-model-chat-input-field');
-    const chatgptAllModelChatSendButton = document.getElementById('chatgpt-all-model-chat-send-button');
-    const chatgptAllModelAttachFileButton = document.getElementById('chatgpt-all-model-attach-file-button');
-    const chatgptAllModelFileUpload = document.getElementById('chatgpt-all-model-file-upload');
-    const chatgptAllModelFilePreviewContainer = document.getElementById('chatgpt-all-model-file-preview-container');
-
-    const chatgptAllModelHistoryKeyPrefix = 'chatgptAllModelHistory_';
-    let chatgptAllModelTypingIndicator = null;
-    let currentChatGptAllModelFile = null;
-    let supportedChatGptModels = [];
-    let currentSelectedChatGptModel = '';
-    const CHATGPT_ALL_MODEL_DEFAULT_ROLEPLAY = "You're ChatGPT, a helpful and versatile AI model by OpenAI.";
-
-    const chatgptOverallAvatarSvg = `<svg viewBox="0 0 24 24" class="icon chatgpt-avatar-logo"><path fill-rule="evenodd" clip-rule="evenodd" d="M12.0001 0C18.6275 0 24.0001 5.37258 24.0001 12C24.0001 18.6274 18.6275 24 12.0001 24C5.37266 24 0 18.6274 0 12C0 5.37258 5.37266 0 12.0001 0ZM6.75009 10.738L8.66259 12.0171L6.75009 13.2962V10.738ZM9.93759 15.4322L11.8501 16.7113L9.93759 17.9904V15.4322ZM9.93759 6.0437L11.8501 7.3228L9.93759 8.6019V6.0437ZM15.0001 10.738L13.0876 12.0171L15.0001 13.2962V10.738ZM17.2501 6.88469C16.0188 5.84979 14.4001 5.25 12.6001 5.25C10.8001 5.25 9.18134 5.84979 7.95009 6.88469L9.33759 7.77838C10.2563 7.01902 11.3626 6.60019 12.6001 6.60019C13.8376 6.60019 14.9438 7.01902 15.8626 7.77838L17.2501 6.88469ZM18.0001 10.1019V13.9322L19.9126 15.2113C20.3626 14.2498 20.6251 13.1721 20.6251 12C20.6251 10.8279 20.3626 9.75021 19.9126 8.7887L18.0001 10.1019ZM4.08759 8.7887C3.63759 9.75021 3.37509 10.8279 3.37509 12C3.37509 13.1721 3.63759 14.2498 4.08759 15.2113L6.00009 13.9322V10.1019L4.08759 8.7887ZM17.2501 17.1495L15.8626 16.2558C14.9438 17.0152 13.8376 17.434 12.6001 17.434C11.3626 17.434 10.2563 17.0152 9.33759 16.2558L7.95009 17.1495C9.18134 18.1844 10.8001 18.7842 12.6001 18.7842C14.4001 18.7842 16.0188 18.1844 17.2501 17.1495Z" fill="currentColor"></path></svg>`;
-
-    function addChatGptAllModelMessageToChat(message, sender, imageUrl = null, isTyping = false, messageId = null) {
-        if (!chatgptAllModelChatMessagesArea) return;
-
-        if (chatgptAllModelTypingIndicator && chatgptAllModelTypingIndicator.parentNode) {
-            chatgptAllModelTypingIndicator.remove();
-            chatgptAllModelTypingIndicator = null;
-        }
-
-        const messageWrapper = document.createElement('div');
-        messageWrapper.classList.add('chat-message-wrapper', sender === 'user' ? 'user' : 'ai');
-        if (messageId) messageWrapper.dataset.messageId = messageId;
-
-
-        const avatarContainer = document.createElement('div');
-        avatarContainer.classList.add('chat-avatar-container');
-        avatarContainer.innerHTML = sender === 'user' ? userAvatarSvg : chatgptOverallAvatarSvg;
-
-        const messageBubble = document.createElement('div');
-        messageBubble.classList.add('chat-bubble');
-
-        if (isTyping) {
-            messageBubble.innerHTML = typingIndicatorHTML;
-            messageWrapper.id = 'chatgpt-all-model-typing-indicator';
-            chatgptAllModelTypingIndicator = messageWrapper;
-        } else {
-            const rawMessageContent = message || "";
-            messageBubble.innerHTML = formatTextContentEnhanced(rawMessageContent);
-            if (imageUrl) {
-                 messageBubble.innerHTML += `<br><img src="${escapeHTML(imageUrl)}" alt="Chat Image" style="max-width: 100%; border-radius: 8px; margin-top: 8px;">`;
-            }
-
-            if (sender === 'ai') {
-                const controlsDiv = document.createElement('div');
-                controlsDiv.className = 'message-controls';
-
-                const copyBtn = document.createElement('button');
-                copyBtn.className = 'icon-button message-copy-btn';
-                copyBtn.title = translations.copy_button_title || "Copy";
-                copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
-                copyBtn.addEventListener('click', () => {
-                    navigator.clipboard.writeText(rawMessageContent).then(() => {
-                        copyBtn.innerHTML = `<svg viewBox="0 0 24 24" class="icon"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>`;
-                        setTimeout(() => {
-                             copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
-                        }, 1500);
-                    }).catch(err => console.error('Failed to copy text: ', err));
-                });
-
-                const downloadBtn = document.createElement('button');
-                downloadBtn.className = 'icon-button message-download-btn';
-                downloadBtn.title = translations.download_button_title || "Download";
-                downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>';
-                downloadBtn.addEventListener('click', () => {
-                    const filename = `chatgpt_response_${Date.now()}.txt`;
-                    const blob = new Blob([rawMessageContent], { type: 'text/plain;charset=utf-8' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = filename;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                });
-
-                controlsDiv.appendChild(copyBtn);
-                controlsDiv.appendChild(downloadBtn);
-                messageBubble.appendChild(controlsDiv);
-            }
-        }
-        messageWrapper.append(avatarContainer, messageBubble);
-        chatgptAllModelChatMessagesArea.appendChild(messageWrapper);
-        chatgptAllModelChatMessagesArea.scrollTop = chatgptAllModelChatMessagesArea.scrollHeight;
-    }
-
-    function saveChatGptAllModelChatHistory(message, sender, imageUrl, modelName, messageId = null) {
-        if (!chatUID || !modelName) return;
-        const historyKey = `${chatgptAllModelHistoryKeyPrefix}${chatUID}_${modelName}`;
-        let history = [];
-        try { const stored = localStorage.getItem(historyKey); if (stored) history = JSON.parse(stored); } catch (e) { console.error(e); }
-
-        history.push({ message, sender, imageUrl, timestamp: new Date().toISOString(), messageId: messageId || Date.now().toString() });
-        if (history.length > 100) history = history.slice(history.length - 100);
-        try { localStorage.setItem(historyKey, JSON.stringify(history)); } catch (e) { console.error(e); }
-    }
-
-    function loadChatGptAllModelChatHistory(modelName) {
-        if (!chatgptAllModelChatMessagesArea || !chatUID || !modelName) {
-            if(chatgptAllModelChatMessagesArea) chatgptAllModelChatMessagesArea.innerHTML = "";
-            return;
-        }
-        chatgptAllModelChatMessagesArea.innerHTML = "";
-        const historyKey = `${chatgptAllModelHistoryKeyPrefix}${chatUID}_${modelName}`;
-        let history = [];
-        try { const stored = localStorage.getItem(historyKey); if (stored) history = JSON.parse(stored); } catch (e) { console.error(e); }
-
-        if (history.length === 0) {
-            const welcomeMsg = translations.chatgpt_all_model_welcome_message || `Welcome to ChatGPT {modelName}! Ask anything or upload a file.`;
-            addChatGptAllModelMessageToChat(welcomeMsg.replace('{modelName}', modelName), 'ai');
-        } else {
-            history.forEach(item => addChatGptAllModelMessageToChat(item.message, item.sender, item.imageUrl, false, item.messageId));
-        }
-        if (chatgptAllModelChatMessagesArea) chatgptAllModelChatMessagesArea.scrollTop = chatgptAllModelChatMessagesArea.scrollHeight;
-    }
-
-    async function fetchAndPopulateChatGptModels() {
-        if (!chatgptModelSelector) return;
-
-        const cachedModels = localStorage.getItem('supportedChatGptModelsList');
-        if (cachedModels) {
-            try {
-                supportedChatGptModels = JSON.parse(cachedModels);
-                if (Array.isArray(supportedChatGptModels) && supportedChatGptModels.length > 0) {
-                    populateChatGptModelDropdown();
-                    setInitialChatGptModelSelection();
-                    return;
-                }
-            } catch (e) {
-                console.error("Error parsing cached supportedChatGptModelsList", e);
-                localStorage.removeItem('supportedChatGptModelsList');
-            }
-        }
-
-        chatgptModelSelector.innerHTML = `<option value="" data-translate="chatgpt_model_select_default_option">${translations.chatgpt_model_select_default_option || 'Loading models...'}</option>`;
-        try {
-            const response = await fetch('/api/chatgpt-all-model', { // Correct: Already targeting the new route
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    ask: "List available models", // Minimal prompt to get models
-                    model: "gpt-3.5-turbo", // Default model to initiate
-                    uid: chatUID,
-                    // roleplay and other params are not strictly needed for just fetching models
-                })
-            });
-
-            if (!response.ok) {
-                const errData = await response.json().catch(() => null);
-                const errorMsg = errData?.error || `Failed to fetch models list: ${response.statusText}`;
-                console.error("Error fetching ChatGPT models list:", errorMsg);
-                chatgptModelSelector.innerHTML = `<option value="">${translations.chatgpt_models_load_error || 'Error loading models'}</option>`;
-                return;
-            }
-
-            const data = await response.json();
-            if (data && Array.isArray(data.supported_models) && data.supported_models.length > 0) {
-                supportedChatGptModels = data.supported_models;
-                localStorage.setItem('supportedChatGptModelsList', JSON.stringify(supportedChatGptModels));
-                populateChatGptModelDropdown();
-                setInitialChatGptModelSelection();
-            } else {
-                console.warn("No supported models returned from API or list is empty.");
-                chatgptModelSelector.innerHTML = `<option value="">${translations.chatgpt_no_models_available || 'No models available'}</option>`;
-            }
-        } catch (error) {
-            console.error('Error in fetchAndPopulateChatGptModels:', error);
-            chatgptModelSelector.innerHTML = `<option value="">${translations.chatgpt_models_load_error || 'Error loading models'}</option>`;
-        }
-    }
-
-    function setInitialChatGptModelSelection() {
-        if (!chatgptModelSelector || supportedChatGptModels.length === 0) return;
-
-        const lastSelected = localStorage.getItem('lastSelectedChatGptAllModel');
-        if (lastSelected && supportedChatGptModels.includes(lastSelected)) {
-            chatgptModelSelector.value = lastSelected;
-        } else {
-            const defaultModel = supportedChatGptModels.find(m => m.includes('gpt-4o-mini')) ||
-                                 supportedChatGptModels.find(m => m.includes('gpt-3.5-turbo')) ||
-                                 supportedChatGptModels[0];
-            chatgptModelSelector.value = defaultModel;
-        }
-        currentSelectedChatGptModel = chatgptModelSelector.value;
-        if (currentSelectedChatGptModel) {
-            localStorage.setItem('lastSelectedChatGptAllModel', currentSelectedChatGptModel);
-            loadChatGptAllModelChatHistory(currentSelectedChatGptModel);
-            if(chatgptAllModelChatInputField && translations.chatgpt_all_model_placeholder_dynamic) {
-                 chatgptAllModelChatInputField.placeholder = translations.chatgpt_all_model_placeholder_dynamic.replace('{modelName}', currentSelectedChatGptModel);
-            } else if (chatgptAllModelChatInputField) {
-                 chatgptAllModelChatInputField.placeholder = `Ask ${currentSelectedChatGptModel}...`;
-            }
-        }
-    }
-
-    function populateChatGptModelDropdown() {
-        if (!chatgptModelSelector || !supportedChatGptModels || supportedChatGptModels.length === 0) return;
-
-        const loadingOptionText = translations.chatgpt_model_select_default_option || 'Loading models...';
-        const currentSelectorValue = chatgptModelSelector.value;
-
-        chatgptModelSelector.innerHTML = '';
-
-        supportedChatGptModels.forEach(model => {
-            const option = document.createElement('option');
-            option.value = model;
-            option.textContent = model;
-            chatgptModelSelector.appendChild(option);
-        });
-
-        if (supportedChatGptModels.includes(currentSelectorValue)) {
-            chatgptModelSelector.value = currentSelectorValue;
-        } else if (supportedChatGptModels.length > 0) {
-             const defaultModel = supportedChatGptModels.find(m => m.includes('gpt-4o-mini')) ||
-                                  supportedChatGptModels.find(m => m.includes('gpt-3.5-turbo')) ||
-                                  supportedChatGptModels[0];
-            chatgptModelSelector.value = defaultModel;
-        } else {
-            chatgptModelSelector.innerHTML = `<option value="">${loadingOptionText}</option>`;
-        }
-        currentSelectedChatGptModel = chatgptModelSelector.value;
-        if (currentSelectedChatGptModel) {
-            localStorage.setItem('lastSelectedChatGptAllModel', currentSelectedChatGptModel);
-        }
-    }
-
-    if (chatgptAllModelAttachFileButton && chatgptAllModelFileUpload) {
-        chatgptAllModelAttachFileButton.addEventListener('click', () => chatgptAllModelFileUpload.click());
-        chatgptAllModelFileUpload.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                currentChatGptAllModelFile = file;
-                if (chatgptAllModelFilePreviewContainer) {
-                    let previewHTML = `<span class="file-preview-name">${escapeHTML(file.name)} (${(file.size / 1024).toFixed(1)} KB)</span>`;
-                    if (file.type.startsWith('image/')) {
-                        const reader = new FileReader();
-                        reader.onload = (e) => {
-                            previewHTML += `<img src="${e.target.result}" alt="Preview" class="file-preview-image">`;
-                            chatgptAllModelFilePreviewContainer.innerHTML = previewHTML;
-                        };
-                        reader.readAsDataURL(file);
-                    } else {
-                         chatgptAllModelFilePreviewContainer.innerHTML = previewHTML;
-                    }
-                }
-            } else {
-                currentChatGptAllModelFile = null;
-                if (chatgptAllModelFilePreviewContainer) chatgptAllModelFilePreviewContainer.innerHTML = "";
-            }
-        });
-    }
-
-    async function handleChatGptAllModelSendMessage() {
-        if (!chatgptAllModelChatInputField || !chatUID || !currentSelectedChatGptModel) {
-            if (!currentSelectedChatGptModel) alert(translations.chatgpt_select_model_alert || "Please select a ChatGPT model first.");
-            return;
-        }
-        const messageText = chatgptAllModelChatInputField.value.trim();
-        if (!messageText && !currentChatGptAllModelFile) {
-            alert(translations.chatgpt_type_message_or_attach_file_alert || "Please type a message or attach a file.");
-            return;
-        }
-
-        let tempPreviewUrl = null;
-        if (currentChatGptAllModelFile && currentChatGptAllModelFile.type.startsWith('image/')) {
-            tempPreviewUrl = URL.createObjectURL(currentChatGptAllModelFile);
-        }
-        const messageId = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        addChatGptAllModelMessageToChat(messageText || (currentChatGptAllModelFile ? `File: ${currentChatGptAllModelFile.name}`: ""), 'user', tempPreviewUrl, false, messageId);
-        saveChatGptAllModelChatHistory(messageText || (currentChatGptAllModelFile ? `File: ${currentChatGptAllModelFile.name}`: ""), 'user', tempPreviewUrl, currentSelectedChatGptModel, messageId);
-
-        trackActivity('chatgpt_all_model_sent', {
-            messageLength: messageText.length,
-            hasFile: !!currentChatGptAllModelFile,
-            model: currentSelectedChatGptModel,
-            fileName: currentChatGptAllModelFile ? currentChatGptAllModelFile.name : null,
-            fileType: currentChatGptAllModelFile ? currentChatGptAllModelFile.type : null
-        });
-
-        const formData = new FormData();
-        formData.append('uid', chatUID);
-        formData.append('model', currentSelectedChatGptModel);
-        if (messageText) formData.append('ask', messageText);
-        if (currentChatGptAllModelFile) formData.append('file', currentChatGptAllModelFile, currentChatGptAllModelFile.name);
-        formData.append('roleplay', CHATGPT_ALL_MODEL_DEFAULT_ROLEPLAY);
-
-        chatgptAllModelChatInputField.value = '';
-        chatgptAllModelFileUpload.value = null;
-        const oldFile = currentChatGptAllModelFile;
-        currentChatGptAllModelFile = null;
-        if (chatgptAllModelFilePreviewContainer) chatgptAllModelFilePreviewContainer.innerHTML = "";
-
-        chatgptAllModelChatInputField.disabled = true;
-        if (chatgptAllModelChatSendButton) chatgptAllModelChatSendButton.disabled = true;
-        if (chatgptAllModelAttachFileButton) chatgptAllModelAttachFileButton.disabled = true;
-        if (chatgptModelSelector) chatgptModelSelector.disabled = true;
-
-        addChatGptAllModelMessageToChat(null, 'ai', null, true);
-
-        try {
-            const response = await fetch('/api/chatgpt-all-model', { method: 'POST', body: formData });
-            if (chatgptAllModelTypingIndicator) chatgptAllModelTypingIndicator.remove();
-             if (tempPreviewUrl && oldFile && oldFile.type.startsWith('image/')) {
-                URL.revokeObjectURL(tempPreviewUrl);
-            }
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ error: `Server error: ${response.status}` }));
-                throw new Error(errorData.error || `API request failed: ${response.status}`);
-            }
-            const aiResponse = await response.json();
-
-            if (aiResponse.supported_models && Array.isArray(aiResponse.supported_models)) {
-                supportedChatGptModels = aiResponse.supported_models;
-                localStorage.setItem('supportedChatGptModelsList', JSON.stringify(supportedChatGptModels));
-                populateChatGptModelDropdown();
-            }
-
-            if (aiResponse && aiResponse.response) {
-                const aiMessageId = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-                addChatGptAllModelMessageToChat(aiResponse.response, 'ai', null, false, aiMessageId);
-                saveChatGptAllModelChatHistory(aiResponse.response, 'ai', null, aiResponse.model_used || currentSelectedChatGptModel, aiMessageId);
-            } else {
-                throw new Error(translations.invalid_response_from_ai.replace('{aiName}', 'ChatGPT All Model') || "Invalid response structure from ChatGPT All Model AI.");
-            }
-        } catch (error) {
-            console.error('Error with ChatGPT All Model:', error);
-            if (chatgptAllModelTypingIndicator) chatgptAllModelTypingIndicator.remove();
-            const errorMsg = translations.error_ai_connection || "Error: {error} Could not connect to {aiName}.";
-            addChatGptAllModelMessageToChat(errorMsg.replace('{error}', error.message).replace('{aiName}', 'ChatGPT All Model'), 'ai');
-        } finally {
-            chatgptAllModelChatInputField.disabled = false;
-            if (chatgptAllModelChatSendButton) chatgptAllModelChatSendButton.disabled = false;
-            if (chatgptAllModelAttachFileButton) chatgptAllModelAttachFileButton.disabled = false;
-            if (chatgptModelSelector) chatgptModelSelector.disabled = false;
-            if (chatgptAllModelChatInputField) chatgptAllModelChatInputField.focus();
-        }
-    }
-
-    if (chatgptAllModelChatSendButton) chatgptAllModelChatSendButton.addEventListener('click', handleChatGptAllModelSendMessage);
-    if (chatgptAllModelChatInputField) chatgptAllModelChatInputField.addEventListener('keypress', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleChatGptAllModelSendMessage(); }});
-
-    if (chatgptModelSelector) {
-        chatgptModelSelector.addEventListener('change', () => {
-            currentSelectedChatGptModel = chatgptModelSelector.value;
-            if (currentSelectedChatGptModel) {
-                localStorage.setItem('lastSelectedChatGptAllModel', currentSelectedChatGptModel);
-                loadChatGptAllModelChatHistory(currentSelectedChatGptModel);
-                if (chatgptAllModelChatInputField && translations.chatgpt_all_model_placeholder_dynamic) {
-                    chatgptAllModelChatInputField.placeholder = translations.chatgpt_all_model_placeholder_dynamic.replace('{modelName}', currentSelectedChatGptModel);
-                } else if (chatgptAllModelChatInputField) {
-                    chatgptAllModelChatInputField.placeholder = `Ask ${currentSelectedChatGptModel}...`;
-                }
-            } else {
-                if (chatgptAllModelChatMessagesArea) chatgptAllModelChatMessagesArea.innerHTML = "";
-                if (chatgptAllModelChatInputField) chatgptAllModelChatInputField.placeholder = translations.chatgpt_all_model_placeholder || "Ask ChatGPT (any model)...";
-            }
-        });
-    }
-    // --- END OF CHATGPT ALL MODEL CHAT LOGIC ---
-
-
     // --- END OF GEMINI ALL MODEL CHAT LOGIC ---
 
-    // --- CHATGPT ALL MODEL CHAT LOGIC ---
-    const chatgptAllModelChatView = document.getElementById('chatgpt-all-model-view');
-    const chatgptAllModelHeaderTitle = chatgptAllModelChatView ? chatgptAllModelChatView.querySelector('.chat-view-header h2') : null;
-    const chatgptModelSelector = document.getElementById('chatgpt-model-selector');
-    const chatgptAllModelChatMessagesArea = document.getElementById('chatgpt-all-model-chat-messages-area');
-    const chatgptAllModelChatInputField = document.getElementById('chatgpt-all-model-chat-input-field');
-    const chatgptAllModelChatSendButton = document.getElementById('chatgpt-all-model-chat-send-button');
-    const chatgptAllModelAttachFileButton = document.getElementById('chatgpt-all-model-attach-file-button');
-    const chatgptAllModelFileUpload = document.getElementById('chatgpt-all-model-file-upload');
-    const chatgptAllModelFilePreviewContainer = document.getElementById('chatgpt-all-model-file-preview-container');
 
-    const chatgptAllModelHistoryKeyPrefix = 'chatgptAllModelHistory_';
-    let chatgptAllModelTypingIndicator = null;
-    let currentChatGptAllModelFile = null;
-    let supportedChatGptModels = [];
-    let currentSelectedChatGptModel = '';
-    const CHATGPT_ALL_MODEL_DEFAULT_ROLEPLAY = "You're ChatGPT, a helpful and versatile AI model by OpenAI.";
-
-    const chatgptOverallAvatarSvg = `<svg viewBox="0 0 24 24" class="icon chatgpt-avatar-logo"><path fill-rule="evenodd" clip-rule="evenodd" d="M12.0001 0C18.6275 0 24.0001 5.37258 24.0001 12C24.0001 18.6274 18.6275 24 12.0001 24C5.37266 24 0 18.6274 0 12C0 5.37258 5.37266 0 12.0001 0ZM6.75009 10.738L8.66259 12.0171L6.75009 13.2962V10.738ZM9.93759 15.4322L11.8501 16.7113L9.93759 17.9904V15.4322ZM9.93759 6.0437L11.8501 7.3228L9.93759 8.6019V6.0437ZM15.0001 10.738L13.0876 12.0171L15.0001 13.2962V10.738ZM17.2501 6.88469C16.0188 5.84979 14.4001 5.25 12.6001 5.25C10.8001 5.25 9.18134 5.84979 7.95009 6.88469L9.33759 7.77838C10.2563 7.01902 11.3626 6.60019 12.6001 6.60019C13.8376 6.60019 14.9438 7.01902 15.8626 7.77838L17.2501 6.88469ZM18.0001 10.1019V13.9322L19.9126 15.2113C20.3626 14.2498 20.6251 13.1721 20.6251 12C20.6251 10.8279 20.3626 9.75021 19.9126 8.7887L18.0001 10.1019ZM4.08759 8.7887C3.63759 9.75021 3.37509 10.8279 3.37509 12C3.37509 13.1721 3.63759 14.2498 4.08759 15.2113L6.00009 13.9322V10.1019L4.08759 8.7887ZM17.2501 17.1495L15.8626 16.2558C14.9438 17.0152 13.8376 17.434 12.6001 17.434C11.3626 17.434 10.2563 17.0152 9.33759 16.2558L7.95009 17.1495C9.18134 18.1844 10.8001 18.7842 12.6001 18.7842C14.4001 18.7842 16.0188 18.1844 17.2501 17.1495Z" fill="currentColor"></path></svg>`;
-
-    function addChatGptAllModelMessageToChat(message, sender, imageUrl = null, isTyping = false, messageId = null) {
-        if (!chatgptAllModelChatMessagesArea) return;
-
-        if (chatgptAllModelTypingIndicator && chatgptAllModelTypingIndicator.parentNode) {
-            chatgptAllModelTypingIndicator.remove();
-            chatgptAllModelTypingIndicator = null;
-        }
-
-        const messageWrapper = document.createElement('div');
-        messageWrapper.classList.add('chat-message-wrapper', sender === 'user' ? 'user' : 'ai');
-        if (messageId) messageWrapper.dataset.messageId = messageId;
-
-
-        const avatarContainer = document.createElement('div');
-        avatarContainer.classList.add('chat-avatar-container');
-        avatarContainer.innerHTML = sender === 'user' ? userAvatarSvg : chatgptOverallAvatarSvg;
-
-        const messageBubble = document.createElement('div');
-        messageBubble.classList.add('chat-bubble');
-
-        if (isTyping) {
-            messageBubble.innerHTML = typingIndicatorHTML;
-            messageWrapper.id = 'chatgpt-all-model-typing-indicator';
-            chatgptAllModelTypingIndicator = messageWrapper;
-        } else {
-            const rawMessageContent = message || "";
-            messageBubble.innerHTML = formatTextContentEnhanced(rawMessageContent);
-            if (imageUrl) {
-                 messageBubble.innerHTML += `<br><img src="${escapeHTML(imageUrl)}" alt="Chat Image" style="max-width: 100%; border-radius: 8px; margin-top: 8px;">`;
-            }
-
-            if (sender === 'ai') {
-                const controlsDiv = document.createElement('div');
-                controlsDiv.className = 'message-controls';
-
-                const copyBtn = document.createElement('button');
-                copyBtn.className = 'icon-button message-copy-btn';
-                copyBtn.title = translations.copy_button_title || "Copy";
-                copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
-                copyBtn.addEventListener('click', () => {
-                    navigator.clipboard.writeText(rawMessageContent).then(() => {
-                        copyBtn.innerHTML = `<svg viewBox="0 0 24 24" class="icon"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>`;
-                        setTimeout(() => {
-                             copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
-                        }, 1500);
-                    }).catch(err => console.error('Failed to copy text: ', err));
-                });
-
-                const downloadBtn = document.createElement('button');
-                downloadBtn.className = 'icon-button message-download-btn';
-                downloadBtn.title = translations.download_button_title || "Download";
-                downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>';
-                downloadBtn.addEventListener('click', () => {
-                    const filename = `chatgpt_response_${Date.now()}.txt`;
-                    const blob = new Blob([rawMessageContent], { type: 'text/plain;charset=utf-8' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = filename;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                });
-
-                controlsDiv.appendChild(copyBtn);
-                controlsDiv.appendChild(downloadBtn);
-                messageBubble.appendChild(controlsDiv);
-            }
-        }
-        messageWrapper.append(avatarContainer, messageBubble);
-        chatgptAllModelChatMessagesArea.appendChild(messageWrapper);
-        chatgptAllModelChatMessagesArea.scrollTop = chatgptAllModelChatMessagesArea.scrollHeight;
-    }
-
-    function saveChatGptAllModelChatHistory(message, sender, imageUrl, modelName, messageId = null) {
-        if (!chatUID || !modelName) return;
-        const historyKey = `${chatgptAllModelHistoryKeyPrefix}${chatUID}_${modelName}`;
-        let history = [];
-        try { const stored = localStorage.getItem(historyKey); if (stored) history = JSON.parse(stored); } catch (e) { console.error(e); }
-
-        history.push({ message, sender, imageUrl, timestamp: new Date().toISOString(), messageId: messageId || Date.now().toString() });
-        if (history.length > 100) history = history.slice(history.length - 100);
-        try { localStorage.setItem(historyKey, JSON.stringify(history)); } catch (e) { console.error(e); }
-    }
-
-    function loadChatGptAllModelChatHistory(modelName) {
-        if (!chatgptAllModelChatMessagesArea || !chatUID || !modelName) {
-            if(chatgptAllModelChatMessagesArea) chatgptAllModelChatMessagesArea.innerHTML = "";
-            return;
-        }
-        chatgptAllModelChatMessagesArea.innerHTML = "";
-        const historyKey = `${chatgptAllModelHistoryKeyPrefix}${chatUID}_${modelName}`;
-        let history = [];
-        try { const stored = localStorage.getItem(historyKey); if (stored) history = JSON.parse(stored); } catch (e) { console.error(e); }
-
-        if (history.length === 0) {
-            const welcomeMsg = translations.chatgpt_all_model_welcome_message || `Welcome to ChatGPT {modelName}! Ask anything or upload a file.`;
-            addChatGptAllModelMessageToChat(welcomeMsg.replace('{modelName}', modelName), 'ai');
-        } else {
-            history.forEach(item => addChatGptAllModelMessageToChat(item.message, item.sender, item.imageUrl, false, item.messageId));
-        }
-        if (chatgptAllModelChatMessagesArea) chatgptAllModelChatMessagesArea.scrollTop = chatgptAllModelChatMessagesArea.scrollHeight;
-    }
-
-    async function fetchAndPopulateChatGptModels() {
-        if (!chatgptModelSelector) return;
-
-        const cachedModelsKey = 'supportedChatGptModelsList';
-        const cachedModels = localStorage.getItem(cachedModelsKey);
-        if (cachedModels) {
-            try {
-                supportedChatGptModels = JSON.parse(cachedModels);
-                if (Array.isArray(supportedChatGptModels) && supportedChatGptModels.length > 0) {
-                    populateChatGptModelDropdown();
-                    setInitialChatGptModelSelection();
-                    return;
-                }
-            } catch (e) {
-                console.error("Error parsing cached " + cachedModelsKey, e);
-                localStorage.removeItem(cachedModelsKey);
-            }
-        }
-
-        chatgptModelSelector.innerHTML = `<option value="" data-translate="chatgpt_model_select_default_option">${translations.chatgpt_model_select_default_option || 'Loading models...'}</option>`;
-        try {
-            const response = await fetch('/api/chatgpt-all-model', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    ask: "List available models", // A minimal query to get the model list
-                    model: "gpt-3.5-turbo", // A default model to make the API call
-                    uid: chatUID,
-                    // roleplay and other params are not strictly needed for just fetching models
-                })
-            });
-
-            if (!response.ok) {
-                const errData = await response.json().catch(() => null);
-                const errorMsg = errData?.error || `Failed to fetch ChatGPT models list: ${response.statusText}`;
-                console.error("Error fetching ChatGPT models list:", errorMsg);
-                chatgptModelSelector.innerHTML = `<option value="">${translations.chatgpt_models_load_error || 'Error loading models'}</option>`;
-                return;
-            }
-
-            const data = await response.json();
-            if (data && Array.isArray(data.supported_models) && data.supported_models.length > 0) {
-                supportedChatGptModels = data.supported_models;
-                localStorage.setItem(cachedModelsKey, JSON.stringify(supportedChatGptModels));
-                populateChatGptModelDropdown();
-                setInitialChatGptModelSelection();
-            } else {
-                console.warn("No supported ChatGPT models returned from API or list is empty.");
-                chatgptModelSelector.innerHTML = `<option value="">${translations.chatgpt_no_models_available || 'No models available'}</option>`;
-            }
-        } catch (error) {
-            console.error('Error in fetchAndPopulateChatGptModels:', error);
-            chatgptModelSelector.innerHTML = `<option value="">${translations.chatgpt_models_load_error || 'Error loading models'}</option>`;
-        }
-    }
-
-    function setInitialChatGptModelSelection() {
-        if (!chatgptModelSelector || supportedChatGptModels.length === 0) return;
-
-        const lastSelectedKey = 'lastSelectedChatGptAllModel';
-        const lastSelected = localStorage.getItem(lastSelectedKey);
-        if (lastSelected && supportedChatGptModels.includes(lastSelected)) {
-            chatgptModelSelector.value = lastSelected;
-        } else {
-            const defaultModel = supportedChatGptModels.find(m => m.includes('gpt-4o-mini')) ||
-                                 supportedChatGptModels.find(m => m.includes('gpt-3.5-turbo')) ||
-                                 supportedChatGptModels[0];
-            chatgptModelSelector.value = defaultModel;
-        }
-        currentSelectedChatGptModel = chatgptModelSelector.value;
-        if (currentSelectedChatGptModel) {
-            localStorage.setItem(lastSelectedKey, currentSelectedChatGptModel);
-            loadChatGptAllModelChatHistory(currentSelectedChatGptModel);
-            if(chatgptAllModelChatInputField && translations.chatgpt_all_model_placeholder_dynamic) {
-                 chatgptAllModelChatInputField.placeholder = translations.chatgpt_all_model_placeholder_dynamic.replace('{modelName}', currentSelectedChatGptModel);
-            } else if (chatgptAllModelChatInputField) {
-                 chatgptAllModelChatInputField.placeholder = `Ask ${currentSelectedChatGptModel}...`;
-            }
-        }
-    }
-
-    function populateChatGptModelDropdown() {
-        if (!chatgptModelSelector || !supportedChatGptModels || supportedChatGptModels.length === 0) return;
-
-        const loadingOptionText = translations.chatgpt_model_select_default_option || 'Loading models...';
-        const currentSelectorValue = chatgptModelSelector.value;
-
-        chatgptModelSelector.innerHTML = '';
-
-        supportedChatGptModels.forEach(model => {
-            const option = document.createElement('option');
-            option.value = model;
-            option.textContent = model;
-            chatgptModelSelector.appendChild(option);
-        });
-
-        if (supportedChatGptModels.includes(currentSelectorValue)) {
-            chatgptModelSelector.value = currentSelectorValue;
-        } else if (supportedChatGptModels.length > 0) {
-             const defaultModel = supportedChatGptModels.find(m => m.includes('gpt-4o-mini')) ||
-                                  supportedChatGptModels.find(m => m.includes('gpt-3.5-turbo')) ||
-                                  supportedChatGptModels[0];
-            chatgptModelSelector.value = defaultModel;
-        } else {
-            chatgptModelSelector.innerHTML = `<option value="">${loadingOptionText}</option>`;
-        }
-        currentSelectedChatGptModel = chatgptModelSelector.value;
-        if (currentSelectedChatGptModel) {
-            localStorage.setItem('lastSelectedChatGptAllModel', currentSelectedChatGptModel);
-        }
-    }
-
-    if (chatgptAllModelAttachFileButton && chatgptAllModelFileUpload) {
-        chatgptAllModelAttachFileButton.addEventListener('click', () => chatgptAllModelFileUpload.click());
-        chatgptAllModelFileUpload.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                currentChatGptAllModelFile = file;
-                if (chatgptAllModelFilePreviewContainer) {
-                    let previewHTML = `<span class="file-preview-name">${escapeHTML(file.name)} (${(file.size / 1024).toFixed(1)} KB)</span>`;
-                    if (file.type.startsWith('image/')) {
-                        const reader = new FileReader();
-                        reader.onload = (e) => {
-                            previewHTML += `<img src="${e.target.result}" alt="Preview" class="file-preview-image">`;
-                            chatgptAllModelFilePreviewContainer.innerHTML = previewHTML;
-                        };
-                        reader.readAsDataURL(file);
-                    } else {
-                         chatgptAllModelFilePreviewContainer.innerHTML = previewHTML;
-                    }
-                }
-            } else {
-                currentChatGptAllModelFile = null;
-                if (chatgptAllModelFilePreviewContainer) chatgptAllModelFilePreviewContainer.innerHTML = "";
-            }
-        });
-    }
-
-    async function handleChatGptAllModelSendMessage() {
-        if (!chatgptAllModelChatInputField || !chatUID || !currentSelectedChatGptModel) {
-            if (!currentSelectedChatGptModel) alert(translations.chatgpt_select_model_alert || "Please select a ChatGPT model first.");
-            return;
-        }
-        const messageText = chatgptAllModelChatInputField.value.trim();
-        if (!messageText && !currentChatGptAllModelFile) {
-            alert(translations.chatgpt_type_message_or_attach_file_alert || "Please type a message or attach a file.");
-            return;
-        }
-
-        let tempPreviewUrl = null;
-        if (currentChatGptAllModelFile && currentChatGptAllModelFile.type.startsWith('image/')) {
-            tempPreviewUrl = URL.createObjectURL(currentChatGptAllModelFile);
-        }
-        const messageId = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        addChatGptAllModelMessageToChat(messageText || (currentChatGptAllModelFile ? `File: ${currentChatGptAllModelFile.name}`: ""), 'user', tempPreviewUrl, false, messageId);
-        saveChatGptAllModelChatHistory(messageText || (currentChatGptAllModelFile ? `File: ${currentChatGptAllModelFile.name}`: ""), 'user', tempPreviewUrl, currentSelectedChatGptModel, messageId);
-
-        trackActivity('chatgpt_all_model_sent', {
-            messageLength: messageText.length,
-            hasFile: !!currentChatGptAllModelFile,
-            model: currentSelectedChatGptModel,
-            fileName: currentChatGptAllModelFile ? currentChatGptAllModelFile.name : null,
-            fileType: currentChatGptAllModelFile ? currentChatGptAllModelFile.type : null
-        });
-
-        const formData = new FormData();
-        formData.append('uid', chatUID);
-        formData.append('model', currentSelectedChatGptModel);
-        if (messageText) formData.append('ask', messageText);
-        if (currentChatGptAllModelFile) formData.append('file', currentChatGptAllModelFile, currentChatGptAllModelFile.name);
-        formData.append('roleplay', CHATGPT_ALL_MODEL_DEFAULT_ROLEPLAY);
-
-        chatgptAllModelChatInputField.value = '';
-        chatgptAllModelFileUpload.value = null;
-        const oldFile = currentChatGptAllModelFile;
-        currentChatGptAllModelFile = null;
-        if (chatgptAllModelFilePreviewContainer) chatgptAllModelFilePreviewContainer.innerHTML = "";
-
-        chatgptAllModelChatInputField.disabled = true;
-        if (chatgptAllModelChatSendButton) chatgptAllModelChatSendButton.disabled = true;
-        if (chatgptAllModelAttachFileButton) chatgptAllModelAttachFileButton.disabled = true;
-        if (chatgptModelSelector) chatgptModelSelector.disabled = true;
-
-        addChatGptAllModelMessageToChat(null, 'ai', null, true);
-
-        try {
-            const response = await fetch('/api/chatgpt-all-model', { method: 'POST', body: formData });
-            if (chatgptAllModelTypingIndicator) chatgptAllModelTypingIndicator.remove();
-             if (tempPreviewUrl && oldFile && oldFile.type.startsWith('image/')) {
-                URL.revokeObjectURL(tempPreviewUrl);
-            }
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ error: `Server error: ${response.status}` }));
-                throw new Error(errorData.error || `API request failed: ${response.status}`);
-            }
-            const aiResponse = await response.json();
-
-            if (aiResponse.supported_models && Array.isArray(aiResponse.supported_models)) {
-                supportedChatGptModels = aiResponse.supported_models;
-                localStorage.setItem('supportedChatGptModelsList', JSON.stringify(supportedChatGptModels));
-                populateChatGptModelDropdown();
-            }
-
-            if (aiResponse && aiResponse.response) {
-                const aiMessageId = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-                addChatGptAllModelMessageToChat(aiResponse.response, 'ai', null, false, aiMessageId);
-                saveChatGptAllModelChatHistory(aiResponse.response, 'ai', null, aiResponse.model_used || currentSelectedChatGptModel, aiMessageId);
-            } else {
-                throw new Error(translations.invalid_response_from_ai.replace('{aiName}', 'ChatGPT All Model') || "Invalid response structure from ChatGPT All Model AI.");
-            }
-        } catch (error) {
-            console.error('Error with ChatGPT All Model:', error);
-            if (chatgptAllModelTypingIndicator) chatgptAllModelTypingIndicator.remove();
-            const errorMsg = translations.error_ai_connection || "Error: {error} Could not connect to {aiName}.";
-            addChatGptAllModelMessageToChat(errorMsg.replace('{error}', error.message).replace('{aiName}', 'ChatGPT All Model'), 'ai');
-        } finally {
-            chatgptAllModelChatInputField.disabled = false;
-            if (chatgptAllModelChatSendButton) chatgptAllModelChatSendButton.disabled = false;
-            if (chatgptAllModelAttachFileButton) chatgptAllModelAttachFileButton.disabled = false;
-            if (chatgptModelSelector) chatgptModelSelector.disabled = false;
-            if (chatgptAllModelChatInputField) chatgptAllModelChatInputField.focus();
-        }
-    }
-
-    if (chatgptAllModelChatSendButton) chatgptAllModelChatSendButton.addEventListener('click', handleChatGptAllModelSendMessage);
-    if (chatgptAllModelChatInputField) chatgptAllModelChatInputField.addEventListener('keypress', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleChatGptAllModelSendMessage(); }});
-
-    if (chatgptModelSelector) {
-        chatgptModelSelector.addEventListener('change', () => {
-            currentSelectedChatGptModel = chatgptModelSelector.value;
-            if (currentSelectedChatGptModel) {
-                localStorage.setItem('lastSelectedChatGptAllModel', currentSelectedChatGptModel);
-                loadChatGptAllModelChatHistory(currentSelectedChatGptModel);
-                if (chatgptAllModelChatInputField && translations.chatgpt_all_model_placeholder_dynamic) {
-                    chatgptAllModelChatInputField.placeholder = translations.chatgpt_all_model_placeholder_dynamic.replace('{modelName}', currentSelectedChatGptModel);
-                } else if (chatgptAllModelChatInputField) {
-                    chatgptAllModelChatInputField.placeholder = `Ask ${currentSelectedChatGptModel}...`;
-                }
-            } else {
-                if (chatgptAllModelChatMessagesArea) chatgptAllModelChatMessagesArea.innerHTML = "";
-                if (chatgptAllModelChatInputField) chatgptAllModelChatInputField.placeholder = translations.chatgpt_all_model_placeholder || "Ask ChatGPT (any model)...";
-            }
-        });
-    }
-    // --- END OF CHATGPT ALL MODEL CHAT LOGIC ---
-
-
-    // Enhanced text formatting (initial version, can be expanded)
-    function formatTextContentEnhanced(text) {
+    // --- EMAIL GENERATOR LOGIC ---
+    const generateTempEmailButton = document.getElementById('generate-temp-email-button');
+    const generatedEmailAddressContainer = document.getElementById('generated-email-address-container');
     const generatedEmailAddressSpan = document.getElementById('generated-email-address');
     const emailCountdownTimerSpan = document.getElementById('email-countdown-timer');
     const copyEmailButton = document.getElementById('copy-email-button');
@@ -4324,6 +3198,352 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     // --- FIN DE LA LOGIQUE DU GÉNÉRATEUR D'EMAIL ---
+
+    // --- ChatGPT All Models Logic ---
+    const chatGPTAllModelsView = document.getElementById('chatgpt-all-models-view'); // Added in HTML Step 5
+    const chatGPTModelSelector = document.getElementById('chatgpt-model-selector'); // Added in HTML Step 5
+    const chatGPTAllModelsChatMessagesArea = document.getElementById('chatgpt-all-models-chat-messages-area');
+    const chatGPTAllModelsChatInputField = document.getElementById('chatgpt-all-models-chat-input-field');
+    const chatGPTAllModelsChatSendButton = document.getElementById('chatgpt-all-models-chat-send-button');
+    const chatGPTAllModelsAttachFileButton = document.getElementById('chatgpt-all-models-attach-file-button');
+    const chatGPTAllModelsFileUpload = document.getElementById('chatgpt-all-models-file-upload');
+    const chatGPTAllModelsFilePreviewContainer = document.getElementById('chatgpt-all-models-file-preview-container');
+    const chatGPTAllModelsTitle = document.getElementById('chatgpt-all-models-title'); // For updating title with model name
+
+    const CHATGPT_API_URL = 'https://haji-mix-api.gleeze.com/api/openai';
+    const CHATGPT_API_KEY = 'e30864f5c326f6e3d70b032000ef5e2fa610cb5d9bc5759711d33036e303cef4';
+    const chatGPTAllModelHistoryKeyPrefix = 'chatGPTAllModelsHistory_';
+    let chatGPTAllModelsTypingIndicator = null;
+    let currentChatGPTSelectedFile = null;
+    let supportedChatGPTModels = [];
+    let currentSelectedChatGPTModel = ''; // Will hold the string of the selected model
+
+    const chatGPTAvatarSvg = `<svg viewBox="0 0 41 41" class="icon chatgpt-logo-svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M37.5324 19.2844C37.5324 17.0019 37.1162 14.7831 36.3424 12.695C35.6229 10.7465 34.5682 8.99394 33.2466 7.50971C31.925 6.02548 30.3624 4.84866 28.6364 3.99001C26.9103 3.13137 25.0497 2.60022 23.1327 2.42694C22.8868 2.40748 22.6214 2.30448 22.4217 2.13045C22.222 1.95642 22.1034 1.72034 22.0873 1.46781C21.9251 0.369707 21.0401 -0.282461 19.9933 0.0814693C18.9465 0.4454 18.5498 1.54462 18.7121 2.64272C18.7204 2.70249 18.7322 2.76058 18.7482 2.81755C16.8312 2.99084 14.9706 3.52198 13.2446 4.38063C11.5185 5.23927 9.95592 6.41609 8.6343 7.90032C7.31268 9.38455 6.258 11.1371 5.53849 13.0856C4.76471 15.1737 4.34849 17.3925 4.34849 19.675C4.34849 21.9575 4.76471 24.1763 5.53849 26.2644C6.258 28.2129 7.31268 29.9655 8.6343 31.4497C9.95592 32.9339 11.5185 34.1107 13.2446 34.9694C14.9706 35.828 16.8312 36.3592 18.7482 36.5325C18.7641 36.5894 18.7761 36.6475 18.7845 36.7073C18.9467 37.8054 19.8316 38.4576 20.8784 38.0936C21.9252 37.7297 22.3219 36.6305 22.1597 35.5324C22.1501 35.4703 22.1364 35.4097 22.1193 35.3502C22.3674 35.3289 22.6142 35.2242 22.8089 35.0496C23.0036 34.8751 23.1186 34.6362 23.1327 34.3731C25.0497 34.1998 26.9103 33.6687 28.6364 32.81C30.3624 31.9514 31.925 30.7746 33.2466 29.2903C34.5682 27.8061 35.6229 26.0535 36.3424 24.105C37.1162 22.0169 37.5324 19.7981 37.5324 17.5156L37.5324 19.2844Z M20.9403 10.772C20.9403 10.5421 20.8473 10.3213 20.6847 10.1587C20.5221 9.99605 20.3013 9.90305 20.0714 9.90305L12.0771 9.90305C11.8472 9.90305 11.6264 9.99605 11.4638 10.1587C11.3012 10.3213 11.2082 10.5421 11.2082 10.772L11.2082 11.6409C11.2082 11.8708 11.3012 12.0916 11.4638 12.2542C11.6264 12.4168 11.8472 12.5098 12.0771 12.5098L20.0714 12.5098C20.3013 12.5098 20.5221 12.4168 20.6847 12.2542C20.8473 12.0916 20.9403 11.8708 20.9403 11.6409L20.9403 10.772Z M20.9403 17.515C20.9403 17.2851 20.8473 17.0643 20.6847 16.9017C20.5221 16.7391 20.3013 16.6461 20.0714 16.6461L12.0771 16.6461C11.8472 16.6461 11.6264 16.7391 11.4638 16.9017C11.3012 17.0643 11.2082 17.2851 11.2082 17.515L11.2082 18.3839C11.2082 18.6138 11.3012 18.8346 11.4638 18.9972C11.6264 19.1598 11.8472 19.2528 12.0771 19.2528L20.0714 19.2528C20.3013 19.2528 20.5221 19.1598 20.6847 18.9972C20.8473 18.8346 20.9403 18.6138 20.9403 18.3839L20.9403 17.515Z M26.2192 24.2591C26.2192 23.9358 26.0926 23.6254 25.8699 23.4027C25.6472 23.1801 25.3368 23.0534 25.0135 23.0534L12.0771 23.0534C11.7538 23.0534 11.4434 23.1801 11.2207 23.4027C10.998 23.6254 10.8714 23.9358 10.8714 24.2591L10.8714 25.128C10.8714 25.4513 10.998 25.7617 11.2207 25.9843C11.4434 26.207 11.7538 26.3336 12.0771 26.3336H20.0714L20.0714 28.973C20.0714 29.2029 20.1644 29.4237 20.327 29.5863C20.4896 29.7489 20.7104 29.8419 20.9403 29.8419C21.1702 29.8419 21.391 29.7489 21.5536 29.5863C21.7162 29.4237 21.8092 29.2029 21.8092 28.973L21.8092 26.3336H25.0135C25.3368 26.3336 25.6472 26.207 25.8699 25.9843C26.0926 25.7617 26.2192 25.4513 26.2192 25.128L26.2192 24.2591Z" fill="currentColor"></path></svg>`;
+
+
+    function addChatGPTAllModelsMessageToChat(message, sender, imageUrl = null, isTyping = false, messageId = null) {
+        if (!chatGPTAllModelsChatMessagesArea) return;
+
+        if (chatGPTAllModelsTypingIndicator && chatGPTAllModelsTypingIndicator.parentNode) {
+            chatGPTAllModelsTypingIndicator.remove();
+            chatGPTAllModelsTypingIndicator = null;
+        }
+
+        const messageWrapper = document.createElement('div');
+        messageWrapper.classList.add('chat-message-wrapper', sender === 'user' ? 'user' : 'ai');
+        if (messageId) messageWrapper.dataset.messageId = messageId;
+
+        const avatarContainer = document.createElement('div');
+        avatarContainer.classList.add('chat-avatar-container');
+        avatarContainer.innerHTML = sender === 'user' ? userAvatarSvg : chatGPTAvatarSvg;
+
+        const messageBubble = document.createElement('div');
+        messageBubble.classList.add('chat-bubble');
+
+        if (isTyping) {
+            messageBubble.innerHTML = typingIndicatorHTML;
+            messageWrapper.id = 'chatgpt-all-models-typing-indicator';
+            chatGPTAllModelsTypingIndicator = messageWrapper;
+        } else {
+            messageBubble.innerHTML = formatTextContentEnhanced(message || "");
+            if (imageUrl) {
+                 messageBubble.innerHTML += `<br><img src="${escapeHTML(imageUrl)}" alt="Chat Image" style="max-width: 100%; border-radius: 8px; margin-top: 8px;">`;
+            }
+            if (sender === 'ai') {
+                const controlsDiv = document.createElement('div');
+                controlsDiv.className = 'message-controls';
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'icon-button message-copy-btn';
+                copyBtn.title = (typeof translations !== 'undefined' && translations.copy_button_title) ? translations.copy_button_title : 'Copy';
+                copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
+                copyBtn.addEventListener('click', () => {
+                    const textToCopy = messageBubble.textContent || "";
+                    navigator.clipboard.writeText(textToCopy.replace(/\s*Copy\s*Download\s*$/, '').trim()).then(() => {
+                        copyBtn.innerHTML = `<svg viewBox="0 0 24 24" class="icon"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>`;
+                        setTimeout(() => { copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>'; }, 1500);
+                    }).catch(err => console.error('Failed to copy text: ', err));
+                });
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'icon-button message-download-btn';
+                downloadBtn.title = (typeof translations !== 'undefined' && translations.download_button_title) ? translations.download_button_title : 'Download';
+                downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>';
+                downloadBtn.addEventListener('click', () => {
+                    const textContent = messageBubble.textContent || "";
+                    const filename = `chatgpt_response_${Date.now()}.txt`;
+                    const blob = new Blob([textContent.replace(/\s*Copy\s*Download\s*$/, '').trim()], { type: 'text/plain;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+                });
+                controlsDiv.appendChild(copyBtn); controlsDiv.appendChild(downloadBtn); messageBubble.appendChild(controlsDiv);
+            }
+        }
+        messageWrapper.append(avatarContainer, messageBubble);
+        chatGPTAllModelsChatMessagesArea.appendChild(messageWrapper);
+        chatGPTAllModelsChatMessagesArea.scrollTop = chatGPTAllModelsChatMessagesArea.scrollHeight;
+    }
+
+    function saveChatGPTAllModelsMessageToHistory(message, sender, imageUrl, modelName, messageId = null) {
+        if (!chatUID || !modelName) return;
+        const historyKey = `${chatGPTAllModelHistoryKeyPrefix}${chatUID}_${modelName}`;
+        let history = [];
+        try { const stored = localStorage.getItem(historyKey); if (stored) history = JSON.parse(stored); } catch (e) { console.error(e); }
+        history.push({ message, sender, imageUrl, timestamp: new Date().toISOString(), messageId: messageId || Date.now().toString() });
+        if (history.length > 100) history = history.slice(history.length - 100);
+        try { localStorage.setItem(historyKey, JSON.stringify(history)); } catch (e) { console.error(e); }
+    }
+
+    function loadChatGPTAllModelsChatHistory(modelName) {
+        if (!chatGPTAllModelsChatMessagesArea || !chatUID || !modelName) {
+            if(chatGPTAllModelsChatMessagesArea) chatGPTAllModelsChatMessagesArea.innerHTML = "";
+            return;
+        }
+        chatGPTAllModelsChatMessagesArea.innerHTML = "";
+        const historyKey = `${chatGPTAllModelHistoryKeyPrefix}${chatUID}_${modelName}`;
+        let history = [];
+        try { const stored = localStorage.getItem(historyKey); if (stored) history = JSON.parse(stored); } catch (e) { console.error(e); }
+        if (history.length === 0) {
+            const welcomeMsg = (typeof translations !== 'undefined' && translations.chatgpt_all_models_welcome_message) ? translations.chatgpt_all_models_welcome_message.replace('{modelName}', modelName) : `Welcome to ChatGPT ${modelName}! Ask anything or upload a file.`;
+            addChatGPTAllModelsMessageToChat(welcomeMsg, 'ai');
+        } else {
+            history.forEach(item => addChatGPTAllModelsMessageToChat(item.message, item.sender, item.imageUrl, false, item.messageId));
+        }
+        if (chatGPTAllModelsChatMessagesArea) chatGPTAllModelsChatMessagesArea.scrollTop = chatGPTAllModelsChatMessagesArea.scrollHeight;
+    }
+
+    async function fetchChatGPTModelsAndPopulateDropdown() {
+        if (!chatGPTModelSelector) return;
+        const loadingOptText = (typeof translations !== 'undefined' && translations.chatgpt_model_select_default_option) ? translations.chatgpt_model_select_default_option : 'Loading models...';
+        chatGPTModelSelector.innerHTML = `<option value="">${loadingOptText}</option>`;
+
+        try {
+            const params = new URLSearchParams({
+                ask: "list_models", // Special keyword or just a simple query
+                model: "gpt-3.5-turbo", // Use a default/cheap model for this query
+                uid: chatUID,
+                api_key: CHATGPT_API_KEY
+            });
+            const response = await fetch(`${CHATGPT_API_URL}?${params.toString()}`);
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({ error: `Server error ${response.status}` }));
+                throw new Error(errData.error || `Failed to fetch models: ${response.statusText}`);
+            }
+            const data = await response.json();
+            if (data && Array.isArray(data.supported_models) && data.supported_models.length > 0) {
+                supportedChatGPTModels = data.supported_models;
+                localStorage.setItem('supportedChatGPTModelsList', JSON.stringify(supportedChatGPTModels));
+                populateChatGPTModelDropdown();
+                setInitialChatGPTModelSelection();
+            } else {
+                 chatGPTModelSelector.innerHTML = `<option value="">${(typeof translations !== 'undefined' && translations.chatgpt_no_models_available) ? translations.chatgpt_no_models_available : 'No models available'}</option>`;
+            }
+        } catch (error) {
+            console.error("Error fetching ChatGPT models:", error);
+            chatGPTModelSelector.innerHTML = `<option value="">${(typeof translations !== 'undefined' && translations.chatgpt_models_load_error) ? translations.chatgpt_models_load_error : 'Error loading models'}</option>`;
+        }
+    }
+
+    function populateChatGPTModelDropdown() {
+        if (!chatGPTModelSelector || !supportedChatGPTModels || supportedChatGPTModels.length === 0) return;
+        const currentSelectorValue = chatGPTModelSelector.value;
+        chatGPTModelSelector.innerHTML = ''; // Clear
+        supportedChatGPTModels.forEach(model => {
+            const option = document.createElement('option');
+            option.value = model;
+            option.textContent = model;
+            chatGPTModelSelector.appendChild(option);
+        });
+        if (supportedChatGPTModels.includes(currentSelectorValue)) {
+            chatGPTModelSelector.value = currentSelectorValue;
+        } else if (supportedChatGPTModels.length > 0) {
+            const defaultModel = supportedChatGPTModels.find(m => m.includes('gpt-4o-mini')) || supportedChatGPTModels.find(m => m.includes('gpt-4o')) || supportedChatGPTModels.find(m => m.includes('gpt-3.5-turbo')) || supportedChatGPTModels[0];
+            chatGPTModelSelector.value = defaultModel;
+        }
+        currentSelectedChatGPTModel = chatGPTModelSelector.value;
+         if (currentSelectedChatGPTModel && chatGPTAllModelsTitle) {
+            chatGPTAllModelsTitle.textContent = `ChatGPT - ${currentSelectedChatGPTModel}`;
+        }
+        if (currentSelectedChatGPTModel) {
+            localStorage.setItem('lastSelectedChatGPTModel', currentSelectedChatGPTModel);
+            if (chatGPTAllModelsChatInputField) {
+                const placeholderText = (typeof translations !== 'undefined' && translations.chatgpt_all_models_placeholder_dynamic) ? translations.chatgpt_all_models_placeholder_dynamic : "Ask {modelName}...";
+                chatGPTAllModelsChatInputField.placeholder = placeholderText.replace('{modelName}', currentSelectedChatGPTModel);
+            }
+        }
+    }
+
+    function setInitialChatGPTModelSelection() {
+        if (!chatGPTModelSelector || supportedChatGPTModels.length === 0) return;
+        const lastSelected = localStorage.getItem('lastSelectedChatGPTModel');
+        if (lastSelected && supportedChatGPTModels.includes(lastSelected)) {
+            chatGPTModelSelector.value = lastSelected;
+        } else {
+            const defaultModel = supportedChatGPTModels.find(m => m.includes('gpt-4o-mini')) || supportedChatGPTModels.find(m => m.includes('gpt-4o')) || supportedChatGPTModels.find(m => m.includes('gpt-3.5-turbo')) || supportedChatGPTModels[0];
+            chatGPTModelSelector.value = defaultModel;
+        }
+        currentSelectedChatGPTModel = chatGPTModelSelector.value;
+        if (currentSelectedChatGPTModel) {
+             if (chatGPTAllModelsTitle) chatGPTAllModelsTitle.textContent = `ChatGPT - ${currentSelectedChatGPTModel}`;
+            loadChatGPTAllModelsChatHistory(currentSelectedChatGPTModel);
+            if (chatGPTAllModelsChatInputField) {
+                 const placeholderText = (typeof translations !== 'undefined' && translations.chatgpt_all_models_placeholder_dynamic) ? translations.chatgpt_all_models_placeholder_dynamic : "Ask {modelName}...";
+                chatGPTAllModelsChatInputField.placeholder = placeholderText.replace('{modelName}', currentSelectedChatGPTModel);
+            }
+        }
+    }
+
+    if (chatGPTModelSelector) {
+        chatGPTModelSelector.addEventListener('change', () => {
+            currentSelectedChatGPTModel = chatGPTModelSelector.value;
+            if (currentSelectedChatGPTModel) {
+                localStorage.setItem('lastSelectedChatGPTModel', currentSelectedChatGPTModel);
+                if (chatGPTAllModelsTitle) chatGPTAllModelsTitle.textContent = `ChatGPT - ${currentSelectedChatGPTModel}`;
+                loadChatGPTAllModelsChatHistory(currentSelectedChatGPTModel);
+                if (chatGPTAllModelsChatInputField) {
+                    const placeholderText = (typeof translations !== 'undefined' && translations.chatgpt_all_models_placeholder_dynamic) ? translations.chatgpt_all_models_placeholder_dynamic : "Ask {modelName}...";
+                    chatGPTAllModelsChatInputField.placeholder = placeholderText.replace('{modelName}', currentSelectedChatGPTModel);
+                }
+            }
+        });
+    }
+
+    async function handleChatGPTAllModelsSendMessage() {
+        if (!chatGPTAllModelsChatInputField || !chatUID || !currentSelectedChatGPTModel) {
+            if (!currentSelectedChatGPTModel) alert((typeof translations !== 'undefined' && translations.chatgpt_select_model_alert) ? translations.chatgpt_select_model_alert : "Please select a ChatGPT model first.");
+            return;
+        }
+        const messageText = chatGPTAllModelsChatInputField.value.trim();
+        if (!messageText && !currentChatGPTSelectedFile) {
+            alert((typeof translations !== 'undefined' && translations.chatgpt_type_message_or_attach_file_alert) ? translations.chatgpt_type_message_or_attach_file_alert : "Please type a message or attach a file.");
+            return;
+        }
+
+        let tempPreviewUrl = null;
+        let fileUrlForApi = "";
+
+        // Disable inputs early
+        chatGPTAllModelsChatInputField.disabled = true;
+        if (chatGPTAllModelsChatSendButton) chatGPTAllModelsChatSendButton.disabled = true;
+        if (chatGPTAllModelsAttachFileButton) chatGPTAllModelsAttachFileButton.disabled = true;
+        if (chatGPTModelSelector) chatGPTModelSelector.disabled = true;
+        addChatGPTAllModelsMessageToChat(null, 'ai', null, true); // Typing indicator
+
+        try {
+            if (currentChatGPTSelectedFile) {
+                if (currentChatGPTSelectedFile.type.startsWith('image/')) {
+                    tempPreviewUrl = URL.createObjectURL(currentChatGPTSelectedFile);
+                }
+                // Backend upload step
+                const uploadFormData = new FormData();
+                uploadFormData.append('file', currentChatGPTSelectedFile);
+                const uploadResponse = await fetch('/api/upload-temp-file', { method: 'POST', body: uploadFormData });
+                if (!uploadResponse.ok) {
+                    const errData = await uploadResponse.json().catch(() => ({}));
+                    throw new Error(errData.error || `File upload failed: ${uploadResponse.statusText}`);
+                }
+                const uploadResult = await uploadResponse.json();
+                if (!uploadResult.success || !uploadResult.fileUrl) {
+                    throw new Error(uploadResult.error || "File upload succeeded but no URL was returned.");
+                }
+                fileUrlForApi = uploadResult.fileUrl;
+            }
+
+            const messageId = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            const userMessageDisplay = messageText || (currentChatGPTSelectedFile ? `File: ${currentChatGPTSelectedFile.name}`: "");
+            addChatGPTAllModelsMessageToChat(userMessageDisplay, 'user', tempPreviewUrl, false, messageId);
+            saveChatGPTAllModelsMessageToHistory(userMessageDisplay, 'user', tempPreviewUrl, currentSelectedChatGPTModel, messageId);
+
+            trackActivity('chatgpt_all_model_sent', {
+                messageLength: messageText.length, hasFile: !!currentChatGPTSelectedFile, model: currentSelectedChatGPTModel,
+                fileName: currentChatGPTSelectedFile ? currentChatGPTSelectedFile.name : null,
+                fileType: currentChatGPTSelectedFile ? currentChatGPTSelectedFile.type : null
+            });
+
+            const apiParams = new URLSearchParams({
+                ask: messageText, model: currentSelectedChatGPTModel, uid: chatUID,
+                api_key: CHATGPT_API_KEY, roleplay: "" // Default roleplay
+            });
+            if (fileUrlForApi) {
+                apiParams.append('img_url', fileUrlForApi);
+            }
+
+            const response = await fetch(`${CHATGPT_API_URL}?${apiParams.toString()}`);
+
+            if (chatGPTAllModelsTypingIndicator) chatGPTAllModelsTypingIndicator.remove();
+            if (tempPreviewUrl) URL.revokeObjectURL(tempPreviewUrl); // Revoke user's local preview URL
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: `Server error: ${response.status}` }));
+                throw new Error(errorData.error || `API request failed: ${response.status}`);
+            }
+            const aiResponse = await response.json();
+
+            if (aiResponse && Array.isArray(aiResponse.supported_models)) {
+                 if (JSON.stringify(supportedChatGPTModels) !== JSON.stringify(aiResponse.supported_models)) {
+                    supportedChatGPTModels = aiResponse.supported_models;
+                    localStorage.setItem('supportedChatGPTModelsList', JSON.stringify(supportedChatGPTModels));
+                    populateChatGPTModelDropdown(); // This will preserve selection if possible
+                }
+            }
+
+            if (aiResponse && aiResponse.answer) {
+                const aiMessageId = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                addChatGPTAllModelsMessageToChat(aiResponse.answer, 'ai', null, false, aiMessageId);
+                saveChatGPTAllModelsMessageToHistory(aiResponse.answer, 'ai', null, aiResponse.model_used || currentSelectedChatGPTModel, aiMessageId);
+            } else {
+                throw new Error((typeof translations !== 'undefined' && translations.invalid_response_from_ai) ? translations.invalid_response_from_ai.replace('{aiName}', 'ChatGPT') : "Invalid response structure from ChatGPT AI.");
+            }
+        } catch (error) {
+            console.error('Error with ChatGPT All Models:', error);
+            if (chatGPTAllModelsTypingIndicator) chatGPTAllModelsTypingIndicator.remove();
+            if (tempPreviewUrl) URL.revokeObjectURL(tempPreviewUrl);
+            const errorMsg = (typeof translations !== 'undefined' && translations.error_ai_connection) ? translations.error_ai_connection : "Error: {error} Could not connect to {aiName}.";
+            addChatGPTAllModelsMessageToChat(errorMsg.replace('{error}', error.message).replace('{aiName}', 'ChatGPT'), 'ai');
+        } finally {
+            chatGPTAllModelsChatInputField.value = '';
+            if (chatGPTAllModelsFileUpload) chatGPTAllModelsFileUpload.value = null;
+            currentChatGPTSelectedFile = null;
+            if (chatGPTAllModelsFilePreviewContainer) chatGPTAllModelsFilePreviewContainer.innerHTML = "";
+
+            chatGPTAllModelsChatInputField.disabled = false;
+            if (chatGPTAllModelsChatSendButton) chatGPTAllModelsChatSendButton.disabled = false;
+            if (chatGPTAllModelsAttachFileButton) chatGPTAllModelsAttachFileButton.disabled = false;
+            if (chatGPTModelSelector) chatGPTModelSelector.disabled = false;
+            if (chatGPTAllModelsChatInputField) chatGPTAllModelsChatInputField.focus();
+        }
+    }
+
+    if (chatGPTAllModelsAttachFileButton && chatGPTAllModelsFileUpload) {
+        chatGPTAllModelsAttachFileButton.addEventListener('click', () => chatGPTAllModelsFileUpload.click());
+        chatGPTAllModelsFileUpload.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                currentChatGPTSelectedFile = file;
+                if (chatGPTAllModelsFilePreviewContainer) {
+                    let previewHTML = `<span class="file-preview-name">${escapeHTML(file.name)} (${(file.size / 1024).toFixed(1)} KB)</span>`;
+                    if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            previewHTML += `<img src="${e.target.result}" alt="Preview" class="file-preview-image">`;
+                            chatGPTAllModelsFilePreviewContainer.innerHTML = previewHTML;
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                         chatGPTAllModelsFilePreviewContainer.innerHTML = previewHTML;
+                    }
+                }
+            } else {
+                currentChatGPTSelectedFile = null;
+                if (chatGPTAllModelsFilePreviewContainer) chatGPTAllModelsFilePreviewContainer.innerHTML = "";
+            }
+        });
+    }
+
+    if (chatGPTAllModelsChatSendButton) chatGPTAllModelsChatSendButton.addEventListener('click', handleChatGPTAllModelsSendMessage);
+    if (chatGPTAllModelsChatInputField) chatGPTAllModelsChatInputField.addEventListener('keypress', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleChatGPTAllModelsSendMessage(); }});
+
+    // --- END ChatGPT All Models Logic ---
+
 
     // --- I18N Basic Setup ---
     let currentLanguage = localStorage.getItem('selectedLanguage') || 'fr'; // Default to French

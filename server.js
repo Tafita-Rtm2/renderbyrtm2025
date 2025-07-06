@@ -6,16 +6,126 @@ const multer = require('multer'); // For handling file uploads
 const fs = require('fs'); // For file system operations like deleting files
 
 // Configure Multer for disk storage
-const UPLOAD_PATH = 'public/uploads/gemini_temp/';
+const GEMINI_TEMP_UPLOAD_PATH = 'public/uploads/gemini_temp/';
+const GEMINI_ALL_MODEL_UPLOAD_PATH = 'public/uploads/gemini_all_model_temp/';
 
-// Ensure upload directory exists
-if (!fs.existsSync(UPLOAD_PATH)){
-    fs.mkdirSync(UPLOAD_PATH, { recursive: true });
-}
+// Ensure upload directories exist
+[GEMINI_TEMP_UPLOAD_PATH, GEMINI_ALL_MODEL_UPLOAD_PATH].forEach(dir => {
+    if (!fs.existsSync(dir)){
+        fs.mkdirSync(dir, { recursive: true });
+    }
+});
 
-const storage = multer.diskStorage({
+// --- Gemini All Model API Route ---
+app.post('/api/gemini-all-model', uploadGeminiAllModel.single('file'), async (req, res) => {
+    const { ask, model, uid, roleplay, max_tokens } = req.body;
+    let clientUploadedFileUrl = req.body.file_url; // If client sends a URL directly
+
+    let tempLocalPath = null;
+    let publicFileUrl = null; // This will be the URL passed to the haji-mix-api
+
+    if (!ask && !req.file && !clientUploadedFileUrl) {
+        return res.status(400).json({ error: 'Parameter "ask" or a file/file_url is required.' });
+    }
+    if (!uid) {
+        if (req.file) fs.unlinkSync(req.file.path); // Clean up if UID is missing early
+        return res.status(400).json({ error: 'Parameter "uid" is required.' });
+    }
+    if (!model) {
+        if (req.file) fs.unlinkSync(req.file.path);
+        return res.status(400).json({ error: 'Parameter "model" is required (e.g., gemini-1.5-flash).' });
+    }
+
+    if (req.file) {
+        tempLocalPath = req.file.path;
+        // Construct the public URL for the locally uploaded file
+        const APP_BASE_URL = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+        publicFileUrl = new URL(`/uploads/gemini_all_model_temp/${req.file.filename}`, APP_BASE_URL).toString();
+        console.log(`Gemini All Model: File temporarily saved at ${tempLocalPath}, accessible via ${publicFileUrl}`);
+    } else if (clientUploadedFileUrl) {
+        // If client provided a URL directly, use that. Validate it lightly.
+        try {
+            const parsedUrl = new URL(clientUploadedFileUrl);
+            if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+                throw new Error("Invalid file URL protocol.");
+            }
+            publicFileUrl = clientUploadedFileUrl;
+            console.log(`Gemini All Model: Using client-provided file URL: ${publicFileUrl}`);
+        } catch (e) {
+            console.error("Invalid file_url provided by client:", e.message);
+            return res.status(400).json({ error: `Invalid file_url: ${e.message}` });
+        }
+    }
+
+    let hajiApiUrl = `https://haji-mix-api.gleeze.com/api/gemini?uid=${encodeURIComponent(uid)}&model=${encodeURIComponent(model)}&api_key=${HAJI_MIX_GEMINI_API_KEY}`;
+    if (ask) {
+        hajiApiUrl += `&ask=${encodeURIComponent(ask)}`;
+    }
+    if (publicFileUrl) {
+        hajiApiUrl += `&file_url=${encodeURIComponent(publicFileUrl)}`;
+    }
+    if (roleplay) {
+        hajiApiUrl += `&roleplay=${encodeURIComponent(roleplay)}`;
+    }
+    if (max_tokens) {
+        hajiApiUrl += `&max_tokens=${encodeURIComponent(max_tokens)}`;
+    }
+    // Note: google_api_key is omitted as per plan, assuming haji-mix-api handles it or it's not strictly needed.
+
+    try {
+        console.log(`Calling Haji Mix Gemini API: ${hajiApiUrl.substring(0,300)}...`);
+        const apiResponse = await fetch(hajiApiUrl);
+        const responseText = await apiResponse.text();
+
+        if (tempLocalPath) { // Clean up locally uploaded file after the API call
+            fs.unlink(tempLocalPath, (err) => {
+                if (err) console.error("Error deleting temporary file for Gemini All Model:", err);
+                else console.log("Temporary file for Gemini All Model deleted:", tempLocalPath);
+            });
+        }
+
+        if (!apiResponse.ok) {
+            let errorJson = { error: `External Haji Mix Gemini API Error: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
+            try { errorJson = JSON.parse(responseText); if(!errorJson.error && !errorJson.message) { errorJson.error = `External Haji Mix Gemini API Error: ${apiResponse.status} ${apiResponse.statusText}`; } } catch (e) { /* Not JSON */ }
+            console.error("Haji Mix Gemini API Error:", errorJson);
+            return res.status(apiResponse.status).json(errorJson);
+        }
+
+        let data;
+        try { data = JSON.parse(responseText); }
+        catch (e) {
+            console.warn('Haji Mix Gemini API response was not JSON, but status was OK. Response text:', responseText);
+            return res.status(500).json({ error: 'Failed to parse response from Haji Mix Gemini API.', details: responseText });
+        }
+
+        // The API returns: user_ask, model_used, answer, supported_models
+        // We need to return at least "answer" and "model_used".
+        // "supported_models" is useful for the client to update its dropdown.
+        if (data && data.answer) {
+            res.json({
+                author: data.model_used || model, // Use model_used from response, fallback to requested model
+                response: data.answer,
+                model_used: data.model_used, // Send back the actual model used
+                supported_models: data.supported_models // Send back the list of supported models
+            });
+        } else {
+            return res.status(500).json({ error: 'Unexpected response structure from Haji Mix Gemini API.', details: data });
+        }
+
+    } catch (error) {
+        console.error('Server error while calling Haji Mix Gemini API:', error);
+        if (tempLocalPath && fs.existsSync(tempLocalPath)) { // Ensure cleanup on error too
+            fs.unlink(tempLocalPath, (err) => {
+                if (err) console.error("Error deleting temporary file for Gemini All Model on error:", err);
+            });
+        }
+        return res.status(500).json({ error: 'Server error while processing Haji Mix Gemini API request.' });
+    }
+});
+
+const storageFactory = (uploadPath) => multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, UPLOAD_PATH);
+        cb(null, uploadPath);
     },
     filename: function (req, file, cb) {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -23,17 +133,26 @@ const storage = multer.diskStorage({
     }
 });
 
-const upload = multer({
-    storage: storage,
+const geminiTempStorage = storageFactory(GEMINI_TEMP_UPLOAD_PATH);
+const geminiAllModelStorage = storageFactory(GEMINI_ALL_MODEL_UPLOAD_PATH);
+
+const uploadGeminiTemp = multer({
+    storage: geminiTempStorage,
     limits: { fileSize: 10 * 1024 * 1024 } // Limit file size to 10MB
 });
+const uploadGeminiAllModel = multer({
+    storage: geminiAllModelStorage,
+    limits: { fileSize: 20 * 1024 * 1024 } // Limit file size to 20MB for potentially larger files
+});
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-// Serve static files from the upload directory first
-app.use('/uploads/gemini_temp', express.static(path.join(__dirname, UPLOAD_PATH)));
+// Serve static files from the upload directories
+app.use('/uploads/gemini_temp', express.static(path.join(__dirname, GEMINI_TEMP_UPLOAD_PATH)));
+app.use('/uploads/gemini_all_model_temp', express.static(path.join(__dirname, GEMINI_ALL_MODEL_UPLOAD_PATH)));
 // Serve main public files
 app.use(express.static(path.join(__dirname, 'public')));
 // JSON parsing middleware
@@ -53,6 +172,8 @@ const GPT4O_LATEST_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6'; // Même cl
 const BLACKBOX_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
 const DEEPSEEK_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
 const CLAUDE_HAIKU_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
+const HAJI_MIX_GEMINI_API_KEY = 'e30864f5c326f6e3d70b032000ef5e2fa610cb5d9bc5759711d33036e303cef4';
+
 
 // TMDB API Configuration
 const TMDB_API_KEY = '973515c7684f56d1472bba67b13d676b';

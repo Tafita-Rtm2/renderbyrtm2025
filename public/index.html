@@ -22,10 +22,7 @@
                 <div class="slider round"></div>
             </label>
         </div>
-        <div id="chat-title-display" class="top-bar-chat-title" style="display:none; text-align: center; flex-grow: 1; font-weight: bold;">
-            <!-- Chat/Model name will be injected here -->
-        </div>
-        <div id="weather-display-container" style="min-width: 150px;">
+        <div id="weather-display-container">
             <!-- Weather data will be injected here by script.js -->
         </div>
     </header>
@@ -82,13 +79,6 @@
                     <img src="https://www.gstatic.com/images/branding/product/2x/gemini_48dp.png" alt="Gemini All Models" class="icon icon-side-menu-item gemini-logo-icon">
                     <span data-translate="gemini_all_model_view_title">Gemini All Models</span>
                     <span class="menu-item-description" data-translate="gemini_all_model_description">Chat with various Gemini models & upload files.</span>
-                </a>
-            </li>
-            <li>
-                <a href="#" data-view="chatgpt-all-models-view">
-                    <svg viewBox="0 0 41 41" class="icon icon-side-menu-item chatgpt-logo-svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M37.5324 19.2844C37.5324 17.0019 37.1162 14.7831 36.3424 12.695C35.6229 10.7465 34.5682 8.99394 33.2466 7.50971C31.925 6.02548 30.3624 4.84866 28.6364 3.99001C26.9103 3.13137 25.0497 2.60022 23.1327 2.42694C22.8868 2.40748 22.6214 2.30448 22.4217 2.13045C22.222 1.95642 22.1034 1.72034 22.0873 1.46781C21.9251 0.369707 21.0401 -0.282461 19.9933 0.0814693C18.9465 0.4454 18.5498 1.54462 18.7121 2.64272C18.7204 2.70249 18.7322 2.76058 18.7482 2.81755C16.8312 2.99084 14.9706 3.52198 13.2446 4.38063C11.5185 5.23927 9.95592 6.41609 8.6343 7.90032C7.31268 9.38455 6.258 11.1371 5.53849 13.0856C4.76471 15.1737 4.34849 17.3925 4.34849 19.675C4.34849 21.9575 4.76471 24.1763 5.53849 26.2644C6.258 28.2129 7.31268 29.9655 8.6343 31.4497C9.95592 32.9339 11.5185 34.1107 13.2446 34.9694C14.9706 35.828 16.8312 36.3592 18.7482 36.5325C18.7641 36.5894 18.7761 36.6475 18.7845 36.7073C18.9467 37.8054 19.8316 38.4576 20.8784 38.0936C21.9252 37.7297 22.3219 36.6305 22.1597 35.5324C22.1501 35.4703 22.1364 35.4097 22.1193 35.3502C22.3674 35.3289 22.6142 35.2242 22.8089 35.0496C23.0036 34.8751 23.1186 34.6362 23.1327 34.3731C25.0497 34.1998 26.9103 33.6687 28.6364 32.81C30.3624 31.9514 31.925 30.7746 33.2466 29.2903C34.5682 27.8061 35.6229 26.0535 36.3424 24.105C37.1162 22.0169 37.5324 19.7981 37.5324 17.5156L37.5324 19.2844Z M20.9403 10.772C20.9403 10.5421 20.8473 10.3213 20.6847 10.1587C20.5221 9.99605 20.3013 9.90305 20.0714 9.90305L12.0771 9.90305C11.8472 9.90305 11.6264 9.99605 11.4638 10.1587C11.3012 10.3213 11.2082 10.5421 11.2082 10.772L11.2082 11.6409C11.2082 11.8708 11.3012 12.0916 11.4638 12.2542C11.6264 12.4168 11.8472 12.5098 12.0771 12.5098L20.0714 12.5098C20.3013 12.5098 20.5221 12.4168 20.6847 12.2542C20.8473 12.0916 20.9403 11.8708 20.9403 11.6409L20.9403 10.772Z M20.9403 17.515C20.9403 17.2851 20.8473 17.0643 20.6847 16.9017C20.5221 16.7391 20.3013 16.6461 20.0714 16.6461L12.0771 16.6461C11.8472 16.6461 11.6264 16.7391 11.4638 16.9017C11.3012 17.0643 11.2082 17.2851 11.2082 17.515L11.2082 18.3839C11.2082 18.6138 11.3012 18.8346 11.4638 18.9972C11.6264 19.1598 11.8472 19.2528 12.0771 19.2528L20.0714 19.2528C20.3013 19.2528 20.5221 19.1598 20.6847 18.9972C20.8473 18.8346 20.9403 18.6138 20.9403 18.3839L20.9403 17.515Z M26.2192 24.2591C26.2192 23.9358 26.0926 23.6254 25.8699 23.4027C25.6472 23.1801 25.3368 23.0534 25.0135 23.0534L12.0771 23.0534C11.7538 23.0534 11.4434 23.1801 11.2207 23.4027C10.998 23.6254 10.8714 23.9358 10.8714 24.2591L10.8714 25.128C10.8714 25.4513 10.998 25.7617 11.2207 25.9843C11.4434 26.207 11.7538 26.3336 12.0771 26.3336H20.0714L20.0714 28.973C20.0714 29.2029 20.1644 29.4237 20.327 29.5863C20.4896 29.7489 20.7104 29.8419 20.9403 29.8419C21.1702 29.8419 21.391 29.7489 21.5536 29.5863C21.7162 29.4237 21.8092 29.2029 21.8092 28.973L21.8092 26.3336H25.0135C25.3368 26.3336 25.6472 26.207 25.8699 25.9843C26.0926 25.7617 26.2192 25.4513 26.2192 25.128L26.2192 24.2591Z" fill="currentColor"></path></svg> <!-- Replaced placeholder with actual SVG -->
-                    <span data-translate="chatgpt_all_models_view_title">ChatGPT All Models</span>
-                    <span class="menu-item-description" data-translate="chatgpt_all_models_description">Chat with OpenAI models, upload files.</span>
                 </a>
             </li>
         </ul>
@@ -589,7 +579,6 @@
 
         <!-- Gemini All Model View -->
         <div id="gemini-all-model-view" class="view" style="display: none;">
-            <!-- Header Section -->
             <div class="chat-view-header">
                 <img src="https://www.gstatic.com/images/branding/product/2x/gemini_48dp.png" alt="Gemini Logo" class="chat-header-logo gemini-logo-icon">
                 <h2 data-translate="gemini_all_model_chat_title">Gemini All Model Chat</h2>
@@ -601,73 +590,21 @@
                     </select>
                 </div>
             </div>
-
-            <!-- Messages Area -->
             <div id="gemini-all-model-chat-messages-area">
-                <!-- Chat messages will appear here. Example structure for a message:
-                <div class="chat-message-wrapper user">
-                    <div class="chat-avatar-container">...</div>
-                    <div class="chat-bubble">...</div>
-                </div>
-                <div class="chat-message-wrapper ai">
-                    <div class="chat-avatar-container">...</div>
-                    <div class="chat-bubble">...</div>
-                </div>
-                -->
+                <!-- Chat messages will appear here -->
             </div>
-
-            <!-- Input Bar Area -->
             <div id="gemini-all-model-chat-input-bar">
                 <input type="file" id="gemini-all-model-file-upload" accept="image/*,application/pdf,text/plain,video/*,audio/*,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display:none;">
                 <button id="gemini-all-model-attach-file-button" class="icon-button" title="Attach File" data-translate="gemini_all_model_attach_file_title">
                     <svg viewBox="0 0 24 24" class="icon"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 015 0v10.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-3.04-2.46-5.5-5.5-5.5S4 1.96 4 5v11.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"></path></svg>
                 </button>
-                <div id="gemini-all-model-file-preview-container">
-                    <!-- File preview will be shown here -->
-                </div>
+                <div id="gemini-all-model-file-preview-container"></div>
                 <input type="text" id="gemini-all-model-chat-input-field" placeholder="Ask Gemini (any model)..." data-translate="gemini_all_model_placeholder">
                 <button id="gemini-all-model-chat-send-button" class="icon-button" title="Send" data-translate="send_button_title">
                     <svg viewBox="0 0 24 24" class="icon"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
                 </button>
             </div>
         </div>
-
-        <!-- ChatGPT All Models View -->
-        <div id="chatgpt-all-models-view" class="view chat-view-fullscreen" style="display: none;">
-            <!-- Header Section -->
-            <div class="chat-view-header">
-                <svg viewBox="0 0 41 41" class="chat-header-logo chatgpt-logo-svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M37.5324 19.2844C37.5324 17.0019 37.1162 14.7831 36.3424 12.695C35.6229 10.7465 34.5682 8.99394 33.2466 7.50971C31.925 6.02548 30.3624 4.84866 28.6364 3.99001C26.9103 3.13137 25.0497 2.60022 23.1327 2.42694C22.8868 2.40748 22.6214 2.30448 22.4217 2.13045C22.222 1.95642 22.1034 1.72034 22.0873 1.46781C21.9251 0.369707 21.0401 -0.282461 19.9933 0.0814693C18.9465 0.4454 18.5498 1.54462 18.7121 2.64272C18.7204 2.70249 18.7322 2.76058 18.7482 2.81755C16.8312 2.99084 14.9706 3.52198 13.2446 4.38063C11.5185 5.23927 9.95592 6.41609 8.6343 7.90032C7.31268 9.38455 6.258 11.1371 5.53849 13.0856C4.76471 15.1737 4.34849 17.3925 4.34849 19.675C4.34849 21.9575 4.76471 24.1763 5.53849 26.2644C6.258 28.2129 7.31268 29.9655 8.6343 31.4497C9.95592 32.9339 11.5185 34.1107 13.2446 34.9694C14.9706 35.828 16.8312 36.3592 18.7482 36.5325C18.7641 36.5894 18.7761 36.6475 18.7845 36.7073C18.9467 37.8054 19.8316 38.4576 20.8784 38.0936C21.9252 37.7297 22.3219 36.6305 22.1597 35.5324C22.1501 35.4703 22.1364 35.4097 22.1193 35.3502C22.3674 35.3289 22.6142 35.2242 22.8089 35.0496C23.0036 34.8751 23.1186 34.6362 23.1327 34.3731C25.0497 34.1998 26.9103 33.6687 28.6364 32.81C30.3624 31.9514 31.925 30.7746 33.2466 29.2903C34.5682 27.8061 35.6229 26.0535 36.3424 24.105C37.1162 22.0169 37.5324 19.7981 37.5324 17.5156L37.5324 19.2844Z M20.9403 10.772C20.9403 10.5421 20.8473 10.3213 20.6847 10.1587C20.5221 9.99605 20.3013 9.90305 20.0714 9.90305L12.0771 9.90305C11.8472 9.90305 11.6264 9.99605 11.4638 10.1587C11.3012 10.3213 11.2082 10.5421 11.2082 10.772L11.2082 11.6409C11.2082 11.8708 11.3012 12.0916 11.4638 12.2542C11.6264 12.4168 11.8472 12.5098 12.0771 12.5098L20.0714 12.5098C20.3013 12.5098 20.5221 12.4168 20.6847 12.2542C20.8473 12.0916 20.9403 11.8708 20.9403 11.6409L20.9403 10.772Z M20.9403 17.515C20.9403 17.2851 20.8473 17.0643 20.6847 16.9017C20.5221 16.7391 20.3013 16.6461 20.0714 16.6461L12.0771 16.6461C11.8472 16.6461 11.6264 16.7391 11.4638 16.9017C11.3012 17.0643 11.2082 17.2851 11.2082 17.515L11.2082 18.3839C11.2082 18.6138 11.3012 18.8346 11.4638 18.9972C11.6264 19.1598 11.8472 19.2528 12.0771 19.2528L20.0714 19.2528C20.3013 19.2528 20.5221 19.1598 20.6847 18.9972C20.8473 18.8346 20.9403 18.6138 20.9403 18.3839L20.9403 17.515Z M26.2192 24.2591C26.2192 23.9358 26.0926 23.6254 25.8699 23.4027C25.6472 23.1801 25.3368 23.0534 25.0135 23.0534L12.0771 23.0534C11.7538 23.0534 11.4434 23.1801 11.2207 23.4027C10.998 23.6254 10.8714 23.9358 10.8714 24.2591L10.8714 25.128C10.8714 25.4513 10.998 25.7617 11.2207 25.9843C11.4434 26.207 11.7538 26.3336 12.0771 26.3336H20.0714L20.0714 28.973C20.0714 29.2029 20.1644 29.4237 20.327 29.5863C20.4896 29.7489 20.7104 29.8419 20.9403 29.8419C21.1702 29.8419 21.391 29.7489 21.5536 29.5863C21.7162 29.4237 21.8092 29.2029 21.8092 28.973L21.8092 26.3336H25.0135C25.3368 26.3336 25.6472 26.207 25.8699 25.9843C26.0926 25.7617 26.2192 25.4513 26.2192 25.128L26.2192 24.2591Z" fill="currentColor"></path></svg> <!-- Replaced placeholder -->
-                <h2 id="chatgpt-all-models-title" data-translate="chatgpt_all_models_chat_title_default">ChatGPT</h2>
-                <div class="model-selector-container">
-                    <label for="chatgpt-model-selector" class="sr-only" data-translate="chatgpt_model_selector_label">Select Model:</label>
-                    <select id="chatgpt-model-selector" name="chatgpt-model-selector">
-                        <option value="" data-translate="chatgpt_model_select_default_option">Loading models...</option>
-                        <!-- Models will be populated by JS -->
-                    </select>
-                </div>
-            </div>
-
-            <!-- Messages Area -->
-            <div id="chatgpt-all-models-chat-messages-area" class="chat-messages-area-common">
-                <!-- Chat messages will appear here -->
-            </div>
-
-            <!-- Input Bar Area -->
-            <div id="chatgpt-all-models-chat-input-bar" class="chat-input-bar-common">
-                <input type="file" id="chatgpt-all-models-file-upload" accept="image/*,application/pdf,text/plain,video/*,audio/*,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display:none;">
-                <button id="chatgpt-all-models-attach-file-button" class="icon-button" title="Attach File" data-translate="chatgpt_all_models_attach_file_title">
-                    <svg viewBox="0 0 24 24" class="icon"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 015 0v10.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-3.04-2.46-5.5-5.5-5.5S4 1.96 4 5v11.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"></path></svg>
-                </button>
-                <div id="chatgpt-all-models-file-preview-container" class="file-preview-container-common">
-                    <!-- File preview will be shown here -->
-                </div>
-                <input type="text" id="chatgpt-all-models-chat-input-field" class="chat-input-field-common" placeholder="Ask ChatGPT (any model)..." data-translate="chatgpt_all_models_placeholder">
-                <button id="chatgpt-all-models-chat-send-button" class="icon-button send-button-common" title="Send" data-translate="send_button_title">
-                    <svg viewBox="0 0 24 24" class="icon"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
-                </button>
-            </div>
-        </div>
-        <!-- END ChatGPT All Models View -->
 
     </main>
 

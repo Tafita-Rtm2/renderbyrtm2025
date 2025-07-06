@@ -2452,6 +2452,122 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
     cursor: pointer;
 }
 
+/* --- GEMINI ALL MODEL VIEW STYLES --- */
+#gemini-all-model-view {
+    /* Basic structure inherited from .view and JS (display:flex, flex-direction:column, height) */
+}
+
+#gemini-all-model-view .chat-view-header {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    background-color: var(--surface-color); /* Or var(--secondary-bg) */
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+#gemini-all-model-view .chat-header-logo {
+    width: 32px; /* Adjust size as needed */
+    height: 32px;
+    margin-right: 10px;
+}
+
+#gemini-all-model-view .chat-view-header h2 {
+    margin: 0;
+    font-size: 1.2em; /* Adjust size */
+    color: var(--accent-color);
+    flex-grow: 1; /* Allow title to take space */
+}
+
+#gemini-all-model-view .model-selector-container {
+    margin-left: auto; /* Pushes selector to the right if title takes space */
+}
+
+#gemini-model-selector {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background-color: var(--primary-bg);
+    color: var(--text-color);
+    font-family: var(--font-primary);
+    font-size: 0.9em;
+    outline: none;
+    cursor: pointer;
+}
+#gemini-model-selector:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 5px var(--accent-color);
+}
+
+/* Messages area and input bar will largely use existing chat styles by ID */
+#gemini-all-model-chat-messages-area {
+    /* Inherits from general chat message area styles if IDs are similar enough or new specific styles needed */
+    /* For example, it uses: flex-grow, overflow-y, padding, background-color, border-bottom, display:flex, flex-direction:column, gap */
+}
+
+#gemini-all-model-chat-input-bar {
+    /* Inherits from general chat input bar styles */
+    /* display:flex, align-items, padding, background-color, border-top, min-height, flex-shrink */
+}
+
+#gemini-all-model-attach-file-button {
+    /* Similar to #gemini-chat-attach-image-button */
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
+    width: 44px; /* Slightly smaller if needed */
+    height: 44px;
+    border-radius: 50%;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+#gemini-all-model-attach-file-button .icon { fill: var(--accent-color); }
+#gemini-all-model-attach-file-button:hover { background-color: var(--accent-color); border-color: var(--accent-color); }
+#gemini-all-model-attach-file-button:hover .icon { fill: var(--primary-bg); }
+
+
+#gemini-all-model-file-preview-container {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-right: 8px;
+    padding: 5px;
+    background-color: var(--surface-color);
+    border-radius: 4px;
+    font-size: 0.8em;
+    max-width: 150px; /* Limit preview width */
+    overflow: hidden;
+}
+.file-preview-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-muted-color);
+}
+.file-preview-image {
+    max-height: 30px;
+    max-width: 50px;
+    border-radius: 3px;
+    border: 1px solid var(--border-color);
+}
+
+
+#gemini-all-model-chat-input-field {
+    /* Inherits general input field styling but ID specific for JS targeting */
+}
+#gemini-all-model-chat-send-button {
+    /* Inherits general send button styling */
+}
+
+/* User message bubble color for Gemini All Model (can be unique or inherit) */
+#gemini-all-model-chat-messages-area .chat-message-wrapper.user .chat-bubble {
+    background-color: var(--success-green) !important; /* Example: a distinct green */
+    color: var(--primary-bg) !important;
+}
+#gemini-all-model-chat-messages-area .chat-message-wrapper.user .chat-bubble a,
+#gemini-all-model-chat-messages-area .chat-message-wrapper.user .chat-bubble strong {
+    color: var(--primary-bg) !important; /* Ensure contrast */
+}
+
 
 /* --- BOX MOVIE VIEW STYLES --- */
 #box-movie-view {
@@ -2722,6 +2838,158 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 }
 
 /* --- END OF BOX MOVIE VIEW STYLES --- */
+
+
+/* --- STYLING FOR ENHANCED CONTENT FORMATTING (Code Blocks, Tables, Message Controls) --- */
+/* Code Blocks */
+.code-block-wrapper {
+    position: relative;
+    margin: 10px 0;
+    background-color: var(--primary-bg); /* Darker background for code */
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    overflow: hidden; /* Important for pre's horizontal scroll */
+}
+body.dark-mode .code-block-wrapper {
+    background-color: #0d1117; /* GitHub dark code bg */
+    border-color: #30363d;
+}
+
+.code-block-wrapper pre {
+    margin: 0;
+    padding: 15px;
+    overflow-x: auto; /* Horizontal scroll for long lines */
+    white-space: pre; /* Preserve whitespace and line breaks */
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.9em;
+    line-height: 1.5;
+    background-color: transparent !important; /* Pre should be transparent, wrapper has bg */
+}
+.code-block-wrapper pre code {
+    display: block; /* Ensure code takes full width of pre for scrolling */
+    padding: 0 !important; /* Remove padding from Prism if it adds any */
+    background: none !important; /* Remove background from Prism if it adds any */
+    color: var(--text-color); /* Default code text color */
+    text-shadow: none !important; /* Remove Prism's text shadow if any */
+}
+body.dark-mode .code-block-wrapper pre code {
+    color: #c9d1d9; /* GitHub dark code text color */
+}
+
+.copy-code-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 4px 6px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+.code-block-wrapper:hover .copy-code-btn {
+    opacity: 1;
+}
+.copy-code-btn .icon {
+    width: 16px;
+    height: 16px;
+    fill: var(--text-muted-color);
+}
+.copy-code-btn:hover .icon {
+    fill: var(--accent-color);
+}
+body.dark-mode .copy-code-btn {
+    background-color: #21262d;
+    border-color: #30363d;
+}
+body.dark-mode .copy-code-btn .icon {
+    fill: #8b949e;
+}
+body.dark-mode .copy-code-btn:hover .icon {
+    fill: #58a6ff;
+}
+
+
+/* Basic Table Styling */
+.chat-bubble table {
+    width: auto; /* Let table size to content, or 100% if preferred */
+    max-width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+    font-size: 0.9em;
+    background-color: var(--surface-color);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.chat-bubble th, .chat-bubble td {
+    border: 1px solid var(--border-color);
+    padding: 10px 12px; /* More padding */
+    text-align: left;
+    color: var(--text-color);
+}
+.chat-bubble th {
+    background-color: var(--primary-bg); /* Header background */
+    color: var(--accent-color);
+    font-weight: 600; /* Bolder headers */
+}
+.chat-bubble tr:nth-child(even) td { /* Zebra striping for rows if desired */
+    background-color: var(--secondary-bg);
+}
+body.dark-mode .chat-bubble th {
+    background-color: #161b22; /* Darker header for dark mode */
+    color: var(--accent-color);
+}
+body.dark-mode .chat-bubble tr:nth-child(even) td {
+    background-color: #0d1117; /* Darker zebra for dark mode */
+}
+body.dark-mode .chat-bubble td, body.dark-mode .chat-bubble th {
+    border-color: #30363d; /* Darker borders for tables in dark mode */
+    color: #c9d1d9;
+}
+
+
+/* Per-Message Controls (Copy/Download) */
+.message-controls {
+    display: flex;
+    justify-content: flex-end;
+    gap: 5px;
+    margin-top: 8px;
+    opacity: 0.6; /* Slightly visible by default */
+    transition: opacity 0.2s ease-in-out;
+}
+.chat-bubble:hover .message-controls {
+    opacity: 1; /* Fully visible on bubble hover */
+}
+
+.message-copy-btn, .message-download-btn {
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
+    padding: 3px; /* Small padding */
+    border-radius: 4px;
+    width: 26px; /* Small square buttons */
+    height: 26px;
+}
+.message-copy-btn .icon, .message-download-btn .icon {
+    width: 16px;
+    height: 16px;
+    fill: var(--text-muted-color);
+}
+.message-copy-btn:hover .icon, .message-download-btn:hover .icon {
+    fill: var(--accent-color);
+}
+
+/* Specific user bubble message controls - if they need different base color */
+.chat-message-wrapper.user .chat-bubble .message-controls button {
+    background-color: rgba(255,255,255,0.1); /* Slightly transparent white on colored user bubble */
+    border-color: rgba(255,255,255,0.2);
+}
+.chat-message-wrapper.user .chat-bubble .message-controls button .icon {
+    fill: rgba(255,255,255,0.7);
+}
+.chat-message-wrapper.user .chat-bubble .message-controls button:hover .icon {
+    fill: #ffffff;
+}
+
 
 /* --- EMAIL GENERATOR VIEW STYLES --- */
 #email-generator-view {

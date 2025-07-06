@@ -22,9 +22,6 @@
                 <div class="slider round"></div>
             </label>
         </div>
-        <div id="active-view-title-container">
-            <span id="active-view-title"></span>
-        </div>
         <div id="weather-display-container">
             <!-- Weather data will be injected here by script.js -->
         </div>
@@ -75,6 +72,13 @@
                     <svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M14.06 9.02l.92.92L5.92 19H5v-.92l9.06-9.06M17.66 3c-.25 0-.51.1-.7.29l-1.83 1.83 3.75 3.75 1.83-1.83c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29zm-3.6 3.19L3 17.25V21h3.75L17.81 9.94l-3.75-3.75z"></path></svg>
                     <span data-translate="claude_haiku_view_title">Claude Haiku AI</span>
                     <span class="menu-item-description" data-translate="claude_haiku_description">Chat with Anthropic's Claude Haiku.</span>
+                </a>
+            </li>
+            <li>
+                <a href="#" data-view="gemini-all-model-view">
+                    <img src="https://www.gstatic.com/images/branding/product/2x/gemini_48dp.png" alt="Gemini All Models" class="icon icon-side-menu-item gemini-logo-icon">
+                    <span data-translate="gemini_all_model_view_title">Gemini All Models</span>
+                    <span class="menu-item-description" data-translate="gemini_all_model_description">Chat with various Gemini models & upload files.</span>
                 </a>
             </li>
             <li>
@@ -160,6 +164,14 @@
                         <p>Interact with Anthropic's Claude Haiku model, known for its efficiency and natural language prowess.</p>
                     </div>
 
+                    <div class="feature-highlight-item" data-view="chatgpt-all-model-view">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" class="icon"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"></path></svg>
+                        </div>
+                        <h3 data-translate="chatgpt_all_model_view_title_feature">ChatGPT All Models</h3>
+                        <p data-translate="chatgpt_all_model_description_feature">Engage with a variety of OpenAI's models, upload files, and explore diverse AI capabilities.</p>
+                    </div>
+
                     <div class="feature-highlight-item" data-view="box-movie-view">
                         <div class="feature-icon">
                             <svg viewBox="0 0 24 24" class="icon"><path d="M18 3v2h-2V3H8v2H6V3H4v18h2v-2h2v2h8v-2h2v2h2V3h-2zM8 17H6v-2h2v2zm0-4H6v-2h2v2zm0-4H6V7h2v2zm10 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2z"></path></svg> <!-- Box Movie Icon -->
@@ -229,6 +241,10 @@
                 <button class="home-app-btn" data-view="claude-haiku-view">
                      <svg viewBox="0 0 24 24" class="icon"><path d="M14.06 9.02l.92.92L5.92 19H5v-.92l9.06-9.06M17.66 3c-.25 0-.51.1-.7.29l-1.83 1.83 3.75 3.75 1.83-1.83c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29zm-3.6 3.19L3 17.25V21h3.75L17.81 9.94l-3.75-3.75z"></path></svg>
                     <span>Claude Haiku</span>
+                </button>
+                <button class="home-app-btn" data-view="chatgpt-all-model-view">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"></path></svg>
+                    <span data-translate="home_nav_chatgpt_all_models">ChatGPT All</span>
                 </button>
             </nav>
             <section id="public-comments-section">
@@ -580,11 +596,56 @@
             </div>
         </div>
 
-        <!-- ChatGPT All Model View -->
+        <!-- Gemini All Model View -->
+        <div id="gemini-all-model-view" class="view" style="display: none;">
+            <!-- Header Section -->
+            <div class="chat-view-header">
+                <img src="https://www.gstatic.com/images/branding/product/2x/gemini_48dp.png" alt="Gemini Logo" class="chat-header-logo gemini-logo-icon">
+                <h2 data-translate="gemini_all_model_chat_title">Gemini All Model Chat</h2>
+                <div class="model-selector-container">
+                    <label for="gemini-model-selector" class="sr-only" data-translate="gemini_model_selector_label">Select Model:</label>
+                    <select id="gemini-model-selector" name="gemini-model-selector">
+                        <option value="" data-translate="gemini_model_select_default_option">Loading models...</option>
+                        <!-- Models will be populated by JS -->
+                    </select>
+                </div>
+            </div>
+
+            <!-- Messages Area -->
+            <div id="gemini-all-model-chat-messages-area">
+                <!-- Chat messages will appear here. Example structure for a message:
+                <div class="chat-message-wrapper user">
+                    <div class="chat-avatar-container">...</div>
+                    <div class="chat-bubble">...</div>
+                </div>
+                <div class="chat-message-wrapper ai">
+                    <div class="chat-avatar-container">...</div>
+                    <div class="chat-bubble">...</div>
+                </div>
+                -->
+            </div>
+
+            <!-- Input Bar Area -->
+            <div id="gemini-all-model-chat-input-bar">
+                <input type="file" id="gemini-all-model-file-upload" accept="image/*,application/pdf,text/plain,video/*,audio/*,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display:none;">
+                <button id="gemini-all-model-attach-file-button" class="icon-button" title="Attach File" data-translate="gemini_all_model_attach_file_title">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 015 0v10.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-3.04-2.46-5.5-5.5-5.5S4 1.96 4 5v11.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"></path></svg>
+                </button>
+                <div id="gemini-all-model-file-preview-container">
+                    <!-- File preview will be shown here -->
+                </div>
+                <input type="text" id="gemini-all-model-chat-input-field" placeholder="Ask Gemini (any model)..." data-translate="gemini_all_model_placeholder">
+                <button id="gemini-all-model-chat-send-button" class="icon-button" title="Send" data-translate="send_button_title">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- ChatGPT All Model View (Copied and adapted from Gemini All Model) -->
         <div id="chatgpt-all-model-view" class="view" style="display: none;">
             <!-- Header Section -->
             <div class="chat-view-header">
-                <svg viewBox="0 0 24 24" class="chat-header-logo"><path fill-rule="evenodd" clip-rule="evenodd" d="M12.0001 0C18.6275 0 24.0001 5.37258 24.0001 12C24.0001 18.6274 18.6275 24 12.0001 24C5.37266 24 0 18.6274 0 12C0 5.37258 5.37266 0 12.0001 0ZM6.75009 10.738L8.66259 12.0171L6.75009 13.2962V10.738ZM9.93759 15.4322L11.8501 16.7113L9.93759 17.9904V15.4322ZM9.93759 6.0437L11.8501 7.3228L9.93759 8.6019V6.0437ZM15.0001 10.738L13.0876 12.0171L15.0001 13.2962V10.738ZM17.2501 6.88469C16.0188 5.84979 14.4001 5.25 12.6001 5.25C10.8001 5.25 9.18134 5.84979 7.95009 6.88469L9.33759 7.77838C10.2563 7.01902 11.3626 6.60019 12.6001 6.60019C13.8376 6.60019 14.9438 7.01902 15.8626 7.77838L17.2501 6.88469ZM18.0001 10.1019V13.9322L19.9126 15.2113C20.3626 14.2498 20.6251 13.1721 20.6251 12C20.6251 10.8279 20.3626 9.75021 19.9126 8.7887L18.0001 10.1019ZM4.08759 8.7887C3.63759 9.75021 3.37509 10.8279 3.37509 12C3.37509 13.1721 3.63759 14.2498 4.08759 15.2113L6.00009 13.9322V10.1019L4.08759 8.7887ZM17.2501 17.1495L15.8626 16.2558C14.9438 17.0152 13.8376 17.434 12.6001 17.434C11.3626 17.434 10.2563 17.0152 9.33759 16.2558L7.95009 17.1495C9.18134 18.1844 10.8001 18.7842 12.6001 18.7842C14.4001 18.7842 16.0188 18.1844 17.2501 17.1495Z" fill="currentColor"></path></svg>
+                <svg viewBox="0 0 24 24" class="chat-header-logo icon"><path fill-rule="evenodd" clip-rule="evenodd" d="M12.0001 0C18.6275 0 24.0001 5.37258 24.0001 12C24.0001 18.6274 18.6275 24 12.0001 24C5.37266 24 0 18.6274 0 12C0 5.37258 5.37266 0 12.0001 0ZM6.75009 10.738L8.66259 12.0171L6.75009 13.2962V10.738ZM9.93759 15.4322L11.8501 16.7113L9.93759 17.9904V15.4322ZM9.93759 6.0437L11.8501 7.3228L9.93759 8.6019V6.0437ZM15.0001 10.738L13.0876 12.0171L15.0001 13.2962V10.738ZM17.2501 6.88469C16.0188 5.84979 14.4001 5.25 12.6001 5.25C10.8001 5.25 9.18134 5.84979 7.95009 6.88469L9.33759 7.77838C10.2563 7.01902 11.3626 6.60019 12.6001 6.60019C13.8376 6.60019 14.9438 7.01902 15.8626 7.77838L17.2501 6.88469ZM18.0001 10.1019V13.9322L19.9126 15.2113C20.3626 14.2498 20.6251 13.1721 20.6251 12C20.6251 10.8279 20.3626 9.75021 19.9126 8.7887L18.0001 10.1019ZM4.08759 8.7887C3.63759 9.75021 3.37509 10.8279 3.37509 12C3.37509 13.1721 3.63759 14.2498 4.08759 15.2113L6.00009 13.9322V10.1019L4.08759 8.7887ZM17.2501 17.1495L15.8626 16.2558C14.9438 17.0152 13.8376 17.434 12.6001 17.434C11.3626 17.434 10.2563 17.0152 9.33759 16.2558L7.95009 17.1495C9.18134 18.1844 10.8001 18.7842 12.6001 18.7842C14.4001 18.7842 16.0188 18.1844 17.2501 17.1495Z" fill="currentColor"></path></svg>
                 <h2 data-translate="chatgpt_all_model_chat_title">ChatGPT All Models</h2>
                 <div class="model-selector-container">
                     <label for="chatgpt-model-selector" class="sr-only" data-translate="chatgpt_model_selector_label">Select Model:</label>
@@ -597,16 +658,7 @@
 
             <!-- Messages Area -->
             <div id="chatgpt-all-model-chat-messages-area">
-                <!-- Chat messages will appear here. Example structure for a message:
-                <div class="chat-message-wrapper user">
-                    <div class="chat-avatar-container">...</div>
-                    <div class="chat-bubble">...</div>
-                </div>
-                <div class="chat-message-wrapper ai">
-                    <div class="chat-avatar-container">...</div>
-                    <div class="chat-bubble">...</div>
-                </div>
-                -->
+                <!-- Chat messages will appear here -->
             </div>
 
             <!-- Input Bar Area -->
@@ -624,6 +676,7 @@
                 </button>
             </div>
         </div>
+
 
     </main>
 

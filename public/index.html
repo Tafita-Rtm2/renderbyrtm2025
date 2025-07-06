@@ -579,6 +579,7 @@
 
         <!-- Gemini All Model View -->
         <div id="gemini-all-model-view" class="view" style="display: none;">
+            <!-- Header Section -->
             <div class="chat-view-header">
                 <img src="https://www.gstatic.com/images/branding/product/2x/gemini_48dp.png" alt="Gemini Logo" class="chat-header-logo gemini-logo-icon">
                 <h2 data-translate="gemini_all_model_chat_title">Gemini All Model Chat</h2>
@@ -590,15 +591,30 @@
                     </select>
                 </div>
             </div>
+
+            <!-- Messages Area -->
             <div id="gemini-all-model-chat-messages-area">
-                <!-- Chat messages will appear here -->
+                <!-- Chat messages will appear here. Example structure for a message:
+                <div class="chat-message-wrapper user">
+                    <div class="chat-avatar-container">...</div>
+                    <div class="chat-bubble">...</div>
+                </div>
+                <div class="chat-message-wrapper ai">
+                    <div class="chat-avatar-container">...</div>
+                    <div class="chat-bubble">...</div>
+                </div>
+                -->
             </div>
+
+            <!-- Input Bar Area -->
             <div id="gemini-all-model-chat-input-bar">
                 <input type="file" id="gemini-all-model-file-upload" accept="image/*,application/pdf,text/plain,video/*,audio/*,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display:none;">
                 <button id="gemini-all-model-attach-file-button" class="icon-button" title="Attach File" data-translate="gemini_all_model_attach_file_title">
                     <svg viewBox="0 0 24 24" class="icon"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 015 0v10.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-3.04-2.46-5.5-5.5-5.5S4 1.96 4 5v11.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"></path></svg>
                 </button>
-                <div id="gemini-all-model-file-preview-container"></div>
+                <div id="gemini-all-model-file-preview-container">
+                    <!-- File preview will be shown here -->
+                </div>
                 <input type="text" id="gemini-all-model-chat-input-field" placeholder="Ask Gemini (any model)..." data-translate="gemini_all_model_placeholder">
                 <button id="gemini-all-model-chat-send-button" class="icon-button" title="Send" data-translate="send_button_title">
                     <svg viewBox="0 0 24 24" class="icon"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>

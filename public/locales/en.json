@@ -208,6 +208,23 @@
     "deepseek_welcome_message": "Hello! I'm Deepseek AI. How can I assist you?",
     "claude_welcome_message": "Greetings, I am Claude Haiku. What shall we discuss?",
 
+    "chatgpt_all_model_view_title": "ChatGPT All Models",
+    "chatgpt_all_model_description": "Chat with various OpenAI models & upload files.",
+    "chatgpt_all_model_chat_title": "ChatGPT All Models Chat",
+    "chatgpt_model_selector_label": "Select Model:",
+    "chatgpt_model_select_default_option": "Loading models...",
+    "chatgpt_all_model_attach_file_title": "Attach File",
+    "chatgpt_all_model_placeholder": "Ask ChatGPT (any model)...",
+    "chatgpt_all_model_placeholder_dynamic": "Ask {modelName}...",
+    "chatgpt_select_model_alert": "Please select a ChatGPT model first.",
+    "chatgpt_type_message_or_attach_file_alert": "Please type a message or attach a file.",
+    "chatgpt_models_load_error": "Error loading models",
+    "chatgpt_no_models_available": "No models available",
+    "chatgpt_all_model_welcome_message": "Welcome to ChatGPT {modelName}! Ask anything or upload a file.",
+
+    "copy_button_title": "Copy",
+    "download_button_title": "Download",
+    "copy_code_button_title": "Copy Code",
     "error_ai_connection": "Error: {error} Could not connect to {aiName}.",
     "invalid_response_from_ai": "Invalid response structure from {aiName} AI."
 }

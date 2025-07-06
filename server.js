@@ -568,7 +568,7 @@ app.post('/api/gemini-all-model', uploadGeminiAllModel.single('file'), async (re
         } catch (e) { return res.status(400).json({ error: `Invalid file_url: ${e.message}` }); }
     }
 
-    let hajiApiUrl = `https://haji-mix-api.gleeze.com/api/gemini?uid=${encodeURIComponent(uid)}&model=${encodeURIComponent(model)}&api_key=${HAJI_MIX_GEMINI_API_KEY}`;
+    let hajiApiUrl = `https://haji-mix-api.gleeze.com/api/gemini?uid=${encodeURIComponent(uid)}&model=${encodeURIComponent(model)}&google_api_key=&api_key=${HAJI_MIX_GEMINI_API_KEY}`; // Added google_api_key=
     if (ask) hajiApiUrl += `&ask=${encodeURIComponent(ask)}`;
     if (publicFileUrl) hajiApiUrl += `&file_url=${encodeURIComponent(publicFileUrl)}`;
     if (roleplay) hajiApiUrl += `&roleplay=${encodeURIComponent(roleplay)}`;

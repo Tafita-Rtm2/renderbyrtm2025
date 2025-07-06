@@ -74,6 +74,13 @@
                     <span class="menu-item-description" data-translate="claude_haiku_description">Chat with Anthropic's Claude Haiku.</span>
                 </a>
             </li>
+            <li>
+                <a href="#" data-view="gemini-all-model-view">
+                    <img src="https://www.gstatic.com/images/branding/product/2x/gemini_48dp.png" alt="Gemini All Models" class="icon icon-side-menu-item gemini-logo-icon">
+                    <span data-translate="gemini_all_model_view_title">Gemini All Models</span>
+                    <span class="menu-item-description" data-translate="gemini_all_model_description">Chat with various Gemini models & upload files.</span>
+                </a>
+            </li>
         </ul>
     </nav>
 
@@ -565,6 +572,35 @@
             <div id="claude-chat-input-bar">
                 <input type="text" id="claude-chat-input-field" placeholder="Ask Claude Haiku AI...">
                 <button id="claude-chat-send-button" class="icon-button" title="Send">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Gemini All Model View -->
+        <div id="gemini-all-model-view" class="view" style="display: none;">
+            <div class="chat-view-header">
+                <img src="https://www.gstatic.com/images/branding/product/2x/gemini_48dp.png" alt="Gemini Logo" class="chat-header-logo gemini-logo-icon">
+                <h2 data-translate="gemini_all_model_chat_title">Gemini All Model Chat</h2>
+                <div class="model-selector-container">
+                    <label for="gemini-model-selector" class="sr-only" data-translate="gemini_model_selector_label">Select Model:</label>
+                    <select id="gemini-model-selector" name="gemini-model-selector">
+                        <option value="" data-translate="gemini_model_select_default_option">Loading models...</option>
+                        <!-- Models will be populated by JS -->
+                    </select>
+                </div>
+            </div>
+            <div id="gemini-all-model-chat-messages-area">
+                <!-- Chat messages will appear here -->
+            </div>
+            <div id="gemini-all-model-chat-input-bar">
+                <input type="file" id="gemini-all-model-file-upload" accept="image/*,application/pdf,text/plain,video/*,audio/*" style="display:none;">
+                <button id="gemini-all-model-attach-file-button" class="icon-button" title="Attach File" data-translate="gemini_all_model_attach_file_title">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 015 0v10.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-3.04-2.46-5.5-5.5-5.5S4 1.96 4 5v11.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"></path></svg>
+                </button>
+                <div id="gemini-all-model-file-preview-container"></div>
+                <input type="text" id="gemini-all-model-chat-input-field" placeholder="Ask Gemini (any model)..." data-translate="gemini_all_model_placeholder">
+                <button id="gemini-all-model-chat-send-button" class="icon-button" title="Send" data-translate="send_button_title">
                     <svg viewBox="0 0 24 24" class="icon"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
                 </button>
             </div>

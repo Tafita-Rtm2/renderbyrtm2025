@@ -278,6 +278,17 @@ document.addEventListener('DOMContentLoaded', () => {
             if (typeof loadClaudeHaikuAiChatHistory === "function") { loadClaudeHaikuAiChatHistory(); }
             const claudeChatInputBar = document.getElementById('claude-chat-input-bar');
             if (claudeChatInputBar) claudeChatInputBar.style.display = 'flex';
+        } else if (viewIdToShow === 'gemini-all-model-view') {
+            console.log('[GEMINI ALL MODEL DIAGNOSTIC] showView called for gemini-all-model-view.');
+            if (typeof fetchAndPopulateGeminiModels === "function") { fetchAndPopulateGeminiModels(); }
+            // History loading is now handled by fetchAndPopulateGeminiModels or model selector change
+            const geminiAllModelInputBar = document.getElementById('gemini-all-model-chat-input-bar');
+            if (geminiAllModelInputBar) geminiAllModelInputBar.style.display = 'flex';
+            // Ensure the view itself is flex if not already handled by the generic flex view block
+            const geminiAllModelView = document.getElementById('gemini-all-model-view');
+            if (geminiAllModelView && geminiAllModelView.style.display !== 'flex') {
+                 geminiAllModelView.style.display = 'flex';
+            }
         }
 
 
@@ -2234,6 +2245,411 @@ document.addEventListener('DOMContentLoaded', () => {
     if (claudeChatSendButton) claudeChatSendButton.addEventListener('click', handleClaudeHaikuAiSendMessage);
     if (claudeChatInputField) claudeChatInputField.addEventListener('keypress', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleClaudeHaikuAiSendMessage(); } });
     // --- END OF CLAUDE HAIKU AI CHAT LOGIC ---
+
+    // --- GEMINI ALL MODEL CHAT LOGIC ---
+    const geminiAllModelChatView = document.getElementById('gemini-all-model-view');
+    const geminiAllModelHeaderTitle = geminiAllModelChatView ? geminiAllModelChatView.querySelector('.chat-view-header h2') : null; // For potential dynamic updates
+    const geminiModelSelector = document.getElementById('gemini-model-selector');
+    const geminiAllModelChatMessagesArea = document.getElementById('gemini-all-model-chat-messages-area');
+    const geminiAllModelChatInputField = document.getElementById('gemini-all-model-chat-input-field');
+    const geminiAllModelChatSendButton = document.getElementById('gemini-all-model-chat-send-button');
+    const geminiAllModelAttachFileButton = document.getElementById('gemini-all-model-attach-file-button');
+    const geminiAllModelFileUpload = document.getElementById('gemini-all-model-file-upload');
+    const geminiAllModelFilePreviewContainer = document.getElementById('gemini-all-model-file-preview-container');
+
+    const geminiAllModelHistoryKeyPrefix = 'geminiAllModelHistory_';
+    let geminiAllModelTypingIndicator = null;
+    let currentGeminiAllModelFile = null;
+    let supportedGeminiModels = [];
+    let currentSelectedGeminiModel = '';
+    const GEMINI_ALL_MODEL_DEFAULT_ROLEPLAY = "You're Gemini AI Assistant, a helpful and versatile AI model.";
+
+    // Avatar for Gemini (can be reused)
+    const geminiOverallAvatarSvg = `<img src="https://www.gstatic.com/images/branding/product/2x/gemini_48dp.png" alt="Gemini" class="gemini-avatar-logo">`; // Reusing existing class for styling
+
+    function addGeminiAllModelMessageToChat(message, sender, imageUrl = null, isTyping = false, messageId = null) {
+        if (!geminiAllModelChatMessagesArea) return;
+
+        if (geminiAllModelTypingIndicator && geminiAllModelTypingIndicator.parentNode) {
+            geminiAllModelTypingIndicator.remove();
+            geminiAllModelTypingIndicator = null;
+        }
+
+        const messageWrapper = document.createElement('div');
+        messageWrapper.classList.add('chat-message-wrapper', sender === 'user' ? 'user' : 'ai');
+        if (messageId) messageWrapper.dataset.messageId = messageId;
+
+
+        const avatarContainer = document.createElement('div');
+        avatarContainer.classList.add('chat-avatar-container');
+        avatarContainer.innerHTML = sender === 'user' ? userAvatarSvg : geminiOverallAvatarSvg;
+
+        const messageBubble = document.createElement('div');
+        messageBubble.classList.add('chat-bubble');
+
+        if (isTyping) {
+            messageBubble.innerHTML = typingIndicatorHTML; // Reuse existing typing indicator
+            messageWrapper.id = 'gemini-all-model-typing-indicator';
+            geminiAllModelTypingIndicator = messageWrapper;
+        } else {
+            // Placeholder for enhanced formatting
+            messageBubble.innerHTML = formatTextContentEnhanced(message || ""); // Use enhanced formatter
+            if (imageUrl) {
+                 messageBubble.innerHTML += `<br><img src="${escapeHTML(imageUrl)}" alt="Chat Image" style="max-width: 100%; border-radius: 8px; margin-top: 8px;">`;
+            }
+            // Add copy and download icons (basic structure for now)
+            const controlsDiv = document.createElement('div');
+            controlsDiv.className = 'message-controls';
+
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'icon-button message-copy-btn';
+            copyBtn.title = translations.copy_button_title || "Copy";
+            copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
+            copyBtn.addEventListener('click', () => {
+                const textToCopy = messageBubble.textContent || ""; // Or more sophisticated extraction
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    copyBtn.innerHTML = `<svg viewBox="0 0 24 24" class="icon"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>`; // Checkmark
+                    setTimeout(() => {
+                         copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
+                    }, 1500);
+                }).catch(err => console.error('Failed to copy text: ', err));
+            });
+
+            const downloadBtn = document.createElement('button');
+            downloadBtn.className = 'icon-button message-download-btn';
+            downloadBtn.title = translations.download_button_title || "Download"; // Add this key
+            downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>';
+            downloadBtn.addEventListener('click', () => {
+                // Basic TXT download for now
+                const textContent = messageBubble.textContent || "";
+                const filename = `gemini_response_${Date.now()}.txt`;
+                const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                // TODO: Add PDF/DOCX options later
+            });
+
+            if (sender === 'ai') { // Only add controls to AI messages for now
+                controlsDiv.appendChild(copyBtn);
+                controlsDiv.appendChild(downloadBtn);
+                messageBubble.appendChild(controlsDiv);
+            }
+        }
+        messageWrapper.append(avatarContainer, messageBubble);
+        geminiAllModelChatMessagesArea.appendChild(messageWrapper);
+        geminiAllModelChatMessagesArea.scrollTop = geminiAllModelChatMessagesArea.scrollHeight;
+    }
+
+    function saveGeminiAllModelChatHistory(message, sender, imageUrl, modelName, messageId = null) {
+        if (!chatUID || !modelName) return;
+        const historyKey = `${geminiAllModelHistoryKeyPrefix}${chatUID}_${modelName}`;
+        let history = [];
+        try { const stored = localStorage.getItem(historyKey); if (stored) history = JSON.parse(stored); } catch (e) { console.error(e); }
+
+        history.push({ message, sender, imageUrl, timestamp: new Date().toISOString(), messageId: messageId || Date.now().toString() });
+        if (history.length > 100) history = history.slice(history.length - 100); // Increased history size
+        try { localStorage.setItem(historyKey, JSON.stringify(history)); } catch (e) { console.error(e); }
+    }
+
+    function loadGeminiAllModelChatHistory(modelName) {
+        if (!geminiAllModelChatMessagesArea || !chatUID || !modelName) {
+            if(geminiAllModelChatMessagesArea) geminiAllModelChatMessagesArea.innerHTML = ""; // Clear if no model
+            return;
+        }
+        geminiAllModelChatMessagesArea.innerHTML = ""; // Clear for new model's history
+        const historyKey = `${geminiAllModelHistoryKeyPrefix}${chatUID}_${modelName}`;
+        let history = [];
+        try { const stored = localStorage.getItem(historyKey); if (stored) history = JSON.parse(stored); } catch (e) { console.error(e); }
+
+        if (history.length === 0) {
+            const welcomeMsg = translations.gemini_all_model_welcome_message || `Welcome to Gemini ${modelName}! Ask anything or upload a file.`;
+            addGeminiAllModelMessageToChat(welcomeMsg.replace('{modelName}', modelName), 'ai');
+        } else {
+            history.forEach(item => addGeminiAllModelMessageToChat(item.message, item.sender, item.imageUrl, false, item.messageId));
+        }
+        if (geminiAllModelChatMessagesArea) geminiAllModelChatMessagesArea.scrollTop = geminiAllModelChatMessagesArea.scrollHeight;
+    }
+
+    async function fetchAndPopulateGeminiModels() {
+        if (!geminiModelSelector) return;
+        // Try to get from localStorage first
+        const storedModels = localStorage.getItem('supportedGeminiModels');
+        if (storedModels) {
+            try {
+                supportedGeminiModels = JSON.parse(storedModels);
+                populateGeminiModelDropdown();
+                // Set selector to last selected model if available
+                const lastSelected = localStorage.getItem('lastSelectedGeminiAllModel');
+                if (lastSelected && supportedGeminiModels.includes(lastSelected)) {
+                    geminiModelSelector.value = lastSelected;
+                    currentSelectedGeminiModel = lastSelected;
+                } else if (supportedGeminiModels.length > 0) {
+                    // Default to a common flash model if available, or the first one
+                    const defaultModel = supportedGeminiModels.find(m => m.includes('1.5-flash')) || supportedGeminiModels[0];
+                    geminiModelSelector.value = defaultModel;
+                    currentSelectedGeminiModel = defaultModel;
+                }
+                loadGeminiAllModelChatHistory(currentSelectedGeminiModel);
+                return; // Models loaded from cache
+            } catch (e) {
+                console.error("Error parsing stored Gemini models", e);
+                localStorage.removeItem('supportedGeminiModels'); // Clear corrupted data
+            }
+        }
+
+        // If not in localStorage or parsing failed, fetch from API (e.g. by making a dummy call or a dedicated endpoint later)
+        // For now, we'll rely on the first chat response to populate this.
+        // So, the dropdown might initially be empty or have a "Loading..." state.
+        // The first successful call to handleGeminiAllModelSendMessage will populate it.
+        geminiModelSelector.innerHTML = `<option value="" data-translate="gemini_model_select_default_option">${translations.gemini_model_select_default_option || 'Loading models...'}</option>`;
+    }
+
+    function populateGeminiModelDropdown() {
+        if (!geminiModelSelector || !supportedGeminiModels || supportedGeminiModels.length === 0) return;
+
+        // Get the "Loading models..." text for re-adding if no models are selected
+        const loadingOptionText = translations.gemini_model_select_default_option || 'Loading models...';
+        const currentSelectorValue = geminiModelSelector.value; // Preserve current selection if possible
+
+        geminiModelSelector.innerHTML = ''; // Clear existing options
+
+        supportedGeminiModels.forEach(model => {
+            const option = document.createElement('option');
+            option.value = model;
+            option.textContent = model;
+            geminiModelSelector.appendChild(option);
+        });
+
+        if (supportedGeminiModels.includes(currentSelectorValue)) {
+            geminiModelSelector.value = currentSelectorValue;
+        } else if (supportedGeminiModels.length > 0) {
+             const defaultModel = supportedGeminiModels.find(m => m.includes('1.5-flash')) || supportedGeminiModels[0];
+            geminiModelSelector.value = defaultModel;
+        } else {
+            // Add back the loading/empty option if list is empty after all
+            geminiModelSelector.innerHTML = `<option value="">${loadingOptionText}</option>`;
+        }
+        currentSelectedGeminiModel = geminiModelSelector.value;
+        if (currentSelectedGeminiModel) {
+            localStorage.setItem('lastSelectedGeminiAllModel', currentSelectedGeminiModel);
+        }
+    }
+
+    if (geminiModelSelector) {
+        geminiModelSelector.addEventListener('change', () => {
+            currentSelectedGeminiModel = geminiModelSelector.value;
+            if (currentSelectedGeminiModel) {
+                localStorage.setItem('lastSelectedGeminiAllModel', currentSelectedGeminiModel);
+                loadGeminiAllModelChatHistory(currentSelectedGeminiModel);
+                 if(geminiAllModelChatInputField) geminiAllModelChatInputField.placeholder = `Ask ${currentSelectedGeminiModel}...`;
+            } else {
+                if(geminiAllModelChatMessagesArea) geminiAllModelChatMessagesArea.innerHTML = ""; // Clear chat area
+                if(geminiAllModelChatInputField) geminiAllModelChatInputField.placeholder = translations.gemini_all_model_placeholder || "Ask Gemini (any model)...";
+            }
+        });
+    }
+    // Initial population attempt (might be empty until first API call)
+    // fetchAndPopulateGeminiModels(); // Call this when the view is shown
+
+    // Enhanced text formatting (initial version, can be expanded)
+    function formatTextContentEnhanced(text) {
+        if (typeof text !== 'string') return '';
+        let resultText = text;
+
+        // Code blocks ( ```[lang]\ncode\n``` or ```\ncode\n``` )
+        resultText = resultText.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
+            const languageClass = lang ? `language-${lang}` : 'language-plaintext';
+            const escapedCode = escapeHTML(code.trim());
+            // data-code attribute for easy copying later
+            return `<div class="code-block-wrapper"><pre><code class="${languageClass}" data-code="${escapeHTML(code.trim())}">${escapedCode}</code></pre><button class="copy-code-btn" title="${translations.copy_code_button_title || 'Copy Code'}"><svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg></button></div>`;
+        });
+         // Simpler inline code `code`
+        resultText = resultText.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+
+        // Headings (Markdown-like)
+        resultText = resultText.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+        resultText = resultText.replace(/^## (.*$)/gim, '<h4>$1</h4>');
+        resultText = resultText.replace(/^# (.*$)/gim, '<h2>$1</h2>'); // Added H1 support
+
+        // Bold text (**)
+        resultText = resultText.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>');
+        // Italics text (*) - ensure it doesn't conflict if single * was meant for bold
+        resultText = resultText.replace(/(?<!\*)\*([^*]+)\*(?!\*)/gim, '<em>$1</em>');
+
+
+        // Basic table formatting (very simplified, assumes simple pipe tables)
+        // This is a rudimentary attempt and might need a proper Markdown library for complex tables.
+        if (resultText.includes('|')) {
+            resultText = resultText.split('\n').map(line => {
+                if (line.startsWith('|') && line.endsWith('|')) {
+                    const cells = line.slice(1, -1).split('|').map(cell => cell.trim());
+                    if (line.includes('---')) { // Header separator
+                        return ''; // Skip rendering separator line directly, CSS will handle it
+                    }
+                    // Heuristic: If it's the first such line or after a separator, assume header
+                    // This logic is imperfect. A full Markdown parser is better.
+                    const cellTag = (prevLineWasHeaderSeparator || !isInsideTable) ? 'th' : 'td';
+                    // For simplicity, let's assume all are td for now and rely on CSS for first row styling
+                    return `<tr>${cells.map(cell => `<td>${escapeHTML(cell)}</td>`).join('')}</tr>`;
+                }
+                return line;
+            }).join('\n');
+            // Wrap recognized table rows in a table tag
+            if (resultText.includes('<tr>')) {
+                 resultText = resultText.replace(/((?:<tr>.*?<\/tr>\s*)+)/g, '<table><tbody>$1</tbody></table>');
+            }
+        }
+        // Line breaks
+        resultText = resultText.replace(/\n/g, '<br>');
+
+
+        return resultText;
+    }
+    // Add event listener for dynamically created copy code buttons
+    document.addEventListener('click', function(event) {
+        if (event.target.classList.contains('copy-code-btn') || event.target.closest('.copy-code-btn')) {
+            const button = event.target.closest('.copy-code-btn');
+            const codeWrapper = button.closest('.code-block-wrapper');
+            const codeElement = codeWrapper.querySelector('code');
+            const codeToCopy = codeElement.dataset.code || codeElement.innerText; // Use data-code for original
+            navigator.clipboard.writeText(codeToCopy).then(() => {
+                button.innerHTML = `<svg viewBox="0 0 24 24" class="icon"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>`; // Checkmark
+                 setTimeout(() => {
+                    button.innerHTML = `<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>`;
+                    button.title = translations.copy_code_button_title || 'Copy Code';
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy code: ', err);
+                // Optionally, provide user feedback about the copy failure
+            });
+        }
+    });
+
+
+    // File attachment logic for Gemini All Model
+    if (geminiAllModelAttachFileButton && geminiAllModelFileUpload) {
+        geminiAllModelAttachFileButton.addEventListener('click', () => geminiAllModelFileUpload.click());
+        geminiAllModelFileUpload.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                currentGeminiAllModelFile = file;
+                if (geminiAllModelFilePreviewContainer) {
+                    let previewHTML = `<span class="file-preview-name">${escapeHTML(file.name)} (${(file.size / 1024).toFixed(1)} KB)</span>`;
+                    if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            previewHTML += `<img src="${e.target.result}" alt="Preview" class="file-preview-image">`;
+                            geminiAllModelFilePreviewContainer.innerHTML = previewHTML;
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                         geminiAllModelFilePreviewContainer.innerHTML = previewHTML;
+                    }
+                }
+            } else {
+                currentGeminiAllModelFile = null;
+                if (geminiAllModelFilePreviewContainer) geminiAllModelFilePreviewContainer.innerHTML = "";
+            }
+        });
+    }
+
+    async function handleGeminiAllModelSendMessage() {
+        if (!geminiAllModelChatInputField || !chatUID || !currentSelectedGeminiModel) {
+            if (!currentSelectedGeminiModel) alert(translations.gemini_select_model_alert || "Please select a Gemini model first.");
+            return;
+        }
+        const messageText = geminiAllModelChatInputField.value.trim();
+        if (!messageText && !currentGeminiAllModelFile) {
+            alert(translations.gemini_type_message_or_attach_file_alert || "Please type a message or attach a file.");
+            return;
+        }
+
+        let tempPreviewUrl = null;
+        if (currentGeminiAllModelFile && currentGeminiAllModelFile.type.startsWith('image/')) {
+            tempPreviewUrl = URL.createObjectURL(currentGeminiAllModelFile);
+        }
+        const messageId = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        addGeminiAllModelMessageToChat(messageText || (currentGeminiAllModelFile ? `File: ${currentGeminiAllModelFile.name}`: ""), 'user', tempPreviewUrl, false, messageId);
+        saveGeminiAllModelChatHistory(messageText || (currentGeminiAllModelFile ? `File: ${currentGeminiAllModelFile.name}`: ""), 'user', tempPreviewUrl, currentSelectedGeminiModel, messageId);
+
+        trackActivity('gemini_all_model_sent', {
+            messageLength: messageText.length,
+            hasFile: !!currentGeminiAllModelFile,
+            model: currentSelectedGeminiModel,
+            fileName: currentGeminiAllModelFile ? currentGeminiAllModelFile.name : null,
+            fileType: currentGeminiAllModelFile ? currentGeminiAllModelFile.type : null
+        });
+
+        const formData = new FormData();
+        formData.append('uid', chatUID);
+        formData.append('model', currentSelectedGeminiModel);
+        if (messageText) formData.append('ask', messageText);
+        if (currentGeminiAllModelFile) formData.append('file', currentGeminiAllModelFile, currentGeminiAllModelFile.name);
+        formData.append('roleplay', GEMINI_ALL_MODEL_DEFAULT_ROLEPLAY); // Or make this configurable
+
+        geminiAllModelChatInputField.value = '';
+        geminiAllModelFileUpload.value = null; // Reset file input
+        const oldFile = currentGeminiAllModelFile; // To revoke object URL later if it was an image
+        currentGeminiAllModelFile = null;
+        if (geminiAllModelFilePreviewContainer) geminiAllModelFilePreviewContainer.innerHTML = "";
+
+        geminiAllModelChatInputField.disabled = true;
+        if (geminiAllModelChatSendButton) geminiAllModelChatSendButton.disabled = true;
+        if (geminiAllModelAttachFileButton) geminiAllModelAttachFileButton.disabled = true;
+        if (geminiModelSelector) geminiModelSelector.disabled = true;
+
+        addGeminiAllModelMessageToChat(null, 'ai', null, true);
+
+        try {
+            const response = await fetch('/api/gemini-all-model', { method: 'POST', body: formData });
+            if (geminiAllModelTypingIndicator) geminiAllModelTypingIndicator.remove();
+             if (tempPreviewUrl && oldFile && oldFile.type.startsWith('image/')) { // Revoke only if it was an image object URL
+                URL.revokeObjectURL(tempPreviewUrl);
+            }
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: `Server error: ${response.status}` }));
+                throw new Error(errorData.error || `API request failed: ${response.status}`);
+            }
+            const aiResponse = await response.json();
+
+            if (aiResponse.supported_models && Array.isArray(aiResponse.supported_models)) {
+                supportedGeminiModels = aiResponse.supported_models;
+                localStorage.setItem('supportedGeminiModels', JSON.stringify(supportedGeminiModels));
+                populateGeminiModelDropdown(); // Repopulate with potentially new list, preserving selection
+            }
+
+            if (aiResponse && aiResponse.response) {
+                const aiMessageId = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                addGeminiAllModelMessageToChat(aiResponse.response, 'ai', null, false, aiMessageId); // No image URL from AI here
+                saveGeminiAllModelChatHistory(aiResponse.response, 'ai', null, aiResponse.model_used || currentSelectedGeminiModel, aiMessageId);
+            } else {
+                throw new Error(translations.invalid_response_from_ai.replace('{aiName}', 'Gemini All Model') || "Invalid response structure from Gemini All Model AI.");
+            }
+        } catch (error) {
+            console.error('Error with Gemini All Model:', error);
+            if (geminiAllModelTypingIndicator) geminiAllModelTypingIndicator.remove();
+            const errorMsg = translations.error_ai_connection || "Error: {error} Could not connect to {aiName}.";
+            addGeminiAllModelMessageToChat(errorMsg.replace('{error}', error.message).replace('{aiName}', 'Gemini All Model'), 'ai');
+        } finally {
+            geminiAllModelChatInputField.disabled = false;
+            if (geminiAllModelChatSendButton) geminiAllModelChatSendButton.disabled = false;
+            if (geminiAllModelAttachFileButton) geminiAllModelAttachFileButton.disabled = false;
+            if (geminiModelSelector) geminiModelSelector.disabled = false;
+            if (geminiAllModelChatInputField) geminiAllModelChatInputField.focus();
+        }
+    }
+
+    if (geminiAllModelChatSendButton) geminiAllModelChatSendButton.addEventListener('click', handleGeminiAllModelSendMessage);
+    if (geminiAllModelChatInputField) geminiAllModelChatInputField.addEventListener('keypress', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleGeminiAllModelSendMessage(); }});
+    // --- END OF GEMINI ALL MODEL CHAT LOGIC ---
 
 
     // --- EMAIL GENERATOR LOGIC ---

@@ -51,6 +51,8 @@
     "feature_activity_history_desc": "Keep track of your interactions and activities within the site. Review your journey and easily revisit your favorite features.",
     "feature_email_generator_title": "Email Generator",
     "feature_email_generator_desc": "Generate temporary email addresses quickly for privacy or testing purposes. Receive emails and manage them for a short period.",
+    "chatgpt_all_model_view_title_feature": "ChatGPT All Models",
+    "chatgpt_all_model_description_feature": "Engage with a variety of OpenAI's models, upload files, and explore diverse AI capabilities.",
 
     "home_nav_ai_chat": "AI Chat",
     "home_nav_image_gen": "Image Gen",
@@ -61,6 +63,7 @@
     "home_nav_blackbox_ai": "Blackbox AI",
     "home_nav_deepseek_ai": "Deepseek AI",
     "home_nav_claude_haiku": "Claude Haiku",
+    "home_nav_chatgpt_all_models": "ChatGPT All",
 
     "public_comments_title": "Leave a Comment",
     "comment_name_label": "Name:",

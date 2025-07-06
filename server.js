@@ -53,6 +53,47 @@ const uploadGeminiAllModel = multer({
     limits: { fileSize: 20 * 1024 * 1024 } // Limit file size to 20MB for this feature
 });
 
+// New UPLOAD_PATH for generic temporary file uploads (e.g., for ChatGPT All Models)
+const TEMP_UPLOAD_PATH = 'public/temp_uploads/';
+if (!fs.existsSync(TEMP_UPLOAD_PATH)){
+    fs.mkdirSync(TEMP_UPLOAD_PATH, { recursive: true });
+}
+
+// Storage configuration for generic temporary file uploads
+const tempStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, TEMP_UPLOAD_PATH);
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+// Multer instance for generic temporary uploads
+const uploadTemp = multer({
+    storage: tempStorage,
+    limits: { fileSize: 25 * 1024 * 1024 }, // Max 25MB for generic uploads
+    fileFilter: function (req, file, cb) {
+        // More permissive filter for generic uploads, but can be restricted as needed
+        // For now, allow common image, document, audio, video, and text types
+        const allowedMimeTypes = [
+            'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+            'application/pdf', 'text/plain',
+            'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'audio/mpeg', 'audio/wav', 'audio/ogg',
+            'video/mp4', 'video/webm', 'video/quicktime'
+        ];
+        if (allowedMimeTypes.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Error: This file type is not allowed for generic uploads.'));
+        }
+    }
+});
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -61,6 +102,7 @@ const PORT = process.env.PORT || 3000;
 // Serve static files from the upload directories
 app.use('/uploads/gemini_temp', express.static(path.join(__dirname, LEGACY_GEMINI_UPLOAD_PATH)));
 app.use('/uploads/gemini_all_model_temp', express.static(path.join(__dirname, GEMINI_ALL_MODEL_TEMP_UPLOAD_PATH)));
+app.use('/temp_uploads', express.static(path.join(__dirname, TEMP_UPLOAD_PATH))); // Serve new temp folder
 // Serve main public files
 app.use(express.static(path.join(__dirname, 'public')));
 // JSON parsing middleware
@@ -626,110 +668,54 @@ app.post('/api/gemini-all-model', uploadGeminiAllModel.single('file'), async (re
     }
 });
 
-// ChatGPT All Model API Route (New - distinct from Gemini All Model)
-app.post('/api/chatgpt-all-model', uploadChatGptAllModel.single('file'), async (req, res) => {
-    const { ask, model, uid, roleplay, max_tokens } = req.body;
-    let clientUploadedFileUrl = req.body.file_url; // Support for pre-uploaded file URLs
-    let tempLocalPath = null;
-    let publicFileUrl = null;
-
-    // Basic validation
-    if (!uid) { if (req.file) fs.unlinkSync(req.file.path); return res.status(400).json({ error: '"uid" is required.' }); }
-    if (!model) { if (req.file) fs.unlinkSync(req.file.path); return res.status(400).json({ error: '"model" is required.' }); }
-    if (!ask && !req.file && !clientUploadedFileUrl) {
-        return res.status(400).json({ error: 'Either "ask" (text prompt) or a file/file_url is required.' });
+// New endpoint for generic file uploads
+app.post('/api/upload-temp-file', uploadTemp.single('file'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ success: false, error: 'No file uploaded.' });
     }
-
-    if (req.file) {
-        tempLocalPath = req.file.path;
-        const APP_BASE_URL = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
-        publicFileUrl = new URL(`/uploads/chatgpt_all_model_temp/${req.file.filename}`, APP_BASE_URL).toString();
-        console.log(`ChatGPT All Model: File temp saved at ${tempLocalPath}, public URL ${publicFileUrl}`);
-    } else if (clientUploadedFileUrl) {
-        try {
-            const parsedUrl = new URL(clientUploadedFileUrl);
-            if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") throw new Error("Invalid file URL protocol.");
-            publicFileUrl = clientUploadedFileUrl;
-        } catch (e) {
-            return res.status(400).json({ error: `Invalid file_url: ${e.message}` });
-        }
-    }
-
-    // Construct URL for Haji Mix OpenAI endpoint
-    // API Key for Haji Mix OpenAI endpoint is HAJI_MIX_OPENAI_API_KEY
-    let hajiApiUrl = `https://haji-mix-api.gleeze.com/api/openai?uid=${encodeURIComponent(uid)}&model=${encodeURIComponent(model)}&api_key=${HAJI_MIX_OPENAI_API_KEY}`;
-    if (ask) {
-        hajiApiUrl += `&ask=${encodeURIComponent(ask)}`;
-    }
-    if (publicFileUrl) {
-        hajiApiUrl += `&img_url=${encodeURIComponent(publicFileUrl)}`; // Haji Mix OpenAI uses img_url
-    }
-    // Optional parameters, include them if provided
-    if (roleplay) {
-        hajiApiUrl += `&roleplay=${encodeURIComponent(roleplay)}`;
-    }
-    if (max_tokens) {
-        hajiApiUrl += `&max_tokens=${encodeURIComponent(max_tokens)}`;
-    }
-    // stream=false is usually default for non-streaming, but can be explicit if API requires
-    hajiApiUrl += `&stream=false`;
-
-
     try {
-        const apiResponse = await fetch(hajiApiUrl);
-        const responseText = await apiResponse.text();
-        // Clean up temp file if one was created
-        if (tempLocalPath) {
-            fs.unlink(tempLocalPath, (err) => {
-                if (err) console.error("Error deleting temp file for ChatGPT All Model:", err);
+        const APP_BASE_URL = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+        const publicFileUrl = new URL(`/temp_uploads/${req.file.filename}`, APP_BASE_URL).toString();
+
+        // Log successful upload and URL generation
+        console.log(`Temp file uploaded: ${req.file.filename}, URL: ${publicFileUrl}`);
+
+        // Schedule file for deletion after a timeout (e.g., 1 hour)
+        const tempFilePath = req.file.path;
+        setTimeout(() => {
+            fs.unlink(tempFilePath, (err) => {
+                if (err) {
+                    console.error(`Error deleting temp file ${tempFilePath}:`, err);
+                } else {
+                    console.log(`Temp file ${tempFilePath} deleted after timeout.`);
+                }
             });
-        }
+        }, 3600000); // 1 hour in milliseconds
 
-        if (!apiResponse.ok) {
-            let errorJson = { error: `Haji Mix OpenAI API Error: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
-            try {
-                const parsedError = JSON.parse(responseText);
-                if (parsedError.error) errorJson.error = parsedError.error;
-                else if (parsedError.message && !parsedError.error) errorJson.error = parsedError.message;
-                if (parsedError.details) errorJson.details = parsedError.details;
-            } catch (c) { /* responseText was not JSON, keep original error */ }
-            console.error("Haji Mix OpenAI API Error details:", errorJson.details);
-            return res.status(apiResponse.status).json(errorJson);
-        }
-
-        let data;
-        try { data = JSON.parse(responseText); }
-        catch (e) {
-            console.warn('Haji Mix OpenAI API response was not JSON, but status was OK. Response text:', responseText);
-            return res.status(500).json({ error: 'Failed to parse response from Haji Mix OpenAI API.', details: responseText });
-        }
-
-        // Construct the response payload for the client
-        const clientResponsePayload = {
-            author: data.model_used || model, // Use model_used from API response, fallback to requested model
-            response: data.answer,
-            model_used: data.model_used,
-            supported_models: Array.isArray(data.supported_models) ? data.supported_models : []
-        };
-
-        if (data.error && !data.answer) {
-             console.warn("Haji Mix API (OpenAI endpoint) returned an error in its payload:", data.error);
-        }
-
-        if (clientResponsePayload.supported_models.length === 0) {
-            console.warn("ChatGPT All Model: Haji Mix API (OpenAI endpoint) response did not include 'supported_models' or it was empty. This might be normal if the first query is just to get models.");
-        }
-        res.json(clientResponsePayload);
+        res.json({ success: true, fileUrl: publicFileUrl, filename: req.file.filename });
 
     } catch (error) {
-        console.error('Server error (Haji Mix OpenAI API):', error);
-        if (tempLocalPath && fs.existsSync(tempLocalPath)) {
-            fs.unlink(tempLocalPath, (err) => {
-                if (err) console.error("Error deleting temp file (ChatGPT All Model) on error:", err);
+        console.error('Error processing file upload:', error);
+        // If file was saved by multer but an error occurred here, try to delete it.
+        if (req.file && req.file.path) {
+            fs.unlink(req.file.path, (unlinkErr) => {
+                if (unlinkErr) console.error(`Error deleting partially uploaded file ${req.file.path} after error:`, unlinkErr);
             });
         }
-        return res.status(500).json({ error: 'Server error processing Haji Mix OpenAI API request.' });
+        res.status(500).json({ success: false, error: 'Server error processing file upload.' });
     }
+}, (error, req, res, next) => { // Multer error handler
+    if (error instanceof multer.MulterError) {
+        // A Multer error occurred when uploading.
+        console.error('Multer error during upload:', error);
+        return res.status(400).json({ success: false, error: `File upload error: ${error.message}` });
+    } else if (error) {
+        // An unknown error occurred when uploading (e.g., file type filter).
+        console.error('Unknown error during upload:', error);
+        return res.status(400).json({ success: false, error: error.message || 'File upload failed due to an unknown error.' });
+    }
+    // Everything went fine if we reach here with no error.
+    next();
 });
 
 

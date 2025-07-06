@@ -2619,11 +2619,125 @@ body.dark-mode #gemini-model-selector {
     max-width: 250px; /* Allow more width for filename */
     min-height: 38px; /* Align with button height */
     box-sizing: border-box;
+    /* Ensure it doesn't cause input bar to grow too tall */
+    max-height: 42px; /* Match attachment button height roughly */
+    overflow: hidden; /* Hide overflow if content is too tall */
+}
+.file-preview-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-muted-color);
+    font-size: 0.85em; /* Slightly smaller for compactness */
 }
 .file-preview-image {
     max-height: 35px; /* Slightly larger preview */
     max-width: 60px;
+    border-radius: 3px;
+    border: 1px solid var(--border-color);
+    object-fit: cover; /* Ensure image covers the area nicely */
 }
+
+/* Specific styling for Gemini All Model chat messages to match other chat views */
+#gemini-all-model-chat-messages-area {
+    flex-grow: 1 !important;
+    overflow-y: auto !important;
+    padding: 20px !important;
+    background-color: var(--primary-bg) !important; /* Matches other chat views */
+    border-bottom: 1px solid var(--border-color) !important; /* Matches other chat views */
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 15px !important; /* Matches other chat views */
+}
+
+#gemini-all-model-chat-messages-area::-webkit-scrollbar { width: 8px; }
+#gemini-all-model-chat-messages-area::-webkit-scrollbar-track { background: var(--primary-bg); }
+#gemini-all-model-chat-messages-area::-webkit-scrollbar-thumb { background-color: var(--accent-color); border-radius: 4px; }
+#gemini-all-model-chat-messages-area::-webkit-scrollbar-thumb:hover { background-color: var(--primary-accent-color); }
+
+/* Input bar styling for Gemini All Model - make it similar to others */
+#gemini-all-model-chat-input-bar {
+    display: flex;
+    align-items: center !important;
+    padding: 15px !important;
+    background-color: var(--primary-bg) !important; /* Matches other chat views */
+    border-top: 1px solid var(--surface-color) !important; /* Matches other chat views */
+    width: 100% !important;
+    box-sizing: border-box !important;
+    min-height: 70px !important; /* Matches other chat views */
+    flex-shrink: 0 !important; /* Matches other chat views */
+}
+
+#gemini-all-model-chat-input-field {
+    flex-grow: 1 !important;
+    padding: 14px 20px !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 25px !important; /* Rounded like other chat inputs */
+    background-color: var(--surface-color) !important;
+    color: var(--text-color) !important;
+    font-family: var(--font-primary) !important;
+    margin-right: 10px !important;
+    outline: none !important;
+    min-height: 48px !important; /* Standard height */
+    height: 48px !important;
+    box-sizing: border-box;
+}
+#gemini-all-model-chat-input-field:focus {
+    border-color: var(--action-color) !important;
+    box-shadow: 0 0 8px rgba(255, 153, 0, 0.6) !important; /* Standard focus glow */
+}
+
+#gemini-all-model-attach-file-button {
+    /* Styles were okay, ensure consistency with other attach buttons */
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
+    width: 48px !important; /* Standard size */
+    height: 48px !important; /* Standard size */
+    border-radius: 50% !important;
+    margin-right: 10px; /* Standard margin */
+}
+#gemini-all-model-attach-file-button:hover {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+#gemini-all-model-attach-file-button:hover .icon {
+    fill: var(--primary-bg);
+}
+
+
+#gemini-all-model-chat-send-button {
+    background-color: var(--action-color) !important; /* Standard send button color */
+    width: 48px !important; /* Standard size */
+    height: 48px !important; /* Standard size */
+    border-radius: 50% !important;
+    border: none !important;
+    flex-shrink: 0 !important;
+}
+#gemini-all-model-chat-send-button .icon {
+    fill: var(--primary-bg) !important;
+    width: 26px !important;
+    height: 26px !important;
+}
+#gemini-all-model-chat-send-button:hover {
+    background-color: var(--primary-accent-color) !important; /* Standard hover */
+}
+#gemini-all-model-chat-send-button:disabled {
+    background-color: var(--text-muted-color) !important;
+    cursor: not-allowed !important;
+}
+
+/* Ensure the overall view structure for gemini-all-model-view is flex column */
+#gemini-all-model-view {
+    display: flex;
+    flex-direction: column !important;
+    height: calc(100vh - var(--top-bar-height) - 30px) !important; /* Full height minus top bar and some padding */
+    padding: 0 !important;
+    box-sizing: border-box !important;
+    background-color: var(--secondary-bg) !important;
+    border-radius: 10px !important;
+    overflow: hidden !important;
+}
+/* --- END OF GEMINI ALL MODEL VIEW ENHANCEMENTS --- */
 
 
 /* --- BOX MOVIE VIEW STYLES --- */

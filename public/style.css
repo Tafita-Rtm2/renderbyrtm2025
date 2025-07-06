@@ -2568,6 +2568,63 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
     color: var(--primary-bg) !important; /* Ensure contrast */
 }
 
+/* More specific styling for the Gemini All Model header elements */
+#gemini-all-model-view .chat-view-header {
+    gap: 15px; /* Add gap between header items */
+    padding: 12px 20px; /* Adjust padding */
+}
+
+#gemini-all-model-view .chat-header-logo {
+    width: 36px;
+    height: 36px;
+}
+
+#gemini-all-model-view .chat-view-header h2 {
+    font-size: 1.3em;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+#gemini-all-model-view .model-selector-container {
+    position: relative; /* For custom arrow later if needed */
+}
+
+#gemini-model-selector {
+    min-width: 200px; /* Give it some space */
+    padding: 10px 15px; /* More padding */
+    padding-right: 35px; /* Space for custom arrow */
+    appearance: none; /* Remove default browser appearance */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23a0a0a0' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E"); /* Basic SVG arrow */
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 16px 12px; /* Adjust arrow size */
+    border-radius: 8px; /* More rounded */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+body.dark-mode #gemini-model-selector {
+     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23e0e0e0' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+}
+
+#gemini-model-selector:hover {
+    border-color: var(--primary-accent-color);
+}
+
+/* File preview container enhancements */
+#gemini-all-model-file-preview-container {
+    border: 1px dashed var(--border-color);
+    padding: 8px;
+    max-width: 250px; /* Allow more width for filename */
+    min-height: 38px; /* Align with button height */
+    box-sizing: border-box;
+}
+.file-preview-image {
+    max-height: 35px; /* Slightly larger preview */
+    max-width: 60px;
+}
+
 
 /* --- BOX MOVIE VIEW STYLES --- */
 #box-movie-view {

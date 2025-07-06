@@ -59,8 +59,8 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 // Serve static files from the upload directories
-app.use('/uploads/gemini_temp', express.static(path.join(__dirname, LEGACY_GEMINI_UPLOAD_PATH))); // For legacy
-app.use('/uploads/gemini_all_model_temp', express.static(path.join(__dirname, GEMINI_ALL_MODEL_TEMP_UPLOAD_PATH))); // For new Gemini All Model
+app.use('/uploads/gemini_temp', express.static(path.join(__dirname, LEGACY_GEMINI_UPLOAD_PATH)));
+app.use('/uploads/gemini_all_model_temp', express.static(path.join(__dirname, GEMINI_ALL_MODEL_TEMP_UPLOAD_PATH)));
 // Serve main public files
 app.use(express.static(path.join(__dirname, 'public')));
 // JSON parsing middleware
@@ -124,7 +124,6 @@ const ADMIN_VERIFICATION_CODE = '2201018280';
 
 // --- ROUTES ---
 
-// Admin Verification
 app.post('/api/verify-admin', (req, res) => {
     const { adminCode } = req.body;
     if (!adminCode) return res.status(400).json({ success: false, message: "Admin code is required" });
@@ -132,7 +131,6 @@ app.post('/api/verify-admin', (req, res) => {
     return res.status(401).json({ success: false, message: "Invalid admin code" });
 });
 
-// Weather
 app.get('/api/weather', async (req, res) => {
     const location = req.query.location;
     if (!location) { return res.status(400).json({ error: 'Location query parameter is required' }); }
@@ -153,7 +151,6 @@ app.get('/api/weather', async (req, res) => {
     }
 });
 
-// User Activities (Admin)
 app.get('/api/activities', async (req, res) => {
     if (!userActivitiesCollection) return res.status(503).json({ error: "Database service not available." });
     try {
@@ -172,7 +169,6 @@ app.get('/api/activities', async (req, res) => {
     }
 });
 
-// Admin Reply to Comment
 app.post('/api/comments/:commentId/reply', async (req, res) => {
     if (!commentsCollection) return res.status(503).json({ error: "Database not connected." });
     try {
@@ -190,7 +186,6 @@ app.post('/api/comments/:commentId/reply', async (req, res) => {
     }
 });
 
-// Generic AI Chat / Story Generator
 app.post('/api/chat', async (req, res) => {
     const { ask, uid, webSearch, isStoryRequestFlag } = req.body;
     if (!ask || !uid) return res.status(400).json({ error: 'Parameters "ask" and "uid" are required.' });
@@ -218,7 +213,6 @@ app.post('/api/chat', async (req, res) => {
     }
 });
 
-// Gemini Vision Chat (Legacy)
 app.post('/api/gemini-chat', uploadLegacyVision.single('imageFile'), async (req, res) => {
     const { q, uid } = req.body;
     let tempImagePath = null;
@@ -227,7 +221,6 @@ app.post('/api/gemini-chat', uploadLegacyVision.single('imageFile'), async (req,
         tempImagePath = req.file.path;
         const APP_BASE_URL = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
         publicImageUrl = new URL(`/uploads/gemini_temp/${req.file.filename}`, APP_BASE_URL).toString();
-        console.log(`Gemini Vision: Image temporarily saved at ${tempImagePath}, accessible via ${publicImageUrl}`);
     }
     if (!uid) {
         if (tempImagePath) fs.unlinkSync(tempImagePath);
@@ -244,7 +237,7 @@ app.post('/api/gemini-chat', uploadLegacyVision.single('imageFile'), async (req,
     try {
         const apiResponse = await fetch(fullApiUrl);
         const responseText = await apiResponse.text();
-        if (tempImagePath) fs.unlink(tempImagePath, (err) => { if (err) console.error("Error deleting temp image for Gemini Vision:", err); else console.log("Temp image for Gemini Vision deleted:", tempImagePath); });
+        if (tempImagePath) fs.unlink(tempImagePath, (err) => { if (err) console.error("Error deleting temp image for Gemini Vision:", err); });
         if (!apiResponse.ok) {
             let errorJson = { error: `External Gemini API Error: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
             try { errorJson = JSON.parse(responseText); if(!errorJson.error && !errorJson.message) { errorJson.error = `External Gemini API Error: ${apiResponse.status} ${apiResponse.statusText}`; } } catch (e) { /* Not JSON */ }
@@ -262,7 +255,6 @@ app.post('/api/gemini-chat', uploadLegacyVision.single('imageFile'), async (req,
     }
 });
 
-// GPT-4o Vision Chat (Legacy, though uses gpt4o-latest endpoint)
 app.post('/api/gpt4o-chat', uploadLegacyVision.single('imageFile'), async (req, res) => {
     const { q, uid } = req.body;
     let tempImagePath = null;
@@ -270,8 +262,7 @@ app.post('/api/gpt4o-chat', uploadLegacyVision.single('imageFile'), async (req, 
     if (req.file) {
         tempImagePath = req.file.path;
         const APP_BASE_URL = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
-        publicImageUrl = new URL(`/uploads/gemini_temp/${req.file.filename}`, APP_BASE_URL).toString(); // Uses legacy path for consistency with original
-        console.log(`GPT-4o Vision: Image temporarily saved at ${tempImagePath}, accessible via ${publicImageUrl}`);
+        publicImageUrl = new URL(`/uploads/gemini_temp/${req.file.filename}`, APP_BASE_URL).toString();
     }
     if (!uid) {
         if (tempImagePath) fs.unlinkSync(tempImagePath);
@@ -288,7 +279,7 @@ app.post('/api/gpt4o-chat', uploadLegacyVision.single('imageFile'), async (req, 
     try {
         const apiResponse = await fetch(fullApiUrl);
         const responseText = await apiResponse.text();
-        if (tempImagePath) fs.unlink(tempImagePath, (err) => { if (err) console.error("Error deleting temp image for GPT-4o Vision:", err); else console.log("Temp image for GPT-4o Vision deleted:", tempImagePath); });
+        if (tempImagePath) fs.unlink(tempImagePath, (err) => { if (err) console.error("Error deleting temp image for GPT-4o Vision:", err); });
         if (!apiResponse.ok) {
             let errorJson = { error: `External GPT-4o API Error: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
             try { errorJson = JSON.parse(responseText); if(!errorJson.error && !errorJson.message) { errorJson.error = `External GPT-4o API Error: ${apiResponse.status} ${apiResponse.statusText}`; } } catch (e) { /* Not JSON */ }
@@ -306,7 +297,6 @@ app.post('/api/gpt4o-chat', uploadLegacyVision.single('imageFile'), async (req, 
     }
 });
 
-// Image Generation
 app.post('/api/generate-image', async (req, res) => {
     const { prompt } = req.body;
     if (!prompt) { return res.status(400).json({ error: 'Parameter "prompt" is required.' }); }
@@ -328,7 +318,6 @@ app.post('/api/generate-image', async (req, res) => {
     }
 });
 
-// Delete Comment
 app.delete('/api/comments/:commentId', async (req, res) => {
     if (!commentsCollection) return res.status(503).json({ error: "Database not connected." });
     try {
@@ -343,7 +332,6 @@ app.delete('/api/comments/:commentId', async (req, res) => {
     }
 });
 
-// Post Comment
 app.post('/api/comments', async (req, res) => {
     if (!commentsCollection) return res.status(503).json({ error: "Database not connected." });
     try {
@@ -355,8 +343,7 @@ app.post('/api/comments', async (req, res) => {
         if (usersCollection) {
             const user = await usersCollection.findOne({ uid: uid });
             if (user && user.name) finalName = user.name;
-            else console.warn(`Comment by UID: ${uid}, but user/name not in usersCollection. Using client name: ${clientProvidedName}`);
-        } else console.warn("usersCollection not available for comment name verification.");
+        }
         const newComment = { uid, name: finalName, text: text.trim(), createdAt: new Date(), likes: { count: 0, users: [] }, dislikes: { count: 0, users: [] }, adminReplyText: "", adminReplyTimestamp: null };
         const result = await commentsCollection.insertOne(newComment);
         res.status(201).json({ _id: result.insertedId, ...newComment });
@@ -366,7 +353,6 @@ app.post('/api/comments', async (req, res) => {
     }
 });
 
-// Like Comment
 app.post('/api/comments/:commentId/like', async (req, res) => {
     if (!commentsCollection) return res.status(503).json({ error: "Database not connected." });
     try {
@@ -396,7 +382,6 @@ app.post('/api/comments/:commentId/like', async (req, res) => {
     }
 });
 
-// Dislike Comment
 app.post('/api/comments/:commentId/dislike', async (req, res) => {
     if (!commentsCollection) return res.status(503).json({ error: "Database not connected." });
     try {
@@ -426,7 +411,6 @@ app.post('/api/comments/:commentId/dislike', async (req, res) => {
     }
 });
 
-// User Registration
 app.post('/api/users/register', async (req, res) => {
     if (!usersCollection) return res.status(503).json({ message: "User service not available." });
     try {
@@ -455,7 +439,6 @@ app.post('/api/users/register', async (req, res) => {
     }
 });
 
-// Check User Registration
 app.get('/api/users/check/:uid', async (req, res) => {
     if (!usersCollection) return res.status(503).json({ message: "User service not available." });
     try {
@@ -470,7 +453,6 @@ app.get('/api/users/check/:uid', async (req, res) => {
     }
 });
 
-// TMDB Helper
 async function fetchTMDB(endpoint, queryParams = {}) {
     const url = new URL(`${TMDB_BASE_URL}${endpoint}`);
     url.searchParams.append('api_key', TMDB_API_KEY);
@@ -487,13 +469,11 @@ async function fetchTMDB(endpoint, queryParams = {}) {
         throw error;
     }
 }
-// TMDB Routes (Popular, Search, Details, Videos)
 app.get('/api/movies/popular', async (req, res) => { try { const data = await fetchTMDB('/movie/popular', { page: req.query.page || '1' }); res.json(data); } catch (e) { res.status(e.status || 500).json({m: e.message}); }});
 app.get('/api/movies/search', async (req, res) => { const {query, page} = req.query; if(!query) return res.status(400).json({m:'Query required.'}); try {const d = await fetchTMDB('/search/movie', {query, page:page||'1'});res.json(d);}catch(e){res.status(e.status||500).json({m:e.message});}});
 app.get('/api/movies/details/:id', async (req, res) => { const {id}=req.params; if(!id) return res.status(400).json({m:'ID required.'}); try {const d=await fetchTMDB(`/movie/${id}`); res.json(d);}catch(e){res.status(e.status||500).json({m:e.message});}});
 app.get('/api/movies/details/:id/videos', async (req, res) => { const {id}=req.params; if(!id) return res.status(400).json({m:'ID required.'}); try {const d=await fetchTMDB(`/movie/${id}/videos`);res.json(d);}catch(e){res.status(e.status||500).json({m:e.message});}});
 
-// Track User Activity
 app.post('/api/activity', async (req, res) => {
     if (!userActivitiesCollection) return res.status(503).json({ error: "Database service not available." });
     try {
@@ -512,7 +492,6 @@ app.post('/api/activity', async (req, res) => {
     }
 });
 
-// Get All Comments
 app.get('/api/comments', async (req, res) => {
     if (!commentsCollection) return res.status(503).json({ error: "Database not connected." });
     try {
@@ -524,23 +503,21 @@ app.get('/api/comments', async (req, res) => {
     }
 });
 
-// Temp Email Routes
-const TEMPMAIL_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
+const TEMPMAIL_API_KEY_CONST = '793fcf57-8820-40ea-b34e-7addd227e2e6'; // Renamed to avoid conflict
 app.get('/api/tempmail/create', async (req, res) => {
-    const apiUrl = `https://kaiz-apis.gleeze.com/api/tempmail-create?apikey=${TEMPMAIL_API_KEY}`;
+    const apiUrl = `https://kaiz-apis.gleeze.com/api/tempmail-create?apikey=${TEMPMAIL_API_KEY_CONST}`;
     try {
         const r = await fetch(apiUrl); const t = await r.text(); if(!r.ok){let e={e:`API (tempmail-create) Err: ${r.status} ${r.statusText}`,d:t};try{e=JSON.parse(t);if(!e.e&&!e.m)e.e=`API (tempmail-create) Err: ${r.status} ${r.statusText}`; }catch(c){} return res.status(r.status).json(e);} res.json(JSON.parse(t));
     } catch (e) { console.error('Tempmail-create err:', e); res.status(500).json({e:'Server error creating temp mail.'});}
 });
 app.get('/api/tempmail/inbox', async (req, res) => {
     const { token } = req.query; if(!token)return res.status(400).json({e:'Token required.'});
-    const apiUrl = `https://kaiz-apis.gleeze.com/api/tempmail-inbox?token=${encodeURIComponent(token)}&apikey=${TEMPMAIL_API_KEY}`;
+    const apiUrl = `https://kaiz-apis.gleeze.com/api/tempmail-inbox?token=${encodeURIComponent(token)}&apikey=${TEMPMAIL_API_KEY_CONST}`;
     try {
         const r = await fetch(apiUrl); const t = await r.text(); if(!r.ok){let e={e:`API (tempmail-inbox) Err: ${r.status} ${r.statusText}`,d:t};try{e=JSON.parse(t);if(!e.e&&!e.m)e.e=`API (tempmail-inbox) Err: ${r.status} ${r.statusText}`; }catch(c){} return res.status(r.status).json(e);} res.json(JSON.parse(t));
     } catch (e) { console.error('Tempmail-inbox err:', e); res.status(500).json({e:'Server error fetching inbox.'});}
 });
 
-// Blackbox AI
 app.post('/api/blackbox-ai', async (req, res) => {
     const { ask, uid, webSearch } = req.body;
     if (!ask || !uid) return res.status(400).json({ error: 'Parameters "ask" and "uid" are required for Blackbox AI.' });
@@ -551,7 +528,6 @@ app.post('/api/blackbox-ai', async (req, res) => {
     } catch (e) { console.error('Blackbox API server err:', e); return res.status(500).json({ error: 'Server error (Blackbox AI).' }); }
 });
 
-// Deepseek AI
 app.post('/api/deepseek-ai', async (req, res) => {
     const { ask } = req.body; if (!ask) return res.status(400).json({ error: '"ask" required for Deepseek AI.' });
     const apiUrl = `https://kaiz-apis.gleeze.com/api/deepseek-v3?ask=${encodeURIComponent(ask)}&apikey=${DEEPSEEK_API_KEY}`;
@@ -560,7 +536,6 @@ app.post('/api/deepseek-ai', async (req, res) => {
     } catch (e) { console.error('Deepseek API server err:', e); return res.status(500).json({ error: 'Server error (Deepseek AI).' }); }
 });
 
-// Claude Haiku AI
 app.post('/api/claude-haiku-ai', async (req, res) => {
     const { ask } = req.body; if (!ask) return res.status(400).json({ error: '"ask" required for Claude Haiku AI.' });
     const apiUrl = `https://kaiz-apis.gleeze.com/api/claude3-haiku?ask=${encodeURIComponent(ask)}&apikey=${CLAUDE_HAIKU_API_KEY}`;
@@ -603,13 +578,47 @@ app.post('/api/gemini-all-model', uploadGeminiAllModel.single('file'), async (re
         const apiResponse = await fetch(hajiApiUrl);
         const responseText = await apiResponse.text();
         if (tempLocalPath) fs.unlink(tempLocalPath, (err) => { if (err) console.error("Error deleting temp file for Gemini All Model:", err); });
+
         if (!apiResponse.ok) {
-            let eJson={e:`Haji Mix Gemini API Err: ${apiResponse.status} ${apiResponse.statusText}`,d:responseText}; try{eJson=JSON.parse(responseText);if(!eJson.e&&!eJson.m)eJson.e=`Haji Mix Gemini API Err: ${apiResponse.status} ${apiResponse.statusText}`;}catch(c){} return res.status(apiResponse.status).json(eJson);
+            let eJson={error:`Haji Mix Gemini API Error: ${apiResponse.status} ${apiResponse.statusText}`,details:responseText};
+            try{
+                const parsedError = JSON.parse(responseText);
+                // If parsedError has a more specific error message, use it.
+                if(parsedError.error) eJson.error = parsedError.error;
+                if(parsedError.message && !parsedError.error) eJson.error = parsedError.message; // Some APIs use 'message'
+                if(parsedError.details) eJson.details = parsedError.details;
+
+            }catch(c){ /* responseText was not JSON, keep original error */}
+            console.error("Haji Mix Gemini API Error:", eJson);
+            return res.status(apiResponse.status).json(eJson);
         }
-        let data; try { data = JSON.parse(responseText); } catch (e) { return res.status(500).json({ error: 'Failed to parse Haji Mix Gemini API response.', details: responseText }); }
-        if (data && data.answer) {
-            res.json({ author: data.model_used || model, response: data.answer, model_used: data.model_used, supported_models: data.supported_models });
-        } else { return res.status(500).json({ error: 'Unexpected Haji Mix Gemini API response structure.', details: data }); }
+
+        let data;
+        try { data = JSON.parse(responseText); }
+        catch (e) {
+            console.warn('Haji Mix Gemini API response was not JSON, but status was OK. Response text:', responseText);
+            return res.status(500).json({ error: 'Failed to parse response from Haji Mix Gemini API.', details: responseText });
+        }
+
+        const responsePayload = {
+            author: data.model_used || model,
+            response: data.answer,
+            model_used: data.model_used,
+            supported_models: Array.isArray(data.supported_models) ? data.supported_models : []
+        };
+
+        if (data.error && !data.answer) {
+             console.warn("Haji Mix API returned an error in its payload:", data.error);
+        }
+
+        if (responsePayload.supported_models.length > 0) {
+            console.log("Gemini All Model: Successfully retrieved/forwarding supported_models list.");
+        } else {
+            console.warn("Gemini All Model: Haji Mix API response did not include 'supported_models' or it was empty.");
+        }
+
+        res.json(responsePayload);
+
     } catch (error) {
         console.error('Server error (Haji Mix Gemini API):', error);
         if (tempLocalPath && fs.existsSync(tempLocalPath)) fs.unlink(tempLocalPath, (err) => { if (err) console.error("Error deleting temp file (Gemini All Model) on error:", err); });

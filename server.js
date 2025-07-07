@@ -42,6 +42,22 @@ const uploadClaudeAllModel = multer({
     limits: { fileSize: 20 * 1024 * 1024 } // 20MB limit
 });
 
+// const app = express(); // Moved up
+// const PORT = process.env.PORT || 3000; // Moved up
+
+// Middleware
+// Serve static files from the upload directories
+// app.use('/uploads/gemini_temp', express.static(path.join(__dirname, LEGACY_GEMINI_UPLOAD_PATH))); // Moved up
+// app.use('/uploads/gemini_all_model_temp', express.static(path.join(__dirname, GEMINI_ALL_MODEL_TEMP_UPLOAD_PATH))); // Moved up
+// app.use('/uploads/chatgpt_temp', express.static(path.join(__dirname, CHATGPT_ALL_MODEL_TEMP_UPLOAD_PATH))); // Moved up
+// app.use('/uploads/claude_temp', express.static(path.join(__dirname, CLAUDE_ALL_MODEL_TEMP_UPLOAD_PATH))); // Moved up
+
+// Serve main public files
+// app.use(express.static(path.join(__dirname, 'public'))); // Moved up
+// JSON parsing middleware
+// app.use(express.json()); // Moved up
+
+
 app.post('/api/all-claude', uploadClaudeAllModel.single('file'), async (req, res) => {
     const { ask, model, uid, roleplay, max_tokens } = req.body;
     let clientUploadedFileUrl = req.body.img_url; // If client sends a URL directly
@@ -165,14 +181,17 @@ const uploadGeminiAllModel = multer({
     limits: { fileSize: 20 * 1024 * 1024 } // Limit file size to 20MB for this feature
 });
 
-
-const app = express();
+const app = express(); // INITIALIZE APP HERE
 const PORT = process.env.PORT || 3000;
 
 // Middleware
 // Serve static files from the upload directories
 app.use('/uploads/gemini_temp', express.static(path.join(__dirname, LEGACY_GEMINI_UPLOAD_PATH)));
 app.use('/uploads/gemini_all_model_temp', express.static(path.join(__dirname, GEMINI_ALL_MODEL_TEMP_UPLOAD_PATH)));
+// Ensure new static paths for ChatGPT and Claude are also after app initialization
+app.use('/uploads/chatgpt_temp', express.static(path.join(__dirname, CHATGPT_ALL_MODEL_TEMP_UPLOAD_PATH)));
+app.use('/uploads/claude_temp', express.static(path.join(__dirname, CLAUDE_ALL_MODEL_TEMP_UPLOAD_PATH)));
+
 // Serve main public files
 app.use(express.static(path.join(__dirname, 'public')));
 // JSON parsing middleware

@@ -3188,9 +3188,11 @@ body.dark-mode .code-block-wrapper {
     margin: 0;
     padding: 15px;
     overflow-x: auto; /* Horizontal scroll for long lines */
-    white-space: pre; /* Preserve whitespace and line breaks */
+    white-space: pre; /* Preserve whitespace and line breaks, crucial for code */
     font-family: 'Courier New', Courier, monospace;
     font-size: 0.9em;
+    max-width: 100%; /* Ensures <pre> itself doesn't overflow its parent (.code-block-wrapper) */
+    box-sizing: border-box; /* Include padding and border in the element's total width and height */
     line-height: 1.5;
     background-color: transparent !important; /* Pre should be transparent, wrapper has bg */
 }

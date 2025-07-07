@@ -2403,7 +2403,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const contentContainer = messageBubble.cloneNode(true);
                 const existingControls = contentContainer.querySelector('.message-controls');
                 if (existingControls) existingControls.remove();
-                
+
                 openDownloadFormatModal(contentContainer);
             });
 
@@ -3223,7 +3223,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (node.nodeType === Node.ELEMENT_NODE) {
                 const tagName = node.tagName.toUpperCase();
                 let childrenMd = '';
-                
+
                 // Special handling for LI content before processing its children for nested lists
                 if (tagName === 'LI') {
                     Array.from(node.childNodes).forEach(child => {
@@ -3256,12 +3256,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Assuming the actual code is in a <code> child, possibly from dataset.code
                         const codeEl = node.querySelector('code');
                         const lang = codeEl ? (codeEl.className.match(/language-(\w+)/)?.[1] || '') : '';
-                        const rawCode = codeEl ? (codeEl.dataset.code || codeEl.innerText) : node.innerText;
+                        // Prioritize dataset.code for raw original code if available
+                        const rawCode = codeEl ? (codeEl.dataset.code || codeEl.textContent) : node.textContent;
                         md = `\`\`\`${lang}\n${rawCode.trim()}\n\`\`\`\n\n`;
                         break;
                     case 'CODE':
                         if (!node.closest('PRE')) md = `\`${childrenMd.trim()}\``;
-                        else md = childrenMd; // Already handled by PRE
+                        else md = childrenMd.trim(); // Text content of <code> inside <pre>
                         break;
                     case 'UL':
                         let ulContent = '';
@@ -3321,7 +3322,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         markdownContent = htmlToMarkdown(bubbleElement).trim();
-        
+
         // Final cleanup: ensure consistent newlines, max 2 consecutive.
         markdownContent = markdownContent.replace(/\n\s*\n/g, '\n\n');
 
@@ -3349,7 +3350,7 @@ document.addEventListener('DOMContentLoaded', () => {
             format: 'a4'
         });
 
-        let yPos = 40; 
+        let yPos = 40;
         const pageHeight = pdf.internal.pageSize.getHeight();
         const pageWidth = pdf.internal.pageSize.getWidth();
         const margin = 40;
@@ -3359,20 +3360,20 @@ document.addEventListener('DOMContentLoaded', () => {
         // For jsPDF, this usually means using a built-in one like 'Helvetica' or 'Times'
         // or embedding a custom font (which is more complex with CDN usage).
         // Defaulting to Helvetica as it's generally good.
-        pdf.setFont('Helvetica', 'normal'); 
+        pdf.setFont('Helvetica', 'normal');
         pdf.setFontSize(11); // Default font size
-        
-        const getLineHeight = (size, multiplier = 1.2) => size * multiplier; 
+
+        const getLineHeight = (size, multiplier = 1.2) => size * multiplier;
 
         async function processNodePdf(node, currentX, currentY, currentOptions) {
             let newY = currentY;
-            const defaultOptions = { 
-                fontName: 'Helvetica', 
-                fontStyle: 'normal', 
+            const defaultOptions = {
+                fontName: 'Helvetica',
+                fontStyle: 'normal',
                 fontSize: 11,
                 // listPrefix is dynamically built during list processing
             };
-            let options = { ...defaultOptions, ...currentOptions }; 
+            let options = { ...defaultOptions, ...currentOptions };
 
             if (node.nodeType === Node.TEXT_NODE) {
                 const trimmedText = node.textContent.replace(/\s+/g, ' ').trim();
@@ -3383,7 +3384,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Calculate available width for text splitting based on currentX
                     const availableWidth = maxLineWidth - (currentX - margin);
                     const textLines = pdf.splitTextToSize(textToSplit, availableWidth > 0 ? availableWidth : maxLineWidth);
-                    
+
                     textLines.forEach(line => {
                         if (newY + getLineHeight(options.fontSize) > pageHeight - margin) {
                             pdf.addPage();
@@ -3399,10 +3400,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } else if (node.nodeType === Node.ELEMENT_NODE) {
                 const tagName = node.tagName.toUpperCase();
-                let newNestedOptions = { ...options }; 
+                let newNestedOptions = { ...options };
                 // Reset listPrefix for children unless it's part of LI content that continues
                 if (tagName !== 'LI' && tagName !== 'SPAN' && tagName !== 'STRONG' && tagName !== 'EM' && tagName !== 'B' && tagName !== 'I' && tagName !== 'CODE') {
-                    newNestedOptions.listPrefix = ''; 
+                    newNestedOptions.listPrefix = '';
                 }
 
                 switch (tagName) {
@@ -3415,46 +3416,46 @@ document.addEventListener('DOMContentLoaded', () => {
                     case 'BR':
                         newY += getLineHeight(options.fontSize, 0.8); // Smaller gap for BR
                         if (newY > pageHeight - margin) { pdf.addPage(); newY = margin; }
-                        return newY; 
+                        return newY;
                     case 'PRE':
                         const codeEl = node.querySelector('code');
                         const rawCode = codeEl ? (codeEl.dataset.code || codeEl.innerText) : node.innerText;
                         const codeFontSize = 9;
                         const codeLineHeight = getLineHeight(codeFontSize, 1.15); // Slightly more for code
-                        
-                        const codeLines = pdf.splitTextToSize(rawCode.trim(), maxLineWidth - 10); 
+
+                        const codeLines = pdf.splitTextToSize(rawCode.trim(), maxLineWidth - 10);
                         const boxHeight = (codeLines.length * codeLineHeight) + 10; // Padding for box
 
                         if (newY + boxHeight > pageHeight - margin) { pdf.addPage(); newY = margin; }
-                        
-                        pdf.setFillColor(245, 245, 245); 
-                        pdf.setDrawColor(220, 220, 220); 
-                        pdf.rect(margin - 5, newY - codeLineHeight * 0.1, maxLineWidth + 10, boxHeight, 'FD'); 
-                        
+
+                        pdf.setFillColor(245, 245, 245);
+                        pdf.setDrawColor(220, 220, 220);
+                        pdf.rect(margin - 5, newY - codeLineHeight * 0.1, maxLineWidth + 10, boxHeight, 'FD');
+
                         pdf.setFont('Courier', 'normal');
                         pdf.setFontSize(codeFontSize);
                         let codeTextY = newY + 5; // Start text with padding
                         codeLines.forEach(line => {
-                            if (codeTextY + codeLineHeight > pageHeight - margin) { 
+                            if (codeTextY + codeLineHeight > pageHeight - margin) {
                                 pdf.addPage(); newY = margin; codeTextY = newY + 5;
                                 // Redraw box header if split? For now, no.
-                                pdf.setFillColor(245, 245, 245); 
-                                pdf.setDrawColor(220, 220, 220); 
+                                pdf.setFillColor(245, 245, 245);
+                                pdf.setDrawColor(220, 220, 220);
                                 // Estimate remaining box height or full if new page
                                 const remainingBoxHeight = pageHeight - margin - newY > boxHeight ? boxHeight : pageHeight - margin - newY -5;
                                 pdf.rect(margin - 5, newY - codeLineHeight * 0.1, maxLineWidth + 10, remainingBoxHeight , 'FD');
                             }
-                            pdf.text(line, margin, codeTextY); 
+                            pdf.text(line, margin, codeTextY);
                             codeTextY += codeLineHeight;
                         });
                         newY = codeTextY - codeLineHeight + (getLineHeight(options.fontSize) * 0.5); // Position after the code block
                         pdf.setFont(options.fontName, options.fontStyle); // Reset font
                         pdf.setFontSize(options.fontSize);
-                        return newY; 
+                        return newY;
                     case 'CODE':
-                         if (!node.closest('PRE')) { 
+                         if (!node.closest('PRE')) {
                             newNestedOptions.fontName = 'Courier';
-                            newNestedOptions.fontSize = options.fontSize * 0.9; 
+                            newNestedOptions.fontSize = options.fontSize * 0.9;
                          } else { return newY; } // Handled by PRE's text extraction
                         break;
                     case 'UL': case 'OL':
@@ -3465,12 +3466,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         items.forEach(async (li) => {
                             listCounter++;
                             const itemPrefix = (tagName === 'OL') ? `${listCounter}. ` : '• ';
-                            let liOptions = { 
+                            let liOptions = {
                                 ...options, // Inherit current styles like font size for LI text
-                                listPrefix: itemPrefix, 
+                                listPrefix: itemPrefix,
                                 listDepth: listDepth, // Pass depth for potential nested lists within this LI
                             };
-                            
+
                             // Process children of LI. The first text node will get the prefix.
                             let firstTextNodeProcessed = false;
                             for(const childNode of li.childNodes) {
@@ -3483,8 +3484,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                 }
                             }
                         });
-                        newY += getLineHeight(options.fontSize) * 0.2; 
-                        return newY; 
+                        newY += getLineHeight(options.fontSize) * 0.2;
+                        return newY;
                     case 'TABLE':
                         if (typeof pdf.autoTable === 'function') {
                             const head = [];
@@ -3497,34 +3498,34 @@ document.addEventListener('DOMContentLoaded', () => {
                             bodyRows.forEach(row => {
                                 body.push(Array.from(row.querySelectorAll('td')).map(cell => cell.textContent.trim()));
                             });
-                            
+
                             if (newY + 20 > pageHeight - margin) { pdf.addPage(); newY = margin; }
                             pdf.autoTable({
                                 head: head.length > 0 ? head : null,
                                 body: body,
                                 startY: newY,
                                 margin: { left: margin, right: margin },
-                                theme: 'grid', 
+                                theme: 'grid',
                                 styles: { font: 'Helvetica', fontSize: 9, cellPadding: 3, overflow: 'linebreak' },
                                 headStyles: { fillColor: [220, 220, 220], textColor: 20, fontStyle: 'bold' },
                                 didDrawPage: (data) => { newY = data.cursor.y + 10; } // Update yPos after table
                             });
-                            newY = pdf.previousAutoTable.finalY ? pdf.previousAutoTable.finalY + 15 : newY + (20 * (body.length + (head.length > 0 ? 1:0))); 
-                        } else { 
+                            newY = pdf.previousAutoTable.finalY ? pdf.previousAutoTable.finalY + 15 : newY + (20 * (body.length + (head.length > 0 ? 1:0)));
+                        } else {
                              newY = await processNodePdf(document.createTextNode("[Aperçu du tableau non disponible sans le module externe jsPDF-AutoTable]"), margin, newY, {...options, fontStyle: 'italic'});
                         }
-                        return newY; 
-                    case 'DIV': case 'P': 
+                        return newY;
+                    case 'DIV': case 'P':
                         // Add a small space before block if not first element on page
                         if (newY > margin + getLineHeight(options.fontSize, 0.5) && (node.previousSibling || node.parentElement.firstChild !==node) ) {
-                           newY += getLineHeight(options.fontSize) * 0.1; 
+                           newY += getLineHeight(options.fontSize) * 0.1;
                         }
                         for(const child of Array.from(node.childNodes)) {
                            newY = await processNodePdf(child, currentX, newY, newNestedOptions);
                         }
                         // Add a bit more space after P or DIV if it's a block, unless it's the last element.
                         if (node.nextSibling || (node.parentElement && node.parentElement.lastChild !== node) ) {
-                           newY += getLineHeight(options.fontSize) * 0.3; 
+                           newY += getLineHeight(options.fontSize) * 0.3;
                         }
                         return newY;
                 }
@@ -3535,7 +3536,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     for(const child of Array.from(node.childNodes)) {
                        newY = await processNodePdf(child, currentX, newY, newNestedOptions);
                     }
-                } else if (node.textContent.trim() && !['BR', 'PRE', 'UL', 'OL', 'TABLE', 'DIV', 'P', 'LI'].includes(tagName)) { 
+                } else if (node.textContent.trim() && !['BR', 'PRE', 'UL', 'OL', 'TABLE', 'DIV', 'P', 'LI'].includes(tagName)) {
                     // If it's an unhandled element with text content (e.g. SPAN directly)
                     pdf.setFont(newNestedOptions.fontName, newNestedOptions.fontStyle);
                     pdf.setFontSize(newNestedOptions.fontSize);
@@ -3561,24 +3562,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         pdf.save(`${baseFilename}.pdf`);
-        return Promise.resolve(); 
+        return Promise.resolve();
     }
 
     async function generateDocxFromBubble(bubbleElement, baseFilename) {
-        if (typeof docx === 'undefined' || !docx.Document) { 
+        if (typeof docx === 'undefined' || !docx.Document) {
             console.error("docx library is not loaded or not client-side compatible. Make sure the CDN link is correct.");
             if(downloadFormatStatus) downloadFormatStatus.textContent = 'Erreur : La bibliothèque DOCX n\'a pas pu être chargée ou n\'est pas compatible.';
             return Promise.reject("DOCX library not loaded or incompatible");
         }
 
         const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, Table, TableCell, TableRow, WidthType, BorderStyle, ShadingType, convertInchesToTwip, PageOrientation, Indent } = docx;
-        const docChildren = []; 
+        const docChildren = [];
 
         const defaultParagraphSpacing = { after: 100, before: 50 };
 
         // Recursive function to process HTML nodes and convert them to docx elements
         function processHtmlNodeToDocx(node, currentTextProps = { size: 22, font: "Calibri" }, listInfo = { level: 0, type: null, counter: 0 }) {
-            const elements = []; 
+            const elements = [];
 
             if (node.nodeType === Node.TEXT_NODE) {
                 const text = node.textContent;
@@ -3588,12 +3589,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } else if (node.nodeType === Node.ELEMENT_NODE) {
                 const tagName = node.tagName.toUpperCase();
-                let newTextProps = JSON.parse(JSON.stringify(currentTextProps)); 
+                let newTextProps = JSON.parse(JSON.stringify(currentTextProps));
                 let paragraphChildren = [];
 
                 // Block-level elements usually create new Paragraphs or Tables
                 if (['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'PRE', 'UL', 'OL', 'TABLE', 'DIV', 'BR'].includes(tagName)) {
-                    
+
                     // Process children first for P, DIV to gather TextRuns for a single Paragraph
                     if (tagName === 'P' || tagName === 'DIV') {
                          Array.from(node.childNodes).forEach(child => {
@@ -3609,7 +3610,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         case 'H5': elements.push(new Paragraph({ children: [new TextRun({text: node.textContent, bold: true, size: 22})], heading: HeadingLevel.HEADING_5, spacing: { after: 160, before: 80 } })); break;
                         case 'H6': elements.push(new Paragraph({ children: [new TextRun({text: node.textContent, bold: true, size: 22})], heading: HeadingLevel.HEADING_6, spacing: { after: 140, before: 70 } })); break;
                         case 'P': if (paragraphChildren.length > 0) elements.push(new Paragraph({ children: paragraphChildren, spacing: defaultParagraphSpacing })); break;
-                        case 'DIV': 
+                        case 'DIV':
                             if (paragraphChildren.length > 0) { // If DIV contained inline content, wrap it
                                 elements.push(new Paragraph({ children: paragraphChildren, spacing: defaultParagraphSpacing }));
                             } // If DIV contained other block elements, they are already in 'elements' from recursive calls
@@ -3643,9 +3644,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                 itemCounter++;
                                 const liContentRuns = [];
                                 Array.from(li.childNodes).forEach(child => liContentRuns.push(...processHtmlNodeToDocx(child, newTextProps, {level: listInfo.level + 1, type: tagName, counter: itemCounter })));
-                                
-                                elements.push(new Paragraph({ 
-                                    children: liContentRuns, 
+
+                                elements.push(new Paragraph({
+                                    children: liContentRuns,
                                     numbering: { reference: tagName === 'OL' ? "default-numbering" : "default-bullet", level: listInfo.level },
                                     spacing: {after: 50}
                                 }));
@@ -3658,11 +3659,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                 Array.from(trNode.querySelectorAll('th, td')).forEach(tdNode => {
                                     const cellParagraphs = [];
                                     Array.from(tdNode.childNodes).forEach(child => cellParagraphs.push(...processHtmlNodeToDocx(child, {size:18})));
-                                    
-                                    tableCells.push(new TableCell({ 
-                                        children: cellParagraphs.length > 0 ? cellParagraphs : [new Paragraph("")], 
+
+                                    tableCells.push(new TableCell({
+                                        children: cellParagraphs.length > 0 ? cellParagraphs : [new Paragraph("")],
                                         borders: {
-                                            top: { style: BorderStyle.SINGLE, size: 6, color: "BFBFBF" }, 
+                                            top: { style: BorderStyle.SINGLE, size: 6, color: "BFBFBF" },
                                             bottom: { style: BorderStyle.SINGLE, size: 6, color: "BFBFBF" },
                                             left: { style: BorderStyle.SINGLE, size: 6, color: "BFBFBF" },
                                             right: { style: BorderStyle.SINGLE, size: 6, color: "BFBFBF" },
@@ -3682,9 +3683,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     else if (tagName === 'EM' || tagName === 'I') newTextProps.italics = true;
                     else if (tagName === 'CODE' && !node.closest('PRE')) {
                         newTextProps.font = "Courier New";
-                        newTextProps.size = (currentTextProps.size || 22) * 0.9; 
+                        newTextProps.size = (currentTextProps.size || 22) * 0.9;
                     }
-                    
+
                     if (node.childNodes && node.childNodes.length > 0 && !node.classList.contains('message-controls')) {
                         Array.from(node.childNodes).forEach(child => {
                             elements.push(...processHtmlNodeToDocx(child, newTextProps, listInfo));
@@ -3694,9 +3695,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             }
-            return elements; 
+            return elements;
         }
-        
+
         Array.from(bubbleElement.childNodes).forEach(childNode => {
             docChildren.push(...processHtmlNodeToDocx(childNode));
         });
@@ -3713,13 +3714,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 }
                 flatten(curr.options.children);
-                
+
                 // Filter out TextRuns that are solely whitespace
                 curr.options.children = flatChildren.filter(run => run instanceof TextRun && run.options.text.trim() !== "");
 
                 if (curr.options.children.length > 0) acc.push(curr);
             } else {
-                acc.push(curr); 
+                acc.push(curr);
             }
             return acc;
         }, []);

@@ -627,25 +627,66 @@ app.post('/api/gemini-all-model', uploadGeminiAllModel.single('file'), async (re
 });
 
 // New Route for All ChatGPT Models
-const CHATGPT_HAJI_MIX_API_KEY = 'e30864f5c326f6e3d70b032000ef5e2fa610cb5d9bc5759711d33036e303cef4'; // Same as Gemini for now, as per user instruction
-app.post('/api/all-chatgpt', async (req, res) => { // Not using multer here yet, assuming text-only for now
-    const { ask, model, uid, roleplay, max_tokens, img_url } = req.body;
+const CHATGPT_HAJI_MIX_API_KEY = 'e30864f5c326f6e3d70b032000ef5e2fa610cb5d9bc5759711d33036e303cef4'; 
+const CHATGPT_ALL_MODEL_TEMP_UPLOAD_PATH = 'public/uploads/chatgpt_temp/';
 
-    if (!ask && !img_url) return res.status(400).json({ error: '"ask" or "img_url" is required.' });
+if (!fs.existsSync(CHATGPT_ALL_MODEL_TEMP_UPLOAD_PATH)){
+    fs.mkdirSync(CHATGPT_ALL_MODEL_TEMP_UPLOAD_PATH, { recursive: true });
+}
+app.use('/uploads/chatgpt_temp', express.static(path.join(__dirname, CHATGPT_ALL_MODEL_TEMP_UPLOAD_PATH)));
+
+const chatGPTAllModelStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, CHATGPT_ALL_MODEL_TEMP_UPLOAD_PATH);
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, "chatgptfile-" + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+const uploadChatGPTAllModel = multer({
+    storage: chatGPTAllModelStorage,
+    limits: { fileSize: 20 * 1024 * 1024 } // 20MB limit, same as Gemini All Model
+});
+
+app.post('/api/all-chatgpt', uploadChatGPTAllModel.single('file'), async (req, res) => {
+    const { ask, model, uid, roleplay, max_tokens } = req.body;
+    let clientUploadedFileUrl = req.body.img_url; // If client sends a URL directly
+    let tempLocalPath = null;
+    let publicFileUrl = null;
+
+    if (!ask && !req.file && !clientUploadedFileUrl) return res.status(400).json({ error: '"ask" or file/img_url is required.' });
     if (!uid) return res.status(400).json({ error: '"uid" is required.' });
     if (!model) return res.status(400).json({ error: '"model" is required.' });
 
     let hajiOpenAiApiUrl = `https://haji-mix-api.gleeze.com/api/openai?uid=${encodeURIComponent(uid)}&model=${encodeURIComponent(model)}&api_key=${CHATGPT_HAJI_MIX_API_KEY}`;
     
+    if (req.file) {
+        tempLocalPath = req.file.path;
+        const APP_BASE_URL = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+        publicFileUrl = new URL(`/uploads/chatgpt_temp/${req.file.filename}`, APP_BASE_URL).toString();
+        console.log(`All ChatGPT Models: File temp saved at ${tempLocalPath}, public URL ${publicFileUrl}`);
+    } else if (clientUploadedFileUrl) { // If user provided a URL directly
+        try {
+            const parsedUrl = new URL(clientUploadedFileUrl);
+            if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") throw new Error("Invalid file URL protocol.");
+            publicFileUrl = clientUploadedFileUrl;
+        } catch (e) { 
+            if (tempLocalPath) fs.unlinkSync(tempLocalPath); // Clean up if any file was partially processed
+            return res.status(400).json({ error: `Invalid img_url: ${e.message}` }); 
+        }
+    }
+
     if (ask) hajiOpenAiApiUrl += `&ask=${encodeURIComponent(ask)}`;
-    if (img_url) hajiOpenAiApiUrl += `&img_url=${encodeURIComponent(img_url)}`; // For future image support
+    if (publicFileUrl) hajiOpenAiApiUrl += `&img_url=${encodeURIComponent(publicFileUrl)}`;
     if (roleplay) hajiOpenAiApiUrl += `&roleplay=${encodeURIComponent(roleplay)}`;
     if (max_tokens) hajiOpenAiApiUrl += `&max_tokens=${encodeURIComponent(max_tokens)}`;
-    hajiOpenAiApiUrl += `&stream=false`; // Explicitly set stream to false
+    hajiOpenAiApiUrl += `&stream=false`;
 
     try {
         const apiResponse = await fetch(hajiOpenAiApiUrl);
         const responseText = await apiResponse.text();
+        if (tempLocalPath) fs.unlink(tempLocalPath, (err) => { if (err) console.error("Error deleting temp file for All ChatGPT Models:", err); });
 
         if (!apiResponse.ok) {
             let eJson = { error: `Haji Mix OpenAI API Error: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };

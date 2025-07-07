@@ -3207,114 +3207,125 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function generateTxtFromBubble(bubbleElement, baseFilename) {
-        let textContent = '';
-        const listCounters = {}; // Pour gérer la numérotation des listes ordonnées imbriquées
+        let markdownContent = '';
+        const listLevelCounters = {}; // To manage numbering for nested OLs
 
-        function getNodeText(node) {
+        function htmlToMarkdown(node, currentListInfo = { type: null, level: 0 }) {
+            let md = '';
             if (node.nodeType === Node.TEXT_NODE) {
-                return node.textContent;
+                // Replace multiple spaces/newlines with a single space for inline text,
+                // but preserve newlines if they are significant (e.g. inside PRE)
+                if (node.parentNode.tagName === 'PRE' || node.parentNode.tagName === 'CODE') {
+                    md = node.textContent;
+                } else {
+                    md = node.textContent.replace(/\s+/g, ' ');
+                }
             } else if (node.nodeType === Node.ELEMENT_NODE) {
-                let prefix = '';
-                let suffix = '\n';
-                let content = '';
-
-                // Gestion des listes
-                if (node.tagName === 'UL') {
-                    // Pas de préfixe spécifique pour UL, mais on réinitialise le compteur OL si on sort d'une OL
-                    if (node.parentNode.tagName !== 'LI') listCounters[node.parentNode.tagName] = 0;
-                    for (let i = 0; i < node.childNodes.length; i++) {
-                        content += getNodeText(node.childNodes[i]);
-                    }
-                    suffix = '\n'; // Espace après la liste
-                    return content; // Retourne directement le contenu des LI
-                } else if (node.tagName === 'OL') {
-                    const parentListType = node.parentNode.tagName;
-                    if (!listCounters[parentListType]) listCounters[parentListType] = 0;
-                    listCounters[node.tagName] = 0; // Reset counter for this new OL
-
-                    for (let i = 0; i < node.childNodes.length; i++) {
-                        listCounters[node.tagName]++;
-                        content += getNodeText(node.childNodes[i]);
-                    }
-                    suffix = '\n'; // Espace après la liste
-                    // delete listCounters[node.tagName]; // Clean up counter for this OL level
-                    return content; // Retourne directement le contenu des LI
-                } else if (node.tagName === 'LI') {
-                    const parentOl = node.closest('OL');
-                    if (parentOl) {
-                        // Find the correct counter for this LI based on its OL parent
-                        // This logic is simplified; true nested OL counters are complex.
-                        // This will effectively use the counter of the immediate OL parent.
-                        prefix = `${listCounters[parentOl.tagName] || 1}. `;
-                    } else { // UL
-                        prefix = '- ';
-                    }
-                    for (let i = 0; i < node.childNodes.length; i++) {
-                        content += getNodeText(node.childNodes[i]);
-                    }
-                    // Remove last newline if content itself ends with one, to avoid double newlines from LI's own suffix
-                    if (content.endsWith('\n')) content = content.slice(0, -1);
-
-                } else if (node.tagName === 'BR') {
-                    return '\n';
-                } else if (['H1', 'H2', 'H3', 'H4', 'H5', 'H6'].includes(node.tagName)) {
-                    prefix = `\n## ${node.textContent.toUpperCase()} ##\n\n`; // Markdown-like style for titles
-                    content = ''; // textContent is already in prefix
-                    suffix = '';
-                } else if (node.tagName === 'P') {
-                    // Standard paragraph, just get content
-                    for (let i = 0; i < node.childNodes.length; i++) {
-                        content += getNodeText(node.childNodes[i]);
-                    }
-                } else if (node.tagName === 'PRE') {
-                    const code = node.querySelector('code');
-                    const codeContent = code ? code.dataset.code || code.innerText : node.innerText;
-                    prefix = `\n\`\`\`\n${codeContent.trim()}\n\`\`\`\n\n`;
-                    content = '';
-                    suffix = '';
-                } else if (node.tagName === 'CODE') { // Inline code
-                    // If it's inside a PRE, it's already handled. If standalone:
-                    if (!node.closest('PRE')) {
-                        return `\`${node.textContent}\``;
-                    }
-                } else if (node.tagName === 'STRONG' || node.tagName === 'B') {
-                    return `**${node.textContent}**`;
-                } else if (node.tagName === 'EM' || node.tagName === 'I') {
-                    return `*${node.textContent}*`;
-                } else if (node.classList && node.classList.contains('message-controls')) {
-                    return ''; // Skip message controls div
-                } else if (node.tagName === 'TABLE') {
-                    let tableContent = '\n--- TABLE ---\n';
-                    const rows = node.querySelectorAll('tr');
-                    rows.forEach(row => {
-                        const cells = row.querySelectorAll('th, td');
-                        const cellTexts = Array.from(cells).map(cell => cell.textContent.trim());
-                        tableContent += `| ${cellTexts.join(' | ')} |\n`;
+                const tagName = node.tagName.toUpperCase();
+                let childrenMd = '';
+                
+                // Special handling for LI content before processing its children for nested lists
+                if (tagName === 'LI') {
+                    Array.from(node.childNodes).forEach(child => {
+                         // If child is UL/OL, it's a nested list. Otherwise, process as normal content.
+                        if (child.nodeType === Node.ELEMENT_NODE && (child.tagName === 'UL' || child.tagName === 'OL')) {
+                             // Process nested list separately after current LI content line
+                        } else {
+                            childrenMd += htmlToMarkdown(child, currentListInfo);
+                        }
                     });
-                    tableContent += '--- END TABLE ---\n\n';
-                    return tableContent;
+                } else { // For other elements, process all children first
+                    Array.from(node.childNodes).forEach(child => {
+                        childrenMd += htmlToMarkdown(child, currentListInfo);
+                    });
                 }
-                else { // For other block elements or unrecognized inline elements, just grab text
-                    for (let i = 0; i < node.childNodes.length; i++) {
-                        content += getNodeText(node.childNodes[i]);
-                    }
-                     // Avoid adding extra newlines if content is just a newline itself (from BR)
-                    if (content === '\n' && (prefix === '' || prefix === '\n')) suffix = '';
+
+
+                switch (tagName) {
+                    case 'H1': md = `# ${childrenMd.trim()}\n\n`; break;
+                    case 'H2': md = `## ${childrenMd.trim()}\n\n`; break;
+                    case 'H3': md = `### ${childrenMd.trim()}\n\n`; break;
+                    case 'H4': md = `#### ${childrenMd.trim()}\n\n`; break;
+                    case 'H5': md = `##### ${childrenMd.trim()}\n\n`; break;
+                    case 'H6': md = `###### ${childrenMd.trim()}\n\n`; break;
+                    case 'P': md = `${childrenMd.trim()}\n\n`; break;
+                    case 'STRONG': case 'B': md = `**${childrenMd.trim()}**`; break;
+                    case 'EM': case 'I': md = `*${childrenMd.trim()}*`; break;
+                    case 'BR': md = '\n'; break;
+                    case 'PRE':
+                        // Assuming the actual code is in a <code> child, possibly from dataset.code
+                        const codeEl = node.querySelector('code');
+                        const lang = codeEl ? (codeEl.className.match(/language-(\w+)/)?.[1] || '') : '';
+                        const rawCode = codeEl ? (codeEl.dataset.code || codeEl.innerText) : node.innerText;
+                        md = `\`\`\`${lang}\n${rawCode.trim()}\n\`\`\`\n\n`;
+                        break;
+                    case 'CODE':
+                        if (!node.closest('PRE')) md = `\`${childrenMd.trim()}\``;
+                        else md = childrenMd; // Already handled by PRE
+                        break;
+                    case 'UL':
+                        let ulContent = '';
+                        Array.from(node.children).filter(c => c.tagName === 'LI').forEach(li => {
+                            ulContent += htmlToMarkdown(li, { type: 'UL', level: currentListInfo.level + 1 });
+                        });
+                        md = ulContent + (currentListInfo.level === 0 ? '\n' : ''); // Add extra newline after top-level list
+                        break;
+                    case 'OL':
+                        let olContent = '';
+                        listLevelCounters[currentListInfo.level + 1] = 0; // Reset counter for this level
+                        Array.from(node.children).filter(c => c.tagName === 'LI').forEach(li => {
+                             listLevelCounters[currentListInfo.level + 1]++;
+                            olContent += htmlToMarkdown(li, { type: 'OL', level: currentListInfo.level + 1, counter: listLevelCounters[currentListInfo.level + 1] });
+                        });
+                        md = olContent + (currentListInfo.level === 0 ? '\n' : '');
+                        break;
+                    case 'LI':
+                        const indent = '  '.repeat(currentListInfo.level -1 > 0 ? currentListInfo.level -1 : 0);
+                        if (currentListInfo.type === 'OL') {
+                            md = `${indent}${currentListInfo.counter}. ${childrenMd.trim()}\n`;
+                        } else { // UL
+                            md = `${indent}* ${childrenMd.trim()}\n`; // Using * for UL consistently
+                        }
+                        // Process nested lists if any, after the current LI's main content
+                        Array.from(node.childNodes).forEach(child => {
+                            if (child.nodeType === Node.ELEMENT_NODE && (child.tagName === 'UL' || child.tagName === 'OL')) {
+                                md += htmlToMarkdown(child, { type: child.tagName, level: currentListInfo.level }); // Pass current level, it will be incremented by UL/OL
+                            }
+                        });
+                        break;
+                    case 'TABLE':
+                        // Basic Markdown table conversion
+                        let tableMd = '';
+                        const rows = Array.from(node.querySelectorAll('tr'));
+                        rows.forEach((row, rowIndex) => {
+                            const cells = Array.from(row.querySelectorAll('th, td'));
+                            tableMd += `| ${cells.map(cell => htmlToMarkdown(cell).trim()).join(' | ')} |\n`;
+                            if (rowIndex === 0 && row.querySelector('th')) { // Header row
+                                tableMd += `| ${cells.map(() => '---').join(' | ')} |\n`;
+                            }
+                        });
+                        md = tableMd + '\n';
+                        break;
+                    default:
+                        // For other elements (like DIV, SPAN), just process children.
+                        // If it's an unknown block element, add newlines.
+                        if (window.getComputedStyle(node).display === 'block' && tagName !== 'LI') {
+                            md = `${childrenMd.trim()}\n\n`;
+                        } else {
+                            md = childrenMd;
+                        }
+                        break;
                 }
-                return prefix + content + suffix;
             }
-            return ''; // Should not happen for typical nodes
+            return md;
         }
 
-        // Iterate over the children of the bubbleElement to build the text content
-        bubbleElement.childNodes.forEach(childNode => {
-            textContent += getNodeText(childNode);
-        });
+        markdownContent = htmlToMarkdown(bubbleElement).trim();
         
-        // Basic cleanup: remove multiple consecutive newlines, leaving max 2
-        textContent = textContent.replace(/\n{3,}/g, '\n\n').trim();
+        // Final cleanup: ensure consistent newlines, max 2 consecutive.
+        markdownContent = markdownContent.replace(/\n\s*\n/g, '\n\n');
 
-        const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+        const blob = new Blob([markdownContent], { type: 'text/plain;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -3326,13 +3337,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function generatePdfFromBubble(bubbleElement, baseFilename) {
-        if (typeof jspdf === 'undefined') {
-            console.error("jsPDF is not loaded. Make sure the CDN link is correct in index.html.");
+        if (typeof jspdf === 'undefined' || !jspdf.jsPDF) { // Check for jsPDF constructor
+            console.error("jsPDF is not loaded or 'jspdf.jsPDF' is not available. Make sure the CDN link is correct in index.html.");
             if(downloadFormatStatus) downloadFormatStatus.textContent = 'Erreur : La bibliothèque PDF n\'a pas pu être chargée.';
-            return Promise.reject("jsPDF not loaded");
+            return Promise.reject("jsPDF not loaded or not available as constructor");
         }
-        const { jsPDF } = jspdf;
-        const pdf = new jsPDF({
+        const { jsPDF } = jspdf; // If jspdf is the global, jsPDF is a property.
+        const pdf = new jsPDF({ // Correct instantiation
             orientation: 'p',
             unit: 'pt',
             format: 'a4'
@@ -3344,8 +3355,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const margin = 40;
         const maxLineWidth = pageWidth - 2 * margin;
 
+        // Embed a standard font that supports a wider range of characters if possible
+        // For jsPDF, this usually means using a built-in one like 'Helvetica' or 'Times'
+        // or embedding a custom font (which is more complex with CDN usage).
+        // Defaulting to Helvetica as it's generally good.
         pdf.setFont('Helvetica', 'normal'); 
-        pdf.setFontSize(11);
+        pdf.setFontSize(11); // Default font size
         
         const getLineHeight = (size, multiplier = 1.2) => size * multiplier; 
 
@@ -3354,9 +3369,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const defaultOptions = { 
                 fontName: 'Helvetica', 
                 fontStyle: 'normal', 
-                fontSize: 11, 
-                isCode: false, 
-                // listPrefix is now dynamically built
+                fontSize: 11,
+                // listPrefix is dynamically built during list processing
             };
             let options = { ...defaultOptions, ...currentOptions }; 
 
@@ -3366,27 +3380,30 @@ document.addEventListener('DOMContentLoaded', () => {
                     pdf.setFont(options.fontName, options.fontStyle);
                     pdf.setFontSize(options.fontSize);
                     const textToSplit = (options.listPrefix || '') + trimmedText;
-                    const textLines = pdf.splitTextToSize(textToSplit, maxLineWidth - (currentX - margin));
+                    // Calculate available width for text splitting based on currentX
+                    const availableWidth = maxLineWidth - (currentX - margin);
+                    const textLines = pdf.splitTextToSize(textToSplit, availableWidth > 0 ? availableWidth : maxLineWidth);
                     
                     textLines.forEach(line => {
                         if (newY + getLineHeight(options.fontSize) > pageHeight - margin) {
                             pdf.addPage();
                             newY = margin;
+                             // Reset font after page break
+                            pdf.setFont(options.fontName, options.fontStyle);
+                            pdf.setFontSize(options.fontSize);
                         }
                         pdf.text(line, currentX, newY);
                         newY += getLineHeight(options.fontSize);
                     });
-                     // For list items, subsequent text nodes should be indented like the prefix was.
-                    if(options.listPrefix) options.listPrefix = ' '.repeat((options.listPrefix || '').length);
+                    if(options.listPrefix) options.listPrefix = ' '.repeat((options.listPrefix || '').length); // Indent subsequent lines
                 }
             } else if (node.nodeType === Node.ELEMENT_NODE) {
                 const tagName = node.tagName.toUpperCase();
                 let newNestedOptions = { ...options }; 
-                // Reset listPrefix for children unless it's a list item being continued by its own text nodes
+                // Reset listPrefix for children unless it's part of LI content that continues
                 if (tagName !== 'LI' && tagName !== 'SPAN' && tagName !== 'STRONG' && tagName !== 'EM' && tagName !== 'B' && tagName !== 'I' && tagName !== 'CODE') {
                     newNestedOptions.listPrefix = ''; 
                 }
-
 
                 switch (tagName) {
                     case 'H1': newNestedOptions = {...newNestedOptions, fontSize: 18, fontStyle: 'bold'}; break;
@@ -3396,57 +3413,74 @@ document.addEventListener('DOMContentLoaded', () => {
                     case 'STRONG': case 'B': newNestedOptions.fontStyle = 'bold'; break;
                     case 'EM': case 'I': newNestedOptions.fontStyle = 'italic'; break;
                     case 'BR':
-                        newY += getLineHeight(options.fontSize);
+                        newY += getLineHeight(options.fontSize, 0.8); // Smaller gap for BR
                         if (newY > pageHeight - margin) { pdf.addPage(); newY = margin; }
                         return newY; 
                     case 'PRE':
                         const codeEl = node.querySelector('code');
                         const rawCode = codeEl ? (codeEl.dataset.code || codeEl.innerText) : node.innerText;
                         const codeFontSize = 9;
-                        const codeLineHeight = getLineHeight(codeFontSize, 1.1);
+                        const codeLineHeight = getLineHeight(codeFontSize, 1.15); // Slightly more for code
                         
                         const codeLines = pdf.splitTextToSize(rawCode.trim(), maxLineWidth - 10); 
-                        const boxHeight = (codeLines.length * codeLineHeight) + 10;
+                        const boxHeight = (codeLines.length * codeLineHeight) + 10; // Padding for box
 
                         if (newY + boxHeight > pageHeight - margin) { pdf.addPage(); newY = margin; }
                         
-                        pdf.setFillColor(240, 240, 240); 
-                        pdf.setDrawColor(200, 200, 200); 
-                        pdf.rect(margin - 5, newY - codeLineHeight * 0.2 + 2 , maxLineWidth + 10, boxHeight - 4, 'FD'); 
+                        pdf.setFillColor(245, 245, 245); 
+                        pdf.setDrawColor(220, 220, 220); 
+                        pdf.rect(margin - 5, newY - codeLineHeight * 0.1, maxLineWidth + 10, boxHeight, 'FD'); 
                         
                         pdf.setFont('Courier', 'normal');
                         pdf.setFontSize(codeFontSize);
+                        let codeTextY = newY + 5; // Start text with padding
                         codeLines.forEach(line => {
-                            if (newY + codeLineHeight > pageHeight - margin) { pdf.addPage(); newY = margin; }
-                            pdf.text(line, margin, newY); 
-                            newY += codeLineHeight;
+                            if (codeTextY + codeLineHeight > pageHeight - margin) { 
+                                pdf.addPage(); newY = margin; codeTextY = newY + 5;
+                                // Redraw box header if split? For now, no.
+                                pdf.setFillColor(245, 245, 245); 
+                                pdf.setDrawColor(220, 220, 220); 
+                                // Estimate remaining box height or full if new page
+                                const remainingBoxHeight = pageHeight - margin - newY > boxHeight ? boxHeight : pageHeight - margin - newY -5;
+                                pdf.rect(margin - 5, newY - codeLineHeight * 0.1, maxLineWidth + 10, remainingBoxHeight , 'FD');
+                            }
+                            pdf.text(line, margin, codeTextY); 
+                            codeTextY += codeLineHeight;
                         });
-                        newY += getLineHeight(options.fontSize) * 0.5; 
+                        newY = codeTextY - codeLineHeight + (getLineHeight(options.fontSize) * 0.5); // Position after the code block
+                        pdf.setFont(options.fontName, options.fontStyle); // Reset font
+                        pdf.setFontSize(options.fontSize);
                         return newY; 
                     case 'CODE':
                          if (!node.closest('PRE')) { 
                             newNestedOptions.fontName = 'Courier';
                             newNestedOptions.fontSize = options.fontSize * 0.9; 
-                         } else { return newY; } 
+                         } else { return newY; } // Handled by PRE's text extraction
                         break;
                     case 'UL': case 'OL':
                         const items = Array.from(node.children).filter(child => child.tagName === 'LI');
-                        const listDepth = (options.listDepth || 0) + 1;
+                        const listDepth = (options.listDepth || 0) + 1; // Current depth for items of this list
                         let listCounter = 0;
 
                         items.forEach(async (li) => {
                             listCounter++;
                             const itemPrefix = (tagName === 'OL') ? `${listCounter}. ` : '• ';
                             let liOptions = { 
-                                ...options, 
+                                ...options, // Inherit current styles like font size for LI text
                                 listPrefix: itemPrefix, 
-                                listDepth: listDepth,
+                                listDepth: listDepth, // Pass depth for potential nested lists within this LI
                             };
                             
+                            // Process children of LI. The first text node will get the prefix.
+                            let firstTextNodeProcessed = false;
                             for(const childNode of li.childNodes) {
-                                newY = await processNodePdf(childNode, currentX + 20, newY, liOptions);
-                                // Indent subsequent lines of same LI by clearing the prefix after first use within this LI processing run
-                                liOptions.listPrefix = ' '.repeat(itemPrefix.length); 
+                                if(childNode.nodeType === Node.TEXT_NODE && childNode.textContent.trim() && !firstTextNodeProcessed){
+                                   newY = await processNodePdf(childNode, currentX + (20 * listDepth), newY, liOptions);
+                                   firstTextNodeProcessed = true;
+                                   liOptions.listPrefix = ' '.repeat(itemPrefix.length); // Indent further lines of same LI item
+                                } else {
+                                   newY = await processNodePdf(childNode, currentX + (20 * listDepth), newY, liOptions);
+                                }
                             }
                         });
                         newY += getLineHeight(options.fontSize) * 0.2; 
@@ -3471,46 +3505,57 @@ document.addEventListener('DOMContentLoaded', () => {
                                 startY: newY,
                                 margin: { left: margin, right: margin },
                                 theme: 'grid', 
-                                styles: { font: 'Helvetica', fontSize: 9, cellPadding: 3 },
+                                styles: { font: 'Helvetica', fontSize: 9, cellPadding: 3, overflow: 'linebreak' },
                                 headStyles: { fillColor: [220, 220, 220], textColor: 20, fontStyle: 'bold' },
-                                didDrawPage: (data) => { newY = data.cursor.y + 10; }
+                                didDrawPage: (data) => { newY = data.cursor.y + 10; } // Update yPos after table
                             });
-                            newY = pdf.previousAutoTable.finalY ? pdf.previousAutoTable.finalY + 10 : newY + 20 * (body.length + (head.length > 0 ? 1:0) ); 
+                            newY = pdf.previousAutoTable.finalY ? pdf.previousAutoTable.finalY + 15 : newY + (20 * (body.length + (head.length > 0 ? 1:0))); 
                         } else { 
-                             newY = await processNodePdf(document.createTextNode("[Tableau - autoTable non disponible]"), margin, newY, {...options, fontStyle: 'italic'});
+                             newY = await processNodePdf(document.createTextNode("[Aperçu du tableau non disponible sans le module externe jsPDF-AutoTable]"), margin, newY, {...options, fontStyle: 'italic'});
                         }
                         return newY; 
                     case 'DIV': case 'P': 
+                        // Add a small space before block if not first element on page
+                        if (newY > margin + getLineHeight(options.fontSize, 0.5) && (node.previousSibling || node.parentElement.firstChild !==node) ) {
+                           newY += getLineHeight(options.fontSize) * 0.1; 
+                        }
                         for(const child of Array.from(node.childNodes)) {
                            newY = await processNodePdf(child, currentX, newY, newNestedOptions);
                         }
-                        if (node.nextSibling || node.parentElement.lastChild !== node) { // Add space if not the very last element
+                        // Add a bit more space after P or DIV if it's a block, unless it's the last element.
+                        if (node.nextSibling || (node.parentElement && node.parentElement.lastChild !== node) ) {
                            newY += getLineHeight(options.fontSize) * 0.3; 
                         }
                         return newY;
                 }
 
+                // Generic child processing for elements that mainly apply style (e.g., SPAN)
+                // or unhandled block elements that should just pass content through.
                 if (node.childNodes && node.childNodes.length > 0 && !node.classList.contains('message-controls')) {
                     for(const child of Array.from(node.childNodes)) {
                        newY = await processNodePdf(child, currentX, newY, newNestedOptions);
                     }
-                } else if (textContent && !['BR', 'PRE', 'UL', 'OL', 'TABLE', 'DIV', 'P', 'LI'].includes(tagName)) { 
+                } else if (node.textContent.trim() && !['BR', 'PRE', 'UL', 'OL', 'TABLE', 'DIV', 'P', 'LI'].includes(tagName)) { 
+                    // If it's an unhandled element with text content (e.g. SPAN directly)
                     pdf.setFont(newNestedOptions.fontName, newNestedOptions.fontStyle);
                     pdf.setFontSize(newNestedOptions.fontSize);
-                    const textLinesToPrint = pdf.splitTextToSize((newNestedOptions.listPrefix || '') + textContent, maxLineWidth - (currentX - margin));
+                    const textLinesToPrint = pdf.splitTextToSize((newNestedOptions.listPrefix || '') + node.textContent.trim(), maxLineWidth - (currentX - margin));
                     textLinesToPrint.forEach(line => {
                         if (newY + getLineHeight(newNestedOptions.fontSize) > pageHeight - margin) {
                             pdf.addPage();
                             newY = margin;
+                             pdf.setFont(newNestedOptions.fontName, newNestedOptions.fontStyle); // Reset font on new page
+                             pdf.setFontSize(newNestedOptions.fontSize);
                         }
                         pdf.text(line, currentX, newY);
                         newY += getLineHeight(newNestedOptions.fontSize);
                     });
                 }
             }
-            return newY;
+            return newY; // Return the updated Y position
         }
 
+        // Start processing with initial listDepth and an empty counter object
         for(const childNode of Array.from(bubbleElement.childNodes)) {
             yPos = await processNodePdf(childNode, margin, yPos, { listDepth: 0 });
         }

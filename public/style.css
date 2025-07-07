@@ -830,14 +830,14 @@ body:not(.dark-mode) .theme-switch input:checked + .slider:before {
     border-color: var(--secondary-accent-color);
 }
 #private-message-float-btn:hover {
-    background-color: var(--action-color);
+    background-color: var(--action-color); 
     border-color: var(--action-color);
 }
 #private-message-float-btn .icon {
-    fill: var(--secondary-bg);
+    fill: var(--secondary-bg); 
 }
 #private-message-float-btn:hover .icon {
-    fill: var(--secondary-bg);
+    fill: var(--secondary-bg); 
 }
 */
 /* --- EXISTING FEATURE STYLES (MERGED) --- */
@@ -947,10 +947,44 @@ body:not(.dark-mode) .theme-switch input:checked + .slider:before {
 }
 
 /* Mobile specific adjustments for avatar alignment - These might be less relevant with a fixed viewport, but kept for potential adjustments */
-/* @media (max-width: 768px) { ... } */ /* Commenting out specific mobile avatar adjustments as viewport change is primary strategy */
+@media (max-width: 768px) {
+    .chat-message-wrapper.user {
+        justify-content: flex-end; 
+    }
+    .chat-message-wrapper.ai {
+        justify-content: flex-start; 
+    }
+    .chat-message-wrapper.user .chat-avatar-container {
+        order: 1; 
+        margin-left: 8px;
+        margin-right: 0;
+    }
+    .chat-message-wrapper.user .chat-bubble {
+        order: 0;
+    }
+    .chat-message-wrapper.ai .chat-avatar-container {
+        order: 0; 
+        margin-right: 8px;
+        margin-left: 0;
+    }
+    .chat-message-wrapper.ai .chat-bubble {
+        order: 1;
+    }
+    /* Ensure chat bubbles take appropriate width on mobile */
+    .chat-messages-area .chat-bubble,
+    #chat-messages-area .chat-bubble,
+    #gemini-chat-messages-area .chat-bubble,
+    #gpt4o-chat-messages-area .chat-bubble,
+    #blackbox-chat-messages-area .chat-bubble,
+    #deepseek-chat-messages-area .chat-bubble,
+    #claude-chat-messages-area .chat-bubble,
+    #gemini-all-model-chat-messages-area .chat-bubble {
+        max-width: 90% !important; /* Allow bubbles to be quite wide on mobile */
+    }
+}
 
 .chat-avatar-container {
-    width: 30px !important; /* Reduced avatar size */
+    width: 30px !important; /* Keep reduced avatar size for desktop too, or adjust if needed */
     height: 30px !important; /* Reduced avatar size */
     border-radius: 50% !important;
     display: flex !important;
@@ -2836,6 +2870,80 @@ body.dark-mode #gemini-model-selector {
 }
 
 /* --- END OF GEMINI ALL MODEL VIEW STYLES --- */
+
+
+/* --- ALL CHATGPT MODELS VIEW STYLES --- */
+/* Most styles will be inherited from existing chat view structures like .chat-view-header, 
+   #gemini-all-model-view selectors if IDs are changed to match, or by adding common classes.
+   For now, we'll assume it largely mirrors gemini-all-model-view and add specifics if needed. */
+
+#all-chatgpt-models-view {
+    /* Inherits from .view, and display:flex from JS */
+}
+
+#all-chatgpt-models-view .chat-view-header {
+    /* Likely inherits from #gemini-all-model-view .chat-view-header or a more generic class */
+    /* If specific tweaks are needed for the OpenAI logo or title, add them here */
+}
+#all-chatgpt-models-view .chat-header-logo {
+    /* Styles for the placeholder SVG icon for ChatGPT */
+    fill: var(--accent-color); /* Example color */
+}
+
+#all-chatgpt-model-selector {
+    /* Inherits from #gemini-model-selector or a generic .model-selector class */
+}
+
+#all-chatgpt-chat-messages-area {
+    /* Inherits from general messages area styles or #gemini-all-model-chat-messages-area */
+    /* Specific user/ai bubble colors for ChatGPT if desired */
+}
+#all-chatgpt-chat-messages-area .chat-message-wrapper.user .chat-bubble {
+    background-color: #20894d !important; /* Example: A distinct green for ChatGPT user messages */
+    color: #ffffff !important;
+}
+#all-chatgpt-chat-messages-area .chat-message-wrapper.user .chat-bubble a,
+#all-chatgpt-chat-messages-area .chat-message-wrapper.user .chat-bubble strong {
+    color: #f0f0f0 !important;
+}
+/* AI bubble for ChatGPT can use default .chat-message-wrapper.ai .chat-bubble or be customized */
+#all-chatgpt-chat-messages-area .chat-message-wrapper.ai .chat-avatar-container .icon {
+     fill: #10a37f; /* OpenAI-like teal/green for AI avatar icon */
+}
+
+
+#all-chatgpt-chat-input-bar {
+    /* Inherits from general input bar styles or #gemini-all-model-chat-input-bar */
+}
+
+#all-chatgpt-attach-file-button:disabled { /* Style for the disabled attach button */
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: var(--surface-color); /* Keep it looking like other buttons but inactive */
+}
+#all-chatgpt-attach-file-button:disabled .icon {
+    fill: var(--text-muted-color);
+}
+
+#all-chatgpt-file-preview-container {
+    /* Inherits from #gemini-all-model-file-preview-container or generic */
+}
+
+#all-chatgpt-chat-input-field {
+    /* Inherits from general chat input field styles */
+}
+
+#all-chatgpt-chat-send-button {
+    /* Inherits from general chat send button styles */
+    /* Example: could have a specific hover color if desired */
+    /* background-color: #10a37f !important; /* OpenAI-like color for send button */
+}
+/* #all-chatgpt-chat-send-button:hover {
+    background-color: #0d8c6c !important;
+}*/
+
+/* --- END OF ALL CHATGPT MODELS VIEW STYLES --- */
+
 
 /* --- DOWNLOAD FORMAT MODAL STYLES --- */
 /* .modal-overlay and .modal-content are already defined and styled for the trailer modal.

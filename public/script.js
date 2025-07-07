@@ -143,11 +143,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const chatViewIds = [
             'ai-chat-view', 'gemini-chat-view', 'gpt4o-chat-view',
             'blackbox-ai-view', 'deepseek-ai-view', 'claude-haiku-view',
-            'gemini-all-model-view'
+            'gemini-all-model-view', 'all-chatgpt-models-view' // Added new view
         ];
         const isChatView = chatViewIds.includes(viewIdToShow);
 
-        if (viewToShow && (isChatView || viewIdToShow === 'email-generator-view' || viewIdToShow === 'vip-view')) {
+        if (viewToShow && (isChatView || viewIdToShow === 'email-generator-view' || viewIdToShow === 'vip-view')) { // vip-view might be obsolete
             viewToShow.style.display = 'flex';
         }
 
@@ -157,22 +157,20 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!topBarChatTitleDisplay) {
                 topBarChatTitleDisplay = document.createElement('div');
                 topBarChatTitleDisplay.id = 'top-bar-chat-title';
-                topBarChatTitleDisplay.className = 'top-bar-chat-title-display'; // For styling
-                // Insert it before the weather display, or at a suitable place in the top bar
+                topBarChatTitleDisplay.className = 'top-bar-chat-title-display';
                 const themeToggleContainer = document.getElementById('theme-toggle-container');
                 if (themeToggleContainer && themeToggleContainer.parentNode) {
-                     themeToggleContainer.parentNode.insertBefore(topBarChatTitleDisplay, themeToggleContainer.nextSibling); // Insert after theme toggle
+                     themeToggleContainer.parentNode.insertBefore(topBarChatTitleDisplay, themeToggleContainer.nextSibling);
                 } else if (topBarWeatherDisplay && topBarWeatherDisplay.parentNode) {
                     topBarWeatherDisplay.parentNode.insertBefore(topBarChatTitleDisplay, topBarWeatherDisplay);
                 } else {
-                    // Fallback: append to top-bar if other elements not found
                     document.getElementById('top-bar')?.appendChild(topBarChatTitleDisplay);
                 }
             }
-            topBarChatTitleDisplay.textContent = getChatNameForView(viewIdToShow);
-            topBarChatTitleDisplay.style.display = 'block'; // Or 'flex' if it needs flex properties
+            topBarChatTitleDisplay.textContent = getChatNameForView(viewIdToShow); // Ensure getChatNameForView handles the new ID
+            topBarChatTitleDisplay.style.display = 'block'; 
         } else {
-            if (topBarWeatherDisplay) topBarWeatherDisplay.style.display = 'flex'; // Assuming flex is its default
+            if (topBarWeatherDisplay) topBarWeatherDisplay.style.display = 'flex'; 
             if (topBarChatTitleDisplay) topBarChatTitleDisplay.style.display = 'none';
         }
 
@@ -271,6 +269,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const geminiAllModelViewEl = document.getElementById('gemini-all-model-view');
             if (geminiAllModelViewEl && geminiAllModelViewEl.style.display !== 'flex') {
                  geminiAllModelViewEl.style.display = 'flex';
+            }
+        } else if (viewIdToShow === 'all-chatgpt-models-view') { // Added for new view
+            console.log('[ALL CHATGPT MODELS DIAGNOSTIC] showView called for all-chatgpt-models-view.');
+            if (typeof fetchAndPopulateChatGPTModels === "function") { fetchAndPopulateChatGPTModels(); }
+            const allChatGPTInputBar = document.getElementById('all-chatgpt-chat-input-bar');
+            if (allChatGPTInputBar) allChatGPTInputBar.style.display = 'flex';
+            const allChatGPTViewEl = document.getElementById('all-chatgpt-models-view');
+            if (allChatGPTViewEl && allChatGPTViewEl.style.display !== 'flex') {
+                 allChatGPTViewEl.style.display = 'flex';
             }
         }
 
@@ -2322,7 +2329,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- GEMINI ALL MODEL CHAT LOGIC ---
     const geminiAllModelChatView = document.getElementById('gemini-all-model-view');
-    const geminiAllModelHeaderTitle = geminiAllModelChatView ? geminiAllModelChatView.querySelector('.chat-view-header h2') : null; // For potential dynamic updates
+    const geminiAllModelHeaderTitle = geminiAllModelChatView ? geminiAllModelChatView.querySelector('.chat-view-header h2') : null; 
     const geminiModelSelector = document.getElementById('gemini-model-selector');
     const geminiAllModelChatMessagesArea = document.getElementById('gemini-all-model-chat-messages-area');
     const geminiAllModelChatInputField = document.getElementById('gemini-all-model-chat-input-field');
@@ -2337,9 +2344,27 @@ document.addEventListener('DOMContentLoaded', () => {
     let supportedGeminiModels = [];
     let currentSelectedGeminiModel = '';
     const GEMINI_ALL_MODEL_DEFAULT_ROLEPLAY = "You're Gemini AI Assistant, a helpful and versatile AI model.";
+    const geminiOverallAvatarSvg = `<img src="https://www.gstatic.com/images/branding/product/2x/gemini_48dp.png" alt="Gemini" class="gemini-avatar-logo">`;
 
-    // Avatar for Gemini (can be reused)
-    const geminiOverallAvatarSvg = `<img src="https://www.gstatic.com/images/branding/product/2x/gemini_48dp.png" alt="Gemini" class="gemini-avatar-logo">`; // Reusing existing class for styling
+    // --- All ChatGPT Models Elements ---
+    const allChatGPTModelsView = document.getElementById('all-chatgpt-models-view');
+    const allChatGPTModelSelector = document.getElementById('all-chatgpt-model-selector');
+    const allChatGPTChatMessagesArea = document.getElementById('all-chatgpt-chat-messages-area');
+    const allChatGPTChatInputField = document.getElementById('all-chatgpt-chat-input-field');
+    const allChatGPTChatSendButton = document.getElementById('all-chatgpt-chat-send-button');
+    const allChatGPTAttachFileButton = document.getElementById('all-chatgpt-attach-file-button'); // Initially disabled
+    const allChatGPTFileUpload = document.getElementById('all-chatgpt-file-upload');
+    const allChatGPTFilePreviewContainer = document.getElementById('all-chatgpt-file-preview-container');
+    
+    const allChatGPTModelsHistoryKeyPrefix = 'allChatGPTModelsHistory_';
+    let allChatGPTModelsTypingIndicator = null;
+    let currentAllChatGPTModelFile = null; // For future file uploads
+    let supportedChatGPTModels = [];
+    let currentSelectedChatGPTModel = '';
+    const CHATGPT_DEFAULT_ROLEPLAY = "You are ChatGPT, a large language model trained by OpenAI.";
+    // Placeholder SVG for ChatGPT AI avatar - can be replaced with an <img> if an icon is available
+    const chatGPTAvatarSvg = `<svg viewBox="0 0 24 24" class="icon icon-chat-ai"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 15c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm0-8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z"></path></svg>`;
+
 
     function addGeminiAllModelMessageToChat(message, sender, imageUrl = null, isTyping = false, messageId = null) {
         if (!geminiAllModelChatMessagesArea) return;
@@ -2403,7 +2428,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const contentContainer = messageBubble.cloneNode(true);
                 const existingControls = contentContainer.querySelector('.message-controls');
                 if (existingControls) existingControls.remove();
-
+                
                 openDownloadFormatModal(contentContainer);
             });
 
@@ -2810,6 +2835,293 @@ document.addEventListener('DOMContentLoaded', () => {
     if (geminiAllModelChatInputField) geminiAllModelChatInputField.addEventListener('keypress', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleGeminiAllModelSendMessage(); }});
     // --- END OF GEMINI ALL MODEL CHAT LOGIC ---
 
+    // --- ALL CHATGPT MODELS CHAT LOGIC ---
+
+    function addChatGPTAllModelMessageToChat(message, sender, imageUrl = null, isTyping = false, messageId = null) {
+        if (!allChatGPTChatMessagesArea) return;
+
+        if (allChatGPTModelsTypingIndicator && allChatGPTModelsTypingIndicator.parentNode) {
+            allChatGPTModelsTypingIndicator.remove();
+            allChatGPTModelsTypingIndicator = null;
+        }
+
+        const messageWrapper = document.createElement('div');
+        messageWrapper.classList.add('chat-message-wrapper', sender === 'user' ? 'user' : 'ai');
+        if (messageId) messageWrapper.dataset.messageId = messageId;
+
+        const avatarContainer = document.createElement('div');
+        avatarContainer.classList.add('chat-avatar-container');
+        avatarContainer.innerHTML = sender === 'user' ? userAvatarSvg : chatGPTAvatarSvg; // Use ChatGPT avatar
+
+        const messageBubble = document.createElement('div');
+        messageBubble.classList.add('chat-bubble');
+
+        if (isTyping) {
+            messageBubble.innerHTML = typingIndicatorHTML;
+            messageWrapper.id = 'all-chatgpt-typing-indicator'; // Unique ID
+            allChatGPTModelsTypingIndicator = messageWrapper;
+        } else {
+            messageBubble.innerHTML = formatTextContentEnhanced(message || "");
+            if (imageUrl) { // For future image support
+                 messageBubble.innerHTML += `<br><img src="${escapeHTML(imageUrl)}" alt="Chat Image" style="max-width: 100%; border-radius: 8px; margin-top: 8px;">`;
+            }
+            // Add Download button (Copy button can be added similarly if desired)
+            const controlsDiv = document.createElement('div');
+            controlsDiv.className = 'message-controls';
+            const downloadBtn = document.createElement('button');
+            downloadBtn.className = 'icon-button message-download-btn';
+            downloadBtn.title = translations.download_button_title || "Download";
+            downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>';
+            downloadBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const contentContainer = messageBubble.cloneNode(true);
+                const existingControls = contentContainer.querySelector('.message-controls');
+                if (existingControls) existingControls.remove();
+                openDownloadFormatModal(contentContainer);
+            });
+            if (sender === 'ai') { // Only for AI messages
+                controlsDiv.appendChild(downloadBtn);
+                messageBubble.appendChild(controlsDiv);
+            }
+        }
+        messageWrapper.append(avatarContainer, messageBubble);
+        allChatGPTChatMessagesArea.appendChild(messageWrapper);
+        allChatGPTChatMessagesArea.scrollTop = allChatGPTChatMessagesArea.scrollHeight;
+    }
+
+    function saveChatGPTAllModelChatHistory(message, sender, imageUrl, modelName, messageId = null) {
+        if (!chatUID || !modelName) return;
+        const historyKey = `${allChatGPTModelsHistoryKeyPrefix}${chatUID}_${modelName}`;
+        let history = [];
+        try { const stored = localStorage.getItem(historyKey); if (stored) history = JSON.parse(stored); } catch (e) { console.error("Error parsing ChatGPT All Models history:", e); }
+        history.push({ message, sender, imageUrl, timestamp: new Date().toISOString(), messageId: messageId || Date.now().toString() });
+        if (history.length > 100) history = history.slice(history.length - 100);
+        try { localStorage.setItem(historyKey, JSON.stringify(history)); } catch (e) { console.error("Error saving ChatGPT All Models history:", e); }
+    }
+
+    function loadChatGPTAllModelChatHistory(modelName) {
+        if (!allChatGPTChatMessagesArea || !chatUID || !modelName) {
+            if(allChatGPTChatMessagesArea) allChatGPTChatMessagesArea.innerHTML = "";
+            return;
+        }
+        allChatGPTChatMessagesArea.innerHTML = ""; 
+        const historyKey = `${allChatGPTModelsHistoryKeyPrefix}${chatUID}_${modelName}`;
+        let history = [];
+        try { const stored = localStorage.getItem(historyKey); if (stored) history = JSON.parse(stored); } catch (e) { console.error("Error loading ChatGPT All Models history:", e); }
+
+        if (history.length === 0) {
+            const welcomeMsg = (translations.all_chatgpt_welcome_message || "Welcome to ChatGPT ({modelName})! Ask me anything.").replace('{modelName}', modelName);
+            addChatGPTAllModelMessageToChat(welcomeMsg, 'ai');
+        } else {
+            history.forEach(item => addChatGPTAllModelMessageToChat(item.message, item.sender, item.imageUrl, false, item.messageId));
+        }
+        if (allChatGPTChatMessagesArea) allChatGPTChatMessagesArea.scrollTop = allChatGPTChatMessagesArea.scrollHeight;
+    }
+    
+    async function fetchAndPopulateChatGPTModels() {
+        if (!allChatGPTModelSelector) return;
+        const cachedModels = localStorage.getItem('supportedChatGPTModelsList');
+        if (cachedModels) {
+            try {
+                supportedChatGPTModels = JSON.parse(cachedModels);
+                if (Array.isArray(supportedChatGPTModels) && supportedChatGPTModels.length > 0) {
+                    populateChatGPTModelDropdown();
+                    setInitialChatGPTModelSelection();
+                    return; 
+                }
+            } catch (e) { console.error("Error parsing cached supportedChatGPTModelsList", e); localStorage.removeItem('supportedChatGPTModelsList');}
+        }
+
+        allChatGPTModelSelector.innerHTML = `<option value="" data-translate="all_chatgpt_model_select_default_option">${translations.all_chatgpt_model_select_default_option || 'Loading models...'}</option>`;
+        try {
+            // Use a common/default model for the initial API call to get the list
+            const defaultModelForListing = "gpt-3.5-turbo"; // Or any known valid model
+            const response = await fetch('/api/all-chatgpt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ask: "List available models", model: defaultModelForListing, uid: chatUID, roleplay: "System" })
+            });
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({ error: `Failed to fetch ChatGPT models list: ${response.statusText}` }));
+                throw new Error(errData.error);
+            }
+            const data = await response.json();
+            if (data && Array.isArray(data.supported_models) && data.supported_models.length > 0) {
+                supportedChatGPTModels = data.supported_models;
+                localStorage.setItem('supportedChatGPTModelsList', JSON.stringify(supportedChatGPTModels));
+                populateChatGPTModelDropdown();
+                setInitialChatGPTModelSelection();
+            } else {
+                console.warn("No supported ChatGPT models returned from API or list is empty.");
+                allChatGPTModelSelector.innerHTML = `<option value="">${translations.all_chatgpt_no_models_available || 'No models available'}</option>`;
+            }
+        } catch (error) {
+            console.error('Error in fetchAndPopulateChatGPTModels:', error);
+            allChatGPTModelSelector.innerHTML = `<option value="">${translations.all_chatgpt_models_load_error || 'Error loading models'}</option>`;
+        }
+    }
+
+    function populateChatGPTModelDropdown() {
+        if (!allChatGPTModelSelector || !supportedChatGPTModels || supportedChatGPTModels.length === 0) return;
+        const loadingOptionText = translations.all_chatgpt_model_select_default_option || 'Loading models...';
+        const currentSelectorValue = allChatGPTModelSelector.value; 
+        allChatGPTModelSelector.innerHTML = ''; 
+        supportedChatGPTModels.forEach(model => {
+            const option = document.createElement('option');
+            option.value = model;
+            option.textContent = model;
+            allChatGPTModelSelector.appendChild(option);
+        });
+        if (supportedChatGPTModels.includes(currentSelectorValue)) {
+            allChatGPTModelSelector.value = currentSelectorValue;
+        } else if (supportedChatGPTModels.length > 0) {
+            const defaultModel = supportedChatGPTModels.find(m => m.includes('gpt-4o-mini') || m.includes('gpt-4o')) || 
+                                 supportedChatGPTModels.find(m => m.includes('gpt-3.5-turbo')) || 
+                                 supportedChatGPTModels[0];
+            allChatGPTModelSelector.value = defaultModel;
+        } else {
+            allChatGPTModelSelector.innerHTML = `<option value="">${loadingOptionText}</option>`;
+        }
+        currentSelectedChatGPTModel = allChatGPTModelSelector.value;
+        if (currentSelectedChatGPTModel) {
+            localStorage.setItem('lastSelectedChatGPTAllModel', currentSelectedChatGPTModel);
+        }
+    }
+    
+    function setInitialChatGPTModelSelection() {
+        if (!allChatGPTModelSelector || supportedChatGPTModels.length === 0) return;
+        const lastSelected = localStorage.getItem('lastSelectedChatGPTAllModel');
+        if (lastSelected && supportedChatGPTModels.includes(lastSelected)) {
+            allChatGPTModelSelector.value = lastSelected;
+        } else {
+            const defaultModel = supportedChatGPTModels.find(m => m.includes('gpt-4o-mini') || m.includes('gpt-4o')) ||
+                                 supportedChatGPTModels.find(m => m.includes('gpt-3.5-turbo')) || 
+                                 supportedChatGPTModels[0];
+            allChatGPTModelSelector.value = defaultModel;
+        }
+        currentSelectedChatGPTModel = allChatGPTModelSelector.value;
+        if (currentSelectedChatGPTModel) {
+            localStorage.setItem('lastSelectedChatGPTAllModel', currentSelectedChatGPTModel);
+            loadChatGPTAllModelChatHistory(currentSelectedChatGPTModel);
+            if(allChatGPTChatInputField && translations.all_chatgpt_placeholder_dynamic) {
+                 allChatGPTChatInputField.placeholder = translations.all_chatgpt_placeholder_dynamic.replace('{modelName}', currentSelectedChatGPTModel);
+            } else if (allChatGPTChatInputField) {
+                 allChatGPTChatInputField.placeholder = `Ask ${currentSelectedChatGPTModel}...`;
+            }
+        }
+    }
+
+    if (allChatGPTModelSelector) {
+        allChatGPTModelSelector.addEventListener('change', () => {
+            currentSelectedChatGPTModel = allChatGPTModelSelector.value;
+            if (currentSelectedChatGPTModel) {
+                localStorage.setItem('lastSelectedChatGPTAllModel', currentSelectedChatGPTModel);
+                loadChatGPTAllModelChatHistory(currentSelectedChatGPTModel);
+                if(allChatGPTChatInputField) allChatGPTChatInputField.placeholder = `Ask ${currentSelectedChatGPTModel}...`;
+            } else {
+                if(allChatGPTChatMessagesArea) allChatGPTChatMessagesArea.innerHTML = "";
+                if(allChatGPTChatInputField) allChatGPTChatInputField.placeholder = translations.all_chatgpt_placeholder || "Ask ChatGPT (any model)...";
+            }
+        });
+    }
+
+    async function handleChatGPTAllModelSendMessage() {
+        if (!allChatGPTChatInputField || !chatUID || !currentSelectedChatGPTModel) {
+            if (!currentSelectedChatGPTModel && translations.all_chatgpt_select_model_alert) alert(translations.all_chatgpt_select_model_alert);
+            else if (!currentSelectedChatGPTModel) alert("Please select a ChatGPT model first.");
+            return;
+        }
+        const messageText = allChatGPTChatInputField.value.trim();
+        // currentAllChatGPTModelFile is for future image upload, not used yet for this API
+        if (!messageText /* && !currentAllChatGPTModelFile */) { // Adjusted condition
+            alert(translations.all_chatgpt_type_message_alert || "Please type a message.");
+            return;
+        }
+
+        const messageId = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        addChatGPTAllModelMessageToChat(messageText, 'user', null, false, messageId); // No image URL for now
+        saveChatGPTAllModelChatHistory(messageText, 'user', null, currentSelectedChatGPTModel, messageId);
+
+        trackActivity('all_chatgpt_model_sent', {
+            messageLength: messageText.length,
+            model: currentSelectedChatGPTModel,
+        });
+
+        // Prepare payload (text-only for now)
+        const payload = {
+            ask: messageText,
+            model: currentSelectedChatGPTModel,
+            uid: chatUID,
+            roleplay: CHATGPT_DEFAULT_ROLEPLAY, // Default roleplay
+            // img_url: will be added if file support is implemented
+        };
+        
+        allChatGPTChatInputField.value = '';
+        // currentAllChatGPTModelFile = null; // Reset if file handling was used
+        // if (allChatGPTFilePreviewContainer) allChatGPTFilePreviewContainer.innerHTML = "";
+
+        allChatGPTChatInputField.disabled = true;
+        if (allChatGPTChatSendButton) allChatGPTChatSendButton.disabled = true;
+        // if (allChatGPTAttachFileButton) allChatGPTAttachFileButton.disabled = true; // Keep disabled for now
+        if (allChatGPTModelSelector) allChatGPTModelSelector.disabled = true;
+
+        addChatGPTAllModelMessageToChat(null, 'ai', null, true); // Typing indicator
+
+        try {
+            const response = await fetch('/api/all-chatgpt', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload) 
+            });
+            if (allChatGPTModelsTypingIndicator) allChatGPTModelsTypingIndicator.remove();
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: `Server error: ${response.status}` }));
+                throw new Error(errorData.error || `API request failed: ${response.status}`);
+            }
+            const aiResponse = await response.json();
+
+            // Update supported models list if it changed (though less likely for OpenAI API via Haji)
+            if (aiResponse.supported_models && Array.isArray(aiResponse.supported_models) && 
+                JSON.stringify(supportedChatGPTModels) !== JSON.stringify(aiResponse.supported_models)) {
+                supportedChatGPTModels = aiResponse.supported_models;
+                localStorage.setItem('supportedChatGPTModelsList', JSON.stringify(supportedChatGPTModels));
+                populateChatGPTModelDropdown(); 
+            }
+
+            if (aiResponse && aiResponse.answer) {
+                const aiMessageId = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                addChatGPTAllModelMessageToChat(aiResponse.answer, 'ai', null, false, aiMessageId);
+                saveChatGPTAllModelChatHistory(aiResponse.answer, 'ai', null, aiResponse.model_used || currentSelectedChatGPTModel, aiMessageId);
+            } else {
+                throw new Error((translations.invalid_response_from_ai || "Invalid response structure from {aiName} AI.").replace('{aiName}', 'ChatGPT'));
+            }
+        } catch (error) {
+            console.error('Error with All ChatGPT Models:', error);
+            if (allChatGPTModelsTypingIndicator) allChatGPTModelsTypingIndicator.remove();
+            const errorMsg = (translations.error_ai_connection || "Error: {error} Could not connect to {aiName}.").replace('{error}', error.message).replace('{aiName}', 'ChatGPT');
+            addChatGPTAllModelMessageToChat(errorMsg, 'ai');
+        } finally {
+            allChatGPTChatInputField.disabled = false;
+            if (allChatGPTChatSendButton) allChatGPTChatSendButton.disabled = false;
+            // if (allChatGPTAttachFileButton) allChatGPTAttachFileButton.disabled = false; // Keep disabled
+            if (allChatGPTModelSelector) allChatGPTModelSelector.disabled = false;
+            if (allChatGPTChatInputField) allChatGPTChatInputField.focus();
+        }
+    }
+
+    if (allChatGPTChatSendButton) allChatGPTChatSendButton.addEventListener('click', handleChatGPTAllModelSendMessage);
+    if (allChatGPTChatInputField) {
+        allChatGPTChatInputField.addEventListener('keypress', e => { 
+            if (e.key === 'Enter' && !e.shiftKey) { 
+                e.preventDefault(); 
+                handleChatGPTAllModelSendMessage(); 
+            }
+        });
+    }
+    // Note: File attachment logic for allChatGPTAttachFileButton is intentionally omitted for now.
+    // --- END OF ALL CHATGPT MODELS CHAT LOGIC ---
+
 
     // --- EMAIL GENERATOR LOGIC ---
     const generateTempEmailButton = document.getElementById('generate-temp-email-button');
@@ -3128,6 +3440,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (descriptionP) descriptionP.classList.add('clickable-description');
         }
     });
+
+    // Add "All ChatGPT Models" to relevant view checks in showView
+    // This is done by modifying the existing showView function where chatViewIds and flex view checks occur.
+    // No specific code block here, as it's an adjustment within the large showView function.
+    // The viewId 'all-chatgpt-models-view' will be added to the 'chatViewIds' array
+    // and to the condition for applying 'display: flex'.
+
     // --- END OF I18N Basic Setup ---
 
     // --- Download Format Modal Logic ---
@@ -3223,7 +3542,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (node.nodeType === Node.ELEMENT_NODE) {
                 const tagName = node.tagName.toUpperCase();
                 let childrenMd = '';
-
+                
                 // Special handling for LI content before processing its children for nested lists
                 if (tagName === 'LI') {
                     Array.from(node.childNodes).forEach(child => {
@@ -3244,12 +3563,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 switch (tagName) {
                     // For TXT output, convert Hx tags to their text content, potentially with line breaks for separation,
                     // but without Markdown '#' or emphasis like '**'.
-                    case 'H1':
-                    case 'H2':
-                    case 'H3':
-                    case 'H4':
-                    case 'H5':
-                    case 'H6':
+                    case 'H1': 
+                    case 'H2': 
+                    case 'H3': 
+                    case 'H4': 
+                    case 'H5': 
+                    case 'H6': 
                         md = `\n${childrenMd.trim().toUpperCase()}\n\n`; // Titles in uppercase, surrounded by newlines
                         break;
                     case 'P': md = `${childrenMd.trim()}\n\n`; break;
@@ -3330,7 +3649,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         markdownContent = htmlToMarkdown(bubbleElement).trim();
-
+        
         // Final cleanup: ensure consistent newlines, max 2 consecutive.
         markdownContent = markdownContent.replace(/\n\s*\n/g, '\n\n');
 
@@ -3358,7 +3677,7 @@ document.addEventListener('DOMContentLoaded', () => {
             format: 'a4'
         });
 
-        let yPos = 40;
+        let yPos = 40; 
         const pageHeight = pdf.internal.pageSize.getHeight();
         const pageWidth = pdf.internal.pageSize.getWidth();
         const margin = 40;
@@ -3368,20 +3687,20 @@ document.addEventListener('DOMContentLoaded', () => {
         // For jsPDF, this usually means using a built-in one like 'Helvetica' or 'Times'
         // or embedding a custom font (which is more complex with CDN usage).
         // Defaulting to Helvetica as it's generally good.
-        pdf.setFont('Helvetica', 'normal');
+        pdf.setFont('Helvetica', 'normal'); 
         pdf.setFontSize(11); // Default font size
-
-        const getLineHeight = (size, multiplier = 1.2) => size * multiplier;
+        
+        const getLineHeight = (size, multiplier = 1.2) => size * multiplier; 
 
         async function processNodePdf(node, currentX, currentY, currentOptions) {
             let newY = currentY;
-            const defaultOptions = {
-                fontName: 'Helvetica',
-                fontStyle: 'normal',
+            const defaultOptions = { 
+                fontName: 'Helvetica', 
+                fontStyle: 'normal', 
                 fontSize: 11,
                 // listPrefix is dynamically built during list processing
             };
-            let options = { ...defaultOptions, ...currentOptions };
+            let options = { ...defaultOptions, ...currentOptions }; 
 
             if (node.nodeType === Node.TEXT_NODE) {
                 const trimmedText = node.textContent.replace(/\s+/g, ' ').trim();
@@ -3392,7 +3711,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Calculate available width for text splitting based on currentX
                     const availableWidth = maxLineWidth - (currentX - margin);
                     const textLines = pdf.splitTextToSize(textToSplit, availableWidth > 0 ? availableWidth : maxLineWidth);
-
+                    
                     textLines.forEach(line => {
                         if (newY + getLineHeight(options.fontSize) > pageHeight - margin) {
                             pdf.addPage();
@@ -3408,10 +3727,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } else if (node.nodeType === Node.ELEMENT_NODE) {
                 const tagName = node.tagName.toUpperCase();
-                let newNestedOptions = { ...options };
+                let newNestedOptions = { ...options }; 
                 // Reset listPrefix for children unless it's part of LI content that continues
                 if (tagName !== 'LI' && tagName !== 'SPAN' && tagName !== 'STRONG' && tagName !== 'EM' && tagName !== 'B' && tagName !== 'I' && tagName !== 'CODE') {
-                    newNestedOptions.listPrefix = '';
+                    newNestedOptions.listPrefix = ''; 
                 }
 
                 switch (tagName) {
@@ -3424,46 +3743,46 @@ document.addEventListener('DOMContentLoaded', () => {
                     case 'BR':
                         newY += getLineHeight(options.fontSize, 0.8); // Smaller gap for BR
                         if (newY > pageHeight - margin) { pdf.addPage(); newY = margin; }
-                        return newY;
+                        return newY; 
                     case 'PRE':
                         const codeEl = node.querySelector('code');
                         const rawCode = codeEl ? (codeEl.dataset.code || codeEl.innerText) : node.innerText;
                         const codeFontSize = 9;
                         const codeLineHeight = getLineHeight(codeFontSize, 1.15); // Slightly more for code
-
-                        const codeLines = pdf.splitTextToSize(rawCode.trim(), maxLineWidth - 10);
+                        
+                        const codeLines = pdf.splitTextToSize(rawCode.trim(), maxLineWidth - 10); 
                         const boxHeight = (codeLines.length * codeLineHeight) + 10; // Padding for box
 
                         if (newY + boxHeight > pageHeight - margin) { pdf.addPage(); newY = margin; }
-
-                        pdf.setFillColor(245, 245, 245);
-                        pdf.setDrawColor(220, 220, 220);
-                        pdf.rect(margin - 5, newY - codeLineHeight * 0.1, maxLineWidth + 10, boxHeight, 'FD');
-
+                        
+                        pdf.setFillColor(245, 245, 245); 
+                        pdf.setDrawColor(220, 220, 220); 
+                        pdf.rect(margin - 5, newY - codeLineHeight * 0.1, maxLineWidth + 10, boxHeight, 'FD'); 
+                        
                         pdf.setFont('Courier', 'normal');
                         pdf.setFontSize(codeFontSize);
                         let codeTextY = newY + 5; // Start text with padding
                         codeLines.forEach(line => {
-                            if (codeTextY + codeLineHeight > pageHeight - margin) {
+                            if (codeTextY + codeLineHeight > pageHeight - margin) { 
                                 pdf.addPage(); newY = margin; codeTextY = newY + 5;
                                 // Redraw box header if split? For now, no.
-                                pdf.setFillColor(245, 245, 245);
-                                pdf.setDrawColor(220, 220, 220);
+                                pdf.setFillColor(245, 245, 245); 
+                                pdf.setDrawColor(220, 220, 220); 
                                 // Estimate remaining box height or full if new page
                                 const remainingBoxHeight = pageHeight - margin - newY > boxHeight ? boxHeight : pageHeight - margin - newY -5;
                                 pdf.rect(margin - 5, newY - codeLineHeight * 0.1, maxLineWidth + 10, remainingBoxHeight , 'FD');
                             }
-                            pdf.text(line, margin, codeTextY);
+                            pdf.text(line, margin, codeTextY); 
                             codeTextY += codeLineHeight;
                         });
                         newY = codeTextY - codeLineHeight + (getLineHeight(options.fontSize) * 0.5); // Position after the code block
                         pdf.setFont(options.fontName, options.fontStyle); // Reset font
                         pdf.setFontSize(options.fontSize);
-                        return newY;
+                        return newY; 
                     case 'CODE':
-                         if (!node.closest('PRE')) {
+                         if (!node.closest('PRE')) { 
                             newNestedOptions.fontName = 'Courier';
-                            newNestedOptions.fontSize = options.fontSize * 0.9;
+                            newNestedOptions.fontSize = options.fontSize * 0.9; 
                          } else { return newY; } // Handled by PRE's text extraction
                         break;
                     case 'UL': case 'OL':
@@ -3474,12 +3793,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         items.forEach(async (li) => {
                             listCounter++;
                             const itemPrefix = (tagName === 'OL') ? `${listCounter}. ` : '• ';
-                            let liOptions = {
+                            let liOptions = { 
                                 ...options, // Inherit current styles like font size for LI text
-                                listPrefix: itemPrefix,
+                                listPrefix: itemPrefix, 
                                 listDepth: listDepth, // Pass depth for potential nested lists within this LI
                             };
-
+                            
                             // Process children of LI. The first text node will get the prefix.
                             let firstTextNodeProcessed = false;
                             for(const childNode of li.childNodes) {
@@ -3492,8 +3811,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                 }
                             }
                         });
-                        newY += getLineHeight(options.fontSize) * 0.2;
-                        return newY;
+                        newY += getLineHeight(options.fontSize) * 0.2; 
+                        return newY; 
                     case 'TABLE':
                         if (typeof pdf.autoTable === 'function') {
                             const head = [];
@@ -3506,34 +3825,34 @@ document.addEventListener('DOMContentLoaded', () => {
                             bodyRows.forEach(row => {
                                 body.push(Array.from(row.querySelectorAll('td')).map(cell => cell.textContent.trim()));
                             });
-
+                            
                             if (newY + 20 > pageHeight - margin) { pdf.addPage(); newY = margin; }
                             pdf.autoTable({
                                 head: head.length > 0 ? head : null,
                                 body: body,
                                 startY: newY,
                                 margin: { left: margin, right: margin },
-                                theme: 'grid',
+                                theme: 'grid', 
                                 styles: { font: 'Helvetica', fontSize: 9, cellPadding: 3, overflow: 'linebreak' },
                                 headStyles: { fillColor: [220, 220, 220], textColor: 20, fontStyle: 'bold' },
                                 didDrawPage: (data) => { newY = data.cursor.y + 10; } // Update yPos after table
                             });
-                            newY = pdf.previousAutoTable.finalY ? pdf.previousAutoTable.finalY + 15 : newY + (20 * (body.length + (head.length > 0 ? 1:0)));
-                        } else {
+                            newY = pdf.previousAutoTable.finalY ? pdf.previousAutoTable.finalY + 15 : newY + (20 * (body.length + (head.length > 0 ? 1:0))); 
+                        } else { 
                              newY = await processNodePdf(document.createTextNode("[Aperçu du tableau non disponible sans le module externe jsPDF-AutoTable]"), margin, newY, {...options, fontStyle: 'italic'});
                         }
-                        return newY;
-                    case 'DIV': case 'P':
+                        return newY; 
+                    case 'DIV': case 'P': 
                         // Add a small space before block if not first element on page
                         if (newY > margin + getLineHeight(options.fontSize, 0.5) && (node.previousSibling || node.parentElement.firstChild !==node) ) {
-                           newY += getLineHeight(options.fontSize) * 0.1;
+                           newY += getLineHeight(options.fontSize) * 0.1; 
                         }
                         for(const child of Array.from(node.childNodes)) {
                            newY = await processNodePdf(child, currentX, newY, newNestedOptions);
                         }
                         // Add a bit more space after P or DIV if it's a block, unless it's the last element.
                         if (node.nextSibling || (node.parentElement && node.parentElement.lastChild !== node) ) {
-                           newY += getLineHeight(options.fontSize) * 0.3;
+                           newY += getLineHeight(options.fontSize) * 0.3; 
                         }
                         return newY;
                 }
@@ -3544,7 +3863,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     for(const child of Array.from(node.childNodes)) {
                        newY = await processNodePdf(child, currentX, newY, newNestedOptions);
                     }
-                } else if (node.textContent.trim() && !['BR', 'PRE', 'UL', 'OL', 'TABLE', 'DIV', 'P', 'LI'].includes(tagName)) {
+                } else if (node.textContent.trim() && !['BR', 'PRE', 'UL', 'OL', 'TABLE', 'DIV', 'P', 'LI'].includes(tagName)) { 
                     // If it's an unhandled element with text content (e.g. SPAN directly)
                     pdf.setFont(newNestedOptions.fontName, newNestedOptions.fontStyle);
                     pdf.setFontSize(newNestedOptions.fontSize);
@@ -3570,24 +3889,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         pdf.save(`${baseFilename}.pdf`);
-        return Promise.resolve();
+        return Promise.resolve(); 
     }
 
     async function generateDocxFromBubble(bubbleElement, baseFilename) {
-        if (typeof docx === 'undefined' || !docx.Document) {
+        if (typeof docx === 'undefined' || !docx.Document) { 
             console.error("docx library is not loaded or not client-side compatible. Make sure the CDN link is correct.");
             if(downloadFormatStatus) downloadFormatStatus.textContent = 'Erreur : La bibliothèque DOCX n\'a pas pu être chargée ou n\'est pas compatible.';
             return Promise.reject("DOCX library not loaded or incompatible");
         }
 
         const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, Table, TableCell, TableRow, WidthType, BorderStyle, ShadingType, convertInchesToTwip, PageOrientation, Indent } = docx;
-        const docChildren = [];
+        const docChildren = []; 
 
         const defaultParagraphSpacing = { after: 100, before: 50 };
 
         // Recursive function to process HTML nodes and convert them to docx elements
         function processHtmlNodeToDocx(node, currentTextProps = { size: 22, font: "Calibri" }, listInfo = { level: 0, type: null, counter: 0 }) {
-            const elements = [];
+            const elements = []; 
 
             if (node.nodeType === Node.TEXT_NODE) {
                 const text = node.textContent;
@@ -3597,12 +3916,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } else if (node.nodeType === Node.ELEMENT_NODE) {
                 const tagName = node.tagName.toUpperCase();
-                let newTextProps = JSON.parse(JSON.stringify(currentTextProps));
+                let newTextProps = JSON.parse(JSON.stringify(currentTextProps)); 
                 let paragraphChildren = [];
 
                 // Block-level elements usually create new Paragraphs or Tables
                 if (['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'PRE', 'UL', 'OL', 'TABLE', 'DIV', 'BR'].includes(tagName)) {
-
+                    
                     // Process children first for P, DIV to gather TextRuns for a single Paragraph
                     if (tagName === 'P' || tagName === 'DIV') {
                          Array.from(node.childNodes).forEach(child => {
@@ -3618,7 +3937,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         case 'H5': elements.push(new Paragraph({ children: [new TextRun({text: node.textContent, bold: true, size: 22})], heading: HeadingLevel.HEADING_5, spacing: { after: 160, before: 80 } })); break;
                         case 'H6': elements.push(new Paragraph({ children: [new TextRun({text: node.textContent, bold: true, size: 22})], heading: HeadingLevel.HEADING_6, spacing: { after: 140, before: 70 } })); break;
                         case 'P': if (paragraphChildren.length > 0) elements.push(new Paragraph({ children: paragraphChildren, spacing: defaultParagraphSpacing })); break;
-                        case 'DIV':
+                        case 'DIV': 
                             if (paragraphChildren.length > 0) { // If DIV contained inline content, wrap it
                                 elements.push(new Paragraph({ children: paragraphChildren, spacing: defaultParagraphSpacing }));
                             } // If DIV contained other block elements, they are already in 'elements' from recursive calls
@@ -3652,9 +3971,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                 itemCounter++;
                                 const liContentRuns = [];
                                 Array.from(li.childNodes).forEach(child => liContentRuns.push(...processHtmlNodeToDocx(child, newTextProps, {level: listInfo.level + 1, type: tagName, counter: itemCounter })));
-
-                                elements.push(new Paragraph({
-                                    children: liContentRuns,
+                                
+                                elements.push(new Paragraph({ 
+                                    children: liContentRuns, 
                                     numbering: { reference: tagName === 'OL' ? "default-numbering" : "default-bullet", level: listInfo.level },
                                     spacing: {after: 50}
                                 }));
@@ -3667,11 +3986,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                 Array.from(trNode.querySelectorAll('th, td')).forEach(tdNode => {
                                     const cellParagraphs = [];
                                     Array.from(tdNode.childNodes).forEach(child => cellParagraphs.push(...processHtmlNodeToDocx(child, {size:18})));
-
-                                    tableCells.push(new TableCell({
-                                        children: cellParagraphs.length > 0 ? cellParagraphs : [new Paragraph("")],
+                                    
+                                    tableCells.push(new TableCell({ 
+                                        children: cellParagraphs.length > 0 ? cellParagraphs : [new Paragraph("")], 
                                         borders: {
-                                            top: { style: BorderStyle.SINGLE, size: 6, color: "BFBFBF" },
+                                            top: { style: BorderStyle.SINGLE, size: 6, color: "BFBFBF" }, 
                                             bottom: { style: BorderStyle.SINGLE, size: 6, color: "BFBFBF" },
                                             left: { style: BorderStyle.SINGLE, size: 6, color: "BFBFBF" },
                                             right: { style: BorderStyle.SINGLE, size: 6, color: "BFBFBF" },
@@ -3691,9 +4010,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     else if (tagName === 'EM' || tagName === 'I') newTextProps.italics = true;
                     else if (tagName === 'CODE' && !node.closest('PRE')) {
                         newTextProps.font = "Courier New";
-                        newTextProps.size = (currentTextProps.size || 22) * 0.9;
+                        newTextProps.size = (currentTextProps.size || 22) * 0.9; 
                     }
-
+                    
                     if (node.childNodes && node.childNodes.length > 0 && !node.classList.contains('message-controls')) {
                         Array.from(node.childNodes).forEach(child => {
                             elements.push(...processHtmlNodeToDocx(child, newTextProps, listInfo));
@@ -3703,9 +4022,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             }
-            return elements;
+            return elements; 
         }
-
+        
         Array.from(bubbleElement.childNodes).forEach(childNode => {
             docChildren.push(...processHtmlNodeToDocx(childNode));
         });
@@ -3722,13 +4041,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 }
                 flatten(curr.options.children);
-
+                
                 // Filter out TextRuns that are solely whitespace
                 curr.options.children = flatChildren.filter(run => run instanceof TextRun && run.options.text.trim() !== "");
 
                 if (curr.options.children.length > 0) acc.push(curr);
             } else {
-                acc.push(curr);
+                acc.push(curr); 
             }
             return acc;
         }, []);

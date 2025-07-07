@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- Adjusted viewport for a wider, desktop-like view on mobile, yet still somewhat optimized -->
-    <meta name="viewport" content="width=1024">
+    <!-- Restored viewport for standard responsive design -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
     <title>Futuristic Portfolio</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -80,6 +80,14 @@
                     <img src="https://www.gstatic.com/images/branding/product/2x/gemini_48dp.png" alt="Gemini All Models" class="icon icon-side-menu-item gemini-logo-icon">
                     <span data-translate="gemini_all_model_view_title">Gemini All Models</span>
                     <span class="menu-item-description" data-translate="gemini_all_model_description">Chat with various Gemini models & upload files.</span>
+                </a>
+            </li>
+            <li>
+                <a href="#" data-view="all-chatgpt-models-view">
+                    <!-- Placeholder for ChatGPT/OpenAI Icon -->
+                    <svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 15c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm0-8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z"></path></svg> 
+                    <span data-translate="all_chatgpt_models_view_title">All ChatGPT Models</span>
+                    <span class="menu-item-description" data-translate="all_chatgpt_models_description">Chat with various ChatGPT models.</span>
                 </a>
             </li>
         </ul>
@@ -602,6 +610,37 @@
                 <div id="gemini-all-model-file-preview-container"></div>
                 <input type="text" id="gemini-all-model-chat-input-field" placeholder="Ask Gemini (any model)..." data-translate="gemini_all_model_placeholder">
                 <button id="gemini-all-model-chat-send-button" class="icon-button" title="Send" data-translate="send_button_title">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- All ChatGPT Models View -->
+        <div id="all-chatgpt-models-view" class="view" style="display: none;">
+            <div class="chat-view-header">
+                 <!-- Placeholder for OpenAI/ChatGPT icon -->
+                <svg viewBox="0 0 24 24" class="chat-header-logo icon"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 15c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm0-8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z"></path></svg>
+                <h2 data-translate="all_chatgpt_models_chat_title">All ChatGPT Models</h2>
+                <div class="model-selector-container">
+                    <label for="all-chatgpt-model-selector" class="sr-only" data-translate="all_chatgpt_model_selector_label">Select Model:</label>
+                    <select id="all-chatgpt-model-selector" name="all-chatgpt-model-selector">
+                        <option value="" data-translate="all_chatgpt_model_select_default_option">Loading models...</option>
+                        <!-- Models will be populated by JS -->
+                    </select>
+                </div>
+            </div>
+            <div id="all-chatgpt-chat-messages-area">
+                <!-- Chat messages will appear here -->
+            </div>
+            <div id="all-chatgpt-chat-input-bar">
+                <!-- File input for ChatGPT (initially hidden/disabled if not supporting images yet) -->
+                <input type="file" id="all-chatgpt-file-upload" accept="image/*" style="display:none;">
+                <button id="all-chatgpt-attach-file-button" class="icon-button" title="Attach File (Feature Coming Soon)" data-translate="all_chatgpt_attach_file_title" disabled>
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 015 0v10.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-3.04-2.46-5.5-5.5-5.5S4 1.96 4 5v11.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"></path></svg>
+                </button>
+                <div id="all-chatgpt-file-preview-container"></div>
+                <input type="text" id="all-chatgpt-chat-input-field" placeholder="Ask ChatGPT (any model)..." data-translate="all_chatgpt_placeholder">
+                <button id="all-chatgpt-chat-send-button" class="icon-button" title="Send" data-translate="send_button_title">
                     <svg viewBox="0 0 24 24" class="icon"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
                 </button>
             </div>

@@ -3047,22 +3047,37 @@ document.addEventListener('DOMContentLoaded', () => {
             model: currentSelectedChatGPTModel,
         });
 
-        // Prepare payload (text-only for now)
-        const payload = {
-            ask: messageText,
-            model: currentSelectedChatGPTModel,
-            uid: chatUID,
-            roleplay: CHATGPT_DEFAULT_ROLEPLAY, // Default roleplay
-            // img_url: will be added if file support is implemented
-        };
+        // Prepare payload - Use FormData if a file is selected, otherwise JSON
+        let requestBody;
+        let requestHeaders = { 'Content-Type': 'application/json' };
+
+        if (currentAllChatGPTModelFile) {
+            requestBody = new FormData();
+            requestBody.append('ask', messageText);
+            requestBody.append('model', currentSelectedChatGPTModel);
+            requestBody.append('uid', chatUID);
+            requestBody.append('roleplay', CHATGPT_DEFAULT_ROLEPLAY);
+            requestBody.append('file', currentAllChatGPTModelFile, currentAllChatGPTModelFile.name);
+            // No Content-Type header for FormData, browser sets it with boundary
+            delete requestHeaders['Content-Type']; 
+        } else {
+            requestBody = JSON.stringify({
+                ask: messageText,
+                model: currentSelectedChatGPTModel,
+                uid: chatUID,
+                roleplay: CHATGPT_DEFAULT_ROLEPLAY,
+                // img_url: can be added here if user pastes a URL into a dedicated field (not implemented yet)
+            });
+        }
         
         allChatGPTChatInputField.value = '';
-        // currentAllChatGPTModelFile = null; // Reset if file handling was used
-        // if (allChatGPTFilePreviewContainer) allChatGPTFilePreviewContainer.innerHTML = "";
+        allChatGPTFileUpload.value = null; // Reset file input
+        currentAllChatGPTModelFile = null; 
+        if (allChatGPTFilePreviewContainer) allChatGPTFilePreviewContainer.innerHTML = "";
 
         allChatGPTChatInputField.disabled = true;
         if (allChatGPTChatSendButton) allChatGPTChatSendButton.disabled = true;
-        // if (allChatGPTAttachFileButton) allChatGPTAttachFileButton.disabled = true; // Keep disabled for now
+        if (allChatGPTAttachFileButton) allChatGPTAttachFileButton.disabled = true; 
         if (allChatGPTModelSelector) allChatGPTModelSelector.disabled = true;
 
         addChatGPTAllModelMessageToChat(null, 'ai', null, true); // Typing indicator
@@ -3070,8 +3085,8 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch('/api/all-chatgpt', { 
                 method: 'POST', 
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload) 
+                headers: requestHeaders, // Use dynamic headers
+                body: requestBody 
             });
             if (allChatGPTModelsTypingIndicator) allChatGPTModelsTypingIndicator.remove();
 
@@ -3119,7 +3134,40 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-    // Note: File attachment logic for allChatGPTAttachFileButton is intentionally omitted for now.
+    // File attachment logic for All ChatGPT Models
+    if (allChatGPTAttachFileButton && allChatGPTFileUpload) {
+        allChatGPTAttachFileButton.addEventListener('click', () => allChatGPTFileUpload.click());
+        allChatGPTFileUpload.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                currentAllChatGPTModelFile = file; // Store the selected file
+                if (allChatGPTFilePreviewContainer) {
+                    let previewHTML = `<span class="file-preview-name">${escapeHTML(file.name)} (${(file.size / 1024).toFixed(1)} KB)</span>`;
+                    if (file.type.startsWith('image/')) { // Only show image preview for images
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            previewHTML += `<img src="${e.target.result}" alt="Preview" class="file-preview-image">`;
+                            allChatGPTFilePreviewContainer.innerHTML = previewHTML;
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        // For non-image files, just show name and size
+                        allChatGPTFilePreviewContainer.innerHTML = previewHTML;
+                    }
+                }
+            } else {
+                currentAllChatGPTModelFile = null;
+                if (allChatGPTFilePreviewContainer) allChatGPTFilePreviewContainer.innerHTML = "";
+            }
+        });
+    }
+    
+    // In handleChatGPTAllModelSendMessage function:
+    // - When constructing FormData, append `currentAllChatGPTModelFile` if it exists.
+    // - Reset `currentAllChatGPTModelFile` and clear `allChatGPTFilePreviewContainer` after message send.
+    // This logic is already outlined in the plan for modifying `handleChatGPTAllModelSendMessage`.
+    // The previous step was to declare elements and sketch out functions. This step implements the specific file handling part.
+
     // --- END OF ALL CHATGPT MODELS CHAT LOGIC ---
 
 

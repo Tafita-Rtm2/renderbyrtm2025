@@ -1,5 +1,5 @@
 {
-  "name": "rtm-tools",
+  "name": "rtm-tool_v1",
   "version": "1.0.0",
   "description": "A service to deploy GitHub repositories",
   "main": "server.js",

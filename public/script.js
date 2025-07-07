@@ -3242,13 +3242,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
                 switch (tagName) {
-                    case 'H1': md = `# ${childrenMd.trim()}\n\n`; break;
-                    case 'H2': md = `## ${childrenMd.trim()}\n\n`; break;
-                    case 'H3': md = `### ${childrenMd.trim()}\n\n`; break;
-                    case 'H4': md = `#### ${childrenMd.trim()}\n\n`; break;
-                    case 'H5': md = `##### ${childrenMd.trim()}\n\n`; break;
-                    case 'H6': md = `###### ${childrenMd.trim()}\n\n`; break;
+                    // For TXT output, convert Hx tags to their text content, potentially with line breaks for separation,
+                    // but without Markdown '#' or emphasis like '**'.
+                    case 'H1':
+                    case 'H2':
+                    case 'H3':
+                    case 'H4':
+                    case 'H5':
+                    case 'H6':
+                        md = `\n${childrenMd.trim().toUpperCase()}\n\n`; // Titles in uppercase, surrounded by newlines
+                        break;
                     case 'P': md = `${childrenMd.trim()}\n\n`; break;
+                    // For TXT, strong/em might just be plain text or kept if distinction is important.
+                    // If they are used for titles (as implied by user), they should be plain text.
+                    // For now, let's keep them as Markdown emphasis, assuming they are not the primary way to make titles.
+                    // If a `<strong>` on its own line should be a title, that's a more complex heuristic.
                     case 'STRONG': case 'B': md = `**${childrenMd.trim()}**`; break;
                     case 'EM': case 'I': md = `*${childrenMd.trim()}*`; break;
                     case 'BR': md = '\n'; break;

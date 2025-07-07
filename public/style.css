@@ -817,8 +817,8 @@ body:not(.dark-mode) .theme-switch input:checked + .slider:before {
     border-bottom: none;
 }
 
-
-/* --- Private Message Floating Button --- */
+/* --- Private Message Floating Button (Commented Out) --- */
+/*
 #private-message-trigger-container {
     position: fixed;
     bottom: 15px;
@@ -830,16 +830,16 @@ body:not(.dark-mode) .theme-switch input:checked + .slider:before {
     border-color: var(--secondary-accent-color);
 }
 #private-message-float-btn:hover {
-    background-color: var(--action-color); /* Example: use action color for hover */
+    background-color: var(--action-color);
     border-color: var(--action-color);
 }
 #private-message-float-btn .icon {
-    fill: var(--secondary-bg); /* Icon color on non-hovered special button */
+    fill: var(--secondary-bg);
 }
 #private-message-float-btn:hover .icon {
-    fill: var(--secondary-bg); /* Icon color on hovered special button */
+    fill: var(--secondary-bg);
 }
-
+*/
 /* --- EXISTING FEATURE STYLES (MERGED) --- */
 
 /* Weather Display (already partially in #top-bar section) */

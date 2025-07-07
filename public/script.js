@@ -742,7 +742,7 @@ document.addEventListener('DOMContentLoaded', () => {
             messageWrapper.id = 'typing-indicator-message';
             currentTypingIndicator = messageWrapper;
         } else {
-            messageBubble.innerHTML = formatTextContent(message);
+            messageBubble.innerHTML = formatTextContentEnhanced(message); // Use enhanced formatter
         }
 
         messageWrapper.append(avatarContainer, messageBubble); chatMessagesArea.appendChild(messageWrapper);
@@ -1260,31 +1260,18 @@ document.addEventListener('DOMContentLoaded', () => {
         // }
     }
 
-    function formatTextContent(text) {
-        if (typeof text !== 'string') return ''; // Ensure input is a string
+    function formatTextContent(text) { // Renamed to formatTextContentBasic if needed, but will be replaced by formatTextContentEnhanced
+        if (typeof text !== 'string') return '';
         let resultText = text;
-
-        // 1. Headings (most specific structure)
-        resultText = resultText.replace(/^### (.*$)/gim, '<h3>$1</h3>'); // For ### Title
-        resultText = resultText.replace(/^## (.*$)/gim, '<h4>$1</h4>');   // For ## Subtitle
-
-        // 2. Bold text using **double asterisks** (as per user's specific mention)
-        // This is the primary fix required for this subtask.
+        resultText = resultText.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+        resultText = resultText.replace(/^## (.*$)/gim, '<h4>$1</h4>');
         resultText = resultText.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>');
-
-        // 3. Optional: Handle single asterisks for bold *if* this was the previous intent and is still desired.
-        //    This rule is secondary to the ** rule and should not interfere.
-        //    If single asterisks are for italics, this rule should be for <em>.
-        //    Based on " **Bold Text** or *Bold Text* -> <strong>", we assume single * also means bold.
-        //    The regex `\*([^*]+)\*` is used to avoid issues with already processed `<strong>**text**</strong>`
-        //    and to ensure it doesn't just match a single literal asterisk.
-        resultText = resultText.replace(/\*([^*]+)\*/gim, '<strong>$1</strong>');
-
-        // Note: No other markdown features (like lists, blockquotes, or complex italics) are requested here.
-        // The focus is solely on ensuring '###', '##', and critically '**text**' (and optionally '*text*') are handled.
-
+        resultText = resultText.replace(/\*([^*]+)\*/gim, '<strong>$1</strong>'); // Assuming single * also means bold as per previous logic
         return resultText;
     }
+
+    // formatTextContentEnhanced is now the primary formatter and includes code block handling
+    // It's defined further down but will be used by all chat functions.
 
     async function handleStoryGeneration() {
         if (!storyThemeField || !generatedStoryDisplay || !generateStoryButton) return;
@@ -1518,7 +1505,7 @@ document.addEventListener('DOMContentLoaded', () => {
             geminiTypingIndicator = messageWrapper;
         } else {
             // Sanitize and format message text
-            let formattedMessage = message ? formatTextContent(message) : ''; // formatTextContent from existing chat
+            let formattedMessage = message ? formatTextContentEnhanced(message) : ''; // Use enhanced formatter
 
             if (imageUrl) {
                 // Simple image display, can be enhanced with CSS
@@ -1748,7 +1735,7 @@ document.addEventListener('DOMContentLoaded', () => {
             messageWrapper.id = 'gpt4o-typing-indicator-message';
             gpt4oTypingIndicator = messageWrapper;
         } else {
-            let formattedMessage = message ? formatTextContent(message) : '';
+            let formattedMessage = message ? formatTextContentEnhanced(message) : ''; // Use enhanced formatter
             if (imageUrl) {
                 formattedMessage += `<br><img src="${escapeHTML(imageUrl)}" alt="Chat Image" style="max-width: 100%; border-radius: 8px; margin-top: 8px;">`;
             }
@@ -1927,7 +1914,7 @@ document.addEventListener('DOMContentLoaded', () => {
             messageWrapper.id = 'blackbox-typing-indicator-message';
             blackboxTypingIndicator = messageWrapper;
         } else {
-            messageBubble.innerHTML = formatTextContent(message);
+            messageBubble.innerHTML = formatTextContentEnhanced(message); // Use enhanced formatter
         }
         messageWrapper.append(avatarContainer, messageBubble);
         blackboxChatMessagesArea.appendChild(messageWrapper);
@@ -2047,7 +2034,7 @@ document.addEventListener('DOMContentLoaded', () => {
             messageWrapper.id = 'deepseek-typing-indicator-message';
             deepseekTypingIndicator = messageWrapper;
         } else {
-            messageBubble.innerHTML = formatTextContent(message);
+            messageBubble.innerHTML = formatTextContentEnhanced(message); // Use enhanced formatter
         }
         messageWrapper.append(avatarContainer, messageBubble);
         deepseekChatMessagesArea.appendChild(messageWrapper);
@@ -2150,7 +2137,7 @@ document.addEventListener('DOMContentLoaded', () => {
             messageWrapper.id = 'claude-typing-indicator-message';
             claudeTypingIndicator = messageWrapper;
         } else {
-            messageBubble.innerHTML = formatTextContent(message);
+            messageBubble.innerHTML = formatTextContentEnhanced(message); // Use enhanced formatter
         }
         messageWrapper.append(avatarContainer, messageBubble);
         claudeChatMessagesArea.appendChild(messageWrapper);

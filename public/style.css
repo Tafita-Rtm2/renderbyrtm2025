@@ -922,20 +922,18 @@ body:not(.dark-mode) .theme-switch input:checked + .slider:before {
 #deepseek-chat-messages-area .chat-bubble,
 #claude-chat-messages-area .chat-bubble,
 #gemini-all-model-chat-messages-area .chat-bubble {
-    max-width: 90% !important; /* Increased from previous calc or 85% */
+    max-width: calc(100% - 40px - 12px - 10px) !important; /* Full width minus avatar, its margins, and a little extra padding */
+    /* Example: 100% - avatar_width (30px) - avatar_margin (6px*2=12px) - extra_space (10px) */
+    /* This allows the bubble to take almost all available horizontal space next to the small avatar */
+    overflow-wrap: break-word; /* Ensure long words/strings break to prevent overflow */
+    word-wrap: break-word; /* Legacy support */
+    word-break: break-word; /* Added for better CJK character handling and aggressive breaking */
 }
-@media (min-width: 769px) { /* For PC, allow slightly less width if 90% is too much */
-    .chat-messages-area .chat-bubble,
-    #chat-messages-area .chat-bubble,
-    #gemini-chat-messages-area .chat-bubble,
-    #gpt4o-chat-messages-area .chat-bubble,
-    #blackbox-chat-messages-area .chat-bubble,
-    #deepseek-chat-messages-area .chat-bubble,
-    #claude-chat-messages-area .chat-bubble,
-    #gemini-all-model-chat-messages-area .chat-bubble {
-        max-width: 85% !important;
-    }
-}
+
+/* Remove the media query that was reducing max-width on larger screens,
+   as the new calc() based max-width should adapt well.
+   If specific desktop adjustments are needed, they can be added back carefully. */
+/* @media (min-width: 769px) { ... } */
 
 
 .chat-message-wrapper.user {
@@ -948,44 +946,26 @@ body:not(.dark-mode) .theme-switch input:checked + .slider:before {
     flex-direction: row !important;
 }
 
-/* Mobile specific adjustments for avatar alignment */
-@media (max-width: 768px) {
-    .chat-message-wrapper.user {
-        justify-content: flex-end; /* Ensures content (bubble + avatar) aligns to the right */
-    }
-    .chat-message-wrapper.ai {
-        justify-content: flex-start; /* Ensures content (bubble + avatar) aligns to the left */
-    }
-    /* Ensure avatars are on the correct side and messages don't get overly centered by other flex properties */
-    .chat-message-wrapper.user .chat-avatar-container {
-        order: 1; /* Puts avatar to the right of the bubble in row-reverse */
-        margin-left: 8px;
-        margin-right: 0;
-    }
-    .chat-message-wrapper.user .chat-bubble {
-        order: 0;
-    }
-    .chat-message-wrapper.ai .chat-avatar-container {
-        order: 0; /* Puts avatar to the left of the bubble in row */
-        margin-right: 8px;
-        margin-left: 0;
-    }
-    .chat-message-wrapper.ai .chat-bubble {
-        order: 1;
-    }
-}
+/* Mobile specific adjustments for avatar alignment - These might be less relevant with a fixed viewport, but kept for potential adjustments */
+/* @media (max-width: 768px) { ... } */ /* Commenting out specific mobile avatar adjustments as viewport change is primary strategy */
 
 .chat-avatar-container {
-    width: 36px !important;
-    height: 36px !important;
+    width: 30px !important; /* Reduced avatar size */
+    height: 30px !important; /* Reduced avatar size */
     border-radius: 50% !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    margin: 0 8px !important;
+    margin: 0 6px !important; /* Reduced margin around avatar */
     flex-shrink: 0 !important;
     border: 1px solid var(--border-color) !important;
 }
+.chat-avatar-container .icon,
+.chat-avatar-container img { /* Ensure img/svg inside also scale down */
+    width: 18px !important; /* Smaller icon/image inside avatar */
+    height: 18px !important;
+}
+
 
 .chat-message-wrapper.user .chat-avatar-container {
     background-color: var(--accent-color) !important;

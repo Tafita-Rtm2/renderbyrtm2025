@@ -90,6 +90,14 @@
                     <span class="menu-item-description" data-translate="all_chatgpt_models_description">Chat with various ChatGPT models.</span>
                 </a>
             </li>
+            <li>
+                <a href="#" data-view="all-claude-models-view">
+                    <!-- Placeholder for Claude/Anthropic Icon -->
+                    <svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 10c-2.76 0-5-2.24-5-5h10c0 2.76-2.24 5-5 5z"></path></svg> 
+                    <span data-translate="all_claude_models_view_title">Claude All Models</span>
+                    <span class="menu-item-description" data-translate="all_claude_models_description">Chat with various Claude models & upload files.</span>
+                </a>
+            </li>
         </ul>
     </nav>
 
@@ -640,6 +648,36 @@
                 <div id="all-chatgpt-file-preview-container"></div>
                 <input type="text" id="all-chatgpt-chat-input-field" placeholder="Ask ChatGPT (any model)..." data-translate="all_chatgpt_placeholder">
                 <button id="all-chatgpt-chat-send-button" class="icon-button" title="Send" data-translate="send_button_title">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- All Claude Models View -->
+        <div id="all-claude-models-view" class="view" style="display: none;">
+            <div class="chat-view-header">
+                 <!-- Placeholder for Claude/Anthropic Icon -->
+                <svg viewBox="0 0 24 24" class="chat-header-logo icon"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 10c-2.76 0-5-2.24-5-5h10c0 2.76-2.24 5-5 5z"></path></svg>
+                <h2 data-translate="all_claude_models_chat_title">Claude All Models</h2>
+                <div class="model-selector-container">
+                    <label for="all-claude-model-selector" class="sr-only" data-translate="all_claude_model_selector_label">Select Model:</label>
+                    <select id="all-claude-model-selector" name="all-claude-model-selector">
+                        <option value="" data-translate="all_claude_model_select_default_option">Loading models...</option>
+                        <!-- Models will be populated by JS -->
+                    </select>
+                </div>
+            </div>
+            <div id="all-claude-chat-messages-area">
+                <!-- Chat messages will appear here -->
+            </div>
+            <div id="all-claude-chat-input-bar">
+                <input type="file" id="all-claude-file-upload" accept="image/*,application/pdf,text/plain,video/*,audio/*,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display:none;">
+                <button id="all-claude-attach-file-button" class="icon-button" title="Attach File" data-translate="all_claude_attach_file_title">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 015 0v10.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-3.04-2.46-5.5-5.5-5.5S4 1.96 4 5v11.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"></path></svg>
+                </button>
+                <div id="all-claude-file-preview-container"></div>
+                <input type="text" id="all-claude-chat-input-field" placeholder="Ask Claude (any model)..." data-translate="all_claude_placeholder">
+                <button id="all-claude-chat-send-button" class="icon-button" title="Send" data-translate="send_button_title">
                     <svg viewBox="0 0 24 24" class="icon"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
                 </button>
             </div>

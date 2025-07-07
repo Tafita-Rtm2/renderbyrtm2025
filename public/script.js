@@ -743,6 +743,25 @@ document.addEventListener('DOMContentLoaded', () => {
             currentTypingIndicator = messageWrapper;
         } else {
             messageBubble.innerHTML = formatTextContentEnhanced(message); // Use enhanced formatter
+            // Add download button for AI messages in general AI Chat
+            if (sender === 'ai') {
+                const controlsDiv = document.createElement('div');
+                controlsDiv.className = 'message-controls';
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'icon-button message-download-btn';
+                downloadBtn.title = translations.download_button_title || "Download";
+                downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>';
+                downloadBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const contentContainer = messageBubble.cloneNode(true);
+                    const existingControls = contentContainer.querySelector('.message-controls');
+                    if (existingControls) existingControls.remove();
+                    openDownloadFormatModal(contentContainer);
+                });
+                controlsDiv.appendChild(downloadBtn);
+                // Copy button can also be added here if desired for general AI chat
+                messageBubble.appendChild(controlsDiv);
+            }
         }
 
         messageWrapper.append(avatarContainer, messageBubble); chatMessagesArea.appendChild(messageWrapper);
@@ -1508,10 +1527,28 @@ document.addEventListener('DOMContentLoaded', () => {
             let formattedMessage = message ? formatTextContentEnhanced(message) : ''; // Use enhanced formatter
 
             if (imageUrl) {
-                // Simple image display, can be enhanced with CSS
                 formattedMessage += `<br><img src="${escapeHTML(imageUrl)}" alt="Chat Image" style="max-width: 100%; border-radius: 8px; margin-top: 8px;">`;
             }
             messageBubble.innerHTML = formattedMessage;
+
+            // Add download button for AI messages in Gemini Vision Chat
+            if (sender === 'gemini') { // Corrected sender condition
+                const controlsDiv = document.createElement('div');
+                controlsDiv.className = 'message-controls';
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'icon-button message-download-btn';
+                downloadBtn.title = translations.download_button_title || "Download";
+                downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>';
+                downloadBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const contentContainer = messageBubble.cloneNode(true);
+                    const existingControls = contentContainer.querySelector('.message-controls');
+                    if (existingControls) existingControls.remove();
+                    openDownloadFormatModal(contentContainer);
+                });
+                controlsDiv.appendChild(downloadBtn);
+                messageBubble.appendChild(controlsDiv);
+            }
         }
 
         messageWrapper.append(avatarContainer, messageBubble);
@@ -1740,6 +1777,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 formattedMessage += `<br><img src="${escapeHTML(imageUrl)}" alt="Chat Image" style="max-width: 100%; border-radius: 8px; margin-top: 8px;">`;
             }
             messageBubble.innerHTML = formattedMessage;
+            // Add download button for AI messages in GPT-4o Chat
+            if (sender === 'ai') { // GPT-4o uses 'ai' as sender for its messages
+                const controlsDiv = document.createElement('div');
+                controlsDiv.className = 'message-controls';
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'icon-button message-download-btn';
+                downloadBtn.title = translations.download_button_title || "Download";
+                downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>';
+                downloadBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const contentContainer = messageBubble.cloneNode(true);
+                    const existingControls = contentContainer.querySelector('.message-controls');
+                    if (existingControls) existingControls.remove();
+                    openDownloadFormatModal(contentContainer);
+                });
+                controlsDiv.appendChild(downloadBtn);
+                messageBubble.appendChild(controlsDiv);
+            }
         }
 
         messageWrapper.append(avatarContainer, messageBubble);
@@ -1915,6 +1970,23 @@ document.addEventListener('DOMContentLoaded', () => {
             blackboxTypingIndicator = messageWrapper;
         } else {
             messageBubble.innerHTML = formatTextContentEnhanced(message); // Use enhanced formatter
+            if (sender === 'ai') {
+                const controlsDiv = document.createElement('div');
+                controlsDiv.className = 'message-controls';
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'icon-button message-download-btn';
+                downloadBtn.title = translations.download_button_title || "Download";
+                downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>';
+                downloadBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const contentContainer = messageBubble.cloneNode(true);
+                    const existingControls = contentContainer.querySelector('.message-controls');
+                    if (existingControls) existingControls.remove();
+                    openDownloadFormatModal(contentContainer);
+                });
+                controlsDiv.appendChild(downloadBtn);
+                messageBubble.appendChild(controlsDiv);
+            }
         }
         messageWrapper.append(avatarContainer, messageBubble);
         blackboxChatMessagesArea.appendChild(messageWrapper);
@@ -2035,6 +2107,23 @@ document.addEventListener('DOMContentLoaded', () => {
             deepseekTypingIndicator = messageWrapper;
         } else {
             messageBubble.innerHTML = formatTextContentEnhanced(message); // Use enhanced formatter
+            if (sender === 'ai') {
+                const controlsDiv = document.createElement('div');
+                controlsDiv.className = 'message-controls';
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'icon-button message-download-btn';
+                downloadBtn.title = translations.download_button_title || "Download";
+                downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>';
+                downloadBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const contentContainer = messageBubble.cloneNode(true);
+                    const existingControls = contentContainer.querySelector('.message-controls');
+                    if (existingControls) existingControls.remove();
+                    openDownloadFormatModal(contentContainer);
+                });
+                controlsDiv.appendChild(downloadBtn);
+                messageBubble.appendChild(controlsDiv);
+            }
         }
         messageWrapper.append(avatarContainer, messageBubble);
         deepseekChatMessagesArea.appendChild(messageWrapper);
@@ -2138,6 +2227,23 @@ document.addEventListener('DOMContentLoaded', () => {
             claudeTypingIndicator = messageWrapper;
         } else {
             messageBubble.innerHTML = formatTextContentEnhanced(message); // Use enhanced formatter
+            if (sender === 'ai') {
+                const controlsDiv = document.createElement('div');
+                controlsDiv.className = 'message-controls';
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'icon-button message-download-btn';
+                downloadBtn.title = translations.download_button_title || "Download";
+                downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>';
+                downloadBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const contentContainer = messageBubble.cloneNode(true);
+                    const existingControls = contentContainer.querySelector('.message-controls');
+                    if (existingControls) existingControls.remove();
+                    openDownloadFormatModal(contentContainer);
+                });
+                controlsDiv.appendChild(downloadBtn);
+                messageBubble.appendChild(controlsDiv);
+            }
         }
         messageWrapper.append(avatarContainer, messageBubble);
         claudeChatMessagesArea.appendChild(messageWrapper);
@@ -2285,25 +2391,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const downloadBtn = document.createElement('button');
             downloadBtn.className = 'icon-button message-download-btn';
-            downloadBtn.title = translations.download_button_title || "Download"; // Add this key
+            downloadBtn.title = translations.download_button_title || "Download";
             downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>';
-            downloadBtn.addEventListener('click', () => {
-                // Basic TXT download for now
-                const textContent = messageBubble.textContent || "";
-                const filename = `gemini_response_${Date.now()}.txt`;
-                const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                // TODO: Add PDF/DOCX options later
+            downloadBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent click from bubbling to message bubble if that has other listeners
+                // Pass the content of the message bubble to the modal opener
+                // We need to pass the element that contains the formatted content, which is messageBubble itself,
+                // but specifically the part that formatTextContentEnhanced generated, excluding controls.
+                // A good way is to clone the bubble, remove controls, then pass its innerHTML or the element.
+                // For simplicity now, we pass messageBubble. The generation functions will need to be smart.
+                const contentContainer = messageBubble.cloneNode(true);
+                const existingControls = contentContainer.querySelector('.message-controls');
+                if (existingControls) existingControls.remove();
+                
+                openDownloadFormatModal(contentContainer);
             });
 
-            if (sender === 'ai') { // Only add controls to AI messages for now
+            if (sender === 'ai') { // Only add controls to AI messages
                 controlsDiv.appendChild(copyBtn);
                 controlsDiv.appendChild(downloadBtn);
                 messageBubble.appendChild(controlsDiv);
@@ -3014,31 +3118,626 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('#welcome-description-section .feature-highlight-item').forEach(item => {
         const viewId = item.dataset.view;
         if (viewId) {
-            // Make the whole item clickable
-            item.style.cursor = 'pointer'; // Already done for p, but good for whole item
+            item.style.cursor = 'pointer';
             item.addEventListener('click', function(event) {
-                // Prevent mis-clicks if user is selecting text in description
-                if (window.getSelection().toString()) {
-                    return;
-                }
-                // Allow clicks on actual links within the description to proceed normally
-                if (event.target.tagName === 'A' && event.target.href) {
-                    return;
-                }
+                if (window.getSelection().toString()) return;
+                if (event.target.tagName === 'A' && event.target.href) return;
                 window.showView(viewId);
             });
-
-            // Specifically for the paragraph, ensure it also navigates and gets styling.
-            // The parent click listener might already cover this, but explicit class for styling is good.
             const descriptionP = item.querySelector('p');
-            if (descriptionP) {
-                descriptionP.classList.add('clickable-description');
-                // The parent item click listener should handle the navigation.
-                // If we wanted only the p to be clickable, the listener would be here.
-            }
+            if (descriptionP) descriptionP.classList.add('clickable-description');
         }
     });
     // --- END OF I18N Basic Setup ---
+
+    // --- Download Format Modal Logic ---
+    const downloadFormatModal = document.getElementById('download-format-modal');
+    const closeDownloadFormatModalButton = document.getElementById('close-download-format-modal');
+    const downloadOptionsContainer = document.getElementById('download-options-container');
+    const downloadFormatStatus = document.getElementById('download-format-status');
+    let currentMessageBubbleForDownload = null; // To store the message bubble content
+
+    function openDownloadFormatModal(bubbleElement) {
+        if (!downloadFormatModal || !downloadFormatStatus) return;
+        currentMessageBubbleForDownload = bubbleElement;
+        downloadFormatStatus.textContent = ''; // Clear previous status
+        // Disable buttons initially if needed, or enable all
+        downloadOptionsContainer.querySelectorAll('.download-option-btn').forEach(btn => btn.disabled = false);
+        downloadFormatModal.style.display = 'flex'; // Show modal
+        downloadFormatModal.classList.add('visible');
+    }
+
+    function closeDownloadFormatModal() {
+        if (!downloadFormatModal) return;
+        downloadFormatModal.style.display = 'none';
+        downloadFormatModal.classList.remove('visible');
+        currentMessageBubbleForDownload = null;
+    }
+
+    if (closeDownloadFormatModalButton) {
+        closeDownloadFormatModalButton.addEventListener('click', closeDownloadFormatModal);
+    }
+    if (downloadFormatModal) { // Close on overlay click
+        downloadFormatModal.addEventListener('click', (event) => {
+            if (event.target === downloadFormatModal) {
+                closeDownloadFormatModal();
+            }
+        });
+    }
+
+    if (downloadOptionsContainer) {
+        downloadOptionsContainer.addEventListener('click', async (event) => {
+            if (event.target.classList.contains('download-option-btn')) {
+                const format = event.target.dataset.format;
+                if (!currentMessageBubbleForDownload || !format) return;
+
+                downloadFormatStatus.textContent = `Préparation du téléchargement en ${format.toUpperCase()}...`;
+                event.target.disabled = true; // Disable clicked button
+
+                try {
+                    const filename = `chat_message_${Date.now()}`;
+                    if (format === 'txt') {
+                        await generateTxtFromBubble(currentMessageBubbleForDownload, filename);
+                    } else if (format === 'pdf') {
+                        // await generatePdfFromBubble(currentMessageBubbleForDownload, filename); // To be implemented
+                        downloadFormatStatus.textContent = 'La génération PDF sera bientôt disponible !';
+                        console.warn("PDF generation not yet implemented.");
+                        // Re-enable button after message
+                        setTimeout(() => { event.target.disabled = false; downloadFormatStatus.textContent = '';}, 2000);
+                        return; // Prevent closing modal yet
+                    } else if (format === 'docx') {
+                        // await generateDocxFromBubble(currentMessageBubbleForDownload, filename); // To be implemented
+                        downloadFormatStatus.textContent = 'La génération DOCX sera bientôt disponible !';
+                        console.warn("DOCX generation not yet implemented.");
+                        setTimeout(() => { event.target.disabled = false; downloadFormatStatus.textContent = '';}, 2000);
+                        return; // Prevent closing modal yet
+                    }
+                    downloadFormatStatus.textContent = `Téléchargement en ${format.toUpperCase()} terminé !`;
+                    setTimeout(() => {
+                        closeDownloadFormatModal();
+                        event.target.disabled = false; // Re-enable button for next time
+                    }, 1500);
+                } catch (error) {
+                    console.error(`Error generating ${format}:`, error);
+                    downloadFormatStatus.textContent = `Erreur lors de la génération ${format.toUpperCase()}: ${error.message}`;
+                    event.target.disabled = false; // Re-enable on error
+                }
+            }
+        });
+    }
+
+    async function generateTxtFromBubble(bubbleElement, baseFilename) {
+        let textContent = '';
+        const listCounters = {}; // Pour gérer la numérotation des listes ordonnées imbriquées
+
+        function getNodeText(node) {
+            if (node.nodeType === Node.TEXT_NODE) {
+                return node.textContent;
+            } else if (node.nodeType === Node.ELEMENT_NODE) {
+                let prefix = '';
+                let suffix = '\n';
+                let content = '';
+
+                // Gestion des listes
+                if (node.tagName === 'UL') {
+                    // Pas de préfixe spécifique pour UL, mais on réinitialise le compteur OL si on sort d'une OL
+                    if (node.parentNode.tagName !== 'LI') listCounters[node.parentNode.tagName] = 0;
+                    for (let i = 0; i < node.childNodes.length; i++) {
+                        content += getNodeText(node.childNodes[i]);
+                    }
+                    suffix = '\n'; // Espace après la liste
+                    return content; // Retourne directement le contenu des LI
+                } else if (node.tagName === 'OL') {
+                    const parentListType = node.parentNode.tagName;
+                    if (!listCounters[parentListType]) listCounters[parentListType] = 0;
+                    listCounters[node.tagName] = 0; // Reset counter for this new OL
+
+                    for (let i = 0; i < node.childNodes.length; i++) {
+                        listCounters[node.tagName]++;
+                        content += getNodeText(node.childNodes[i]);
+                    }
+                    suffix = '\n'; // Espace après la liste
+                    // delete listCounters[node.tagName]; // Clean up counter for this OL level
+                    return content; // Retourne directement le contenu des LI
+                } else if (node.tagName === 'LI') {
+                    const parentOl = node.closest('OL');
+                    if (parentOl) {
+                        // Find the correct counter for this LI based on its OL parent
+                        // This logic is simplified; true nested OL counters are complex.
+                        // This will effectively use the counter of the immediate OL parent.
+                        prefix = `${listCounters[parentOl.tagName] || 1}. `;
+                    } else { // UL
+                        prefix = '- ';
+                    }
+                    for (let i = 0; i < node.childNodes.length; i++) {
+                        content += getNodeText(node.childNodes[i]);
+                    }
+                    // Remove last newline if content itself ends with one, to avoid double newlines from LI's own suffix
+                    if (content.endsWith('\n')) content = content.slice(0, -1);
+
+                } else if (node.tagName === 'BR') {
+                    return '\n';
+                } else if (['H1', 'H2', 'H3', 'H4', 'H5', 'H6'].includes(node.tagName)) {
+                    prefix = `\n## ${node.textContent.toUpperCase()} ##\n\n`; // Markdown-like style for titles
+                    content = ''; // textContent is already in prefix
+                    suffix = '';
+                } else if (node.tagName === 'P') {
+                    // Standard paragraph, just get content
+                    for (let i = 0; i < node.childNodes.length; i++) {
+                        content += getNodeText(node.childNodes[i]);
+                    }
+                } else if (node.tagName === 'PRE') {
+                    const code = node.querySelector('code');
+                    const codeContent = code ? code.dataset.code || code.innerText : node.innerText;
+                    prefix = `\n\`\`\`\n${codeContent.trim()}\n\`\`\`\n\n`;
+                    content = '';
+                    suffix = '';
+                } else if (node.tagName === 'CODE') { // Inline code
+                    // If it's inside a PRE, it's already handled. If standalone:
+                    if (!node.closest('PRE')) {
+                        return `\`${node.textContent}\``;
+                    }
+                } else if (node.tagName === 'STRONG' || node.tagName === 'B') {
+                    return `**${node.textContent}**`;
+                } else if (node.tagName === 'EM' || node.tagName === 'I') {
+                    return `*${node.textContent}*`;
+                } else if (node.classList && node.classList.contains('message-controls')) {
+                    return ''; // Skip message controls div
+                } else if (node.tagName === 'TABLE') {
+                    let tableContent = '\n--- TABLE ---\n';
+                    const rows = node.querySelectorAll('tr');
+                    rows.forEach(row => {
+                        const cells = row.querySelectorAll('th, td');
+                        const cellTexts = Array.from(cells).map(cell => cell.textContent.trim());
+                        tableContent += `| ${cellTexts.join(' | ')} |\n`;
+                    });
+                    tableContent += '--- END TABLE ---\n\n';
+                    return tableContent;
+                }
+                else { // For other block elements or unrecognized inline elements, just grab text
+                    for (let i = 0; i < node.childNodes.length; i++) {
+                        content += getNodeText(node.childNodes[i]);
+                    }
+                     // Avoid adding extra newlines if content is just a newline itself (from BR)
+                    if (content === '\n' && (prefix === '' || prefix === '\n')) suffix = '';
+                }
+                return prefix + content + suffix;
+            }
+            return ''; // Should not happen for typical nodes
+        }
+
+        // Iterate over the children of the bubbleElement to build the text content
+        bubbleElement.childNodes.forEach(childNode => {
+            textContent += getNodeText(childNode);
+        });
+        
+        // Basic cleanup: remove multiple consecutive newlines, leaving max 2
+        textContent = textContent.replace(/\n{3,}/g, '\n\n').trim();
+
+        const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${baseFilename}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    async function generatePdfFromBubble(bubbleElement, baseFilename) {
+        if (typeof jspdf === 'undefined') {
+            console.error("jsPDF is not loaded. Make sure the CDN link is correct in index.html.");
+            if(downloadFormatStatus) downloadFormatStatus.textContent = 'Erreur : La bibliothèque PDF n\'a pas pu être chargée.';
+            return Promise.reject("jsPDF not loaded");
+        }
+        const { jsPDF } = jspdf;
+        const pdf = new jsPDF({
+            orientation: 'p',
+            unit: 'pt',
+            format: 'a4'
+        });
+
+        let yPos = 40; 
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const margin = 40;
+        const maxLineWidth = pageWidth - 2 * margin;
+
+        pdf.setFont('Helvetica', 'normal'); 
+        pdf.setFontSize(11);
+        
+        const getLineHeight = (size, multiplier = 1.2) => size * multiplier; 
+
+        async function processNodePdf(node, currentX, currentY, currentOptions) {
+            let newY = currentY;
+            const defaultOptions = { 
+                fontName: 'Helvetica', 
+                fontStyle: 'normal', 
+                fontSize: 11, 
+                isCode: false, 
+                // listPrefix is now dynamically built
+            };
+            let options = { ...defaultOptions, ...currentOptions }; 
+
+            if (node.nodeType === Node.TEXT_NODE) {
+                const trimmedText = node.textContent.replace(/\s+/g, ' ').trim();
+                if (trimmedText) {
+                    pdf.setFont(options.fontName, options.fontStyle);
+                    pdf.setFontSize(options.fontSize);
+                    const textToSplit = (options.listPrefix || '') + trimmedText;
+                    const textLines = pdf.splitTextToSize(textToSplit, maxLineWidth - (currentX - margin));
+                    
+                    textLines.forEach(line => {
+                        if (newY + getLineHeight(options.fontSize) > pageHeight - margin) {
+                            pdf.addPage();
+                            newY = margin;
+                        }
+                        pdf.text(line, currentX, newY);
+                        newY += getLineHeight(options.fontSize);
+                    });
+                     // For list items, subsequent text nodes should be indented like the prefix was.
+                    if(options.listPrefix) options.listPrefix = ' '.repeat((options.listPrefix || '').length);
+                }
+            } else if (node.nodeType === Node.ELEMENT_NODE) {
+                const tagName = node.tagName.toUpperCase();
+                let newNestedOptions = { ...options }; 
+                // Reset listPrefix for children unless it's a list item being continued by its own text nodes
+                if (tagName !== 'LI' && tagName !== 'SPAN' && tagName !== 'STRONG' && tagName !== 'EM' && tagName !== 'B' && tagName !== 'I' && tagName !== 'CODE') {
+                    newNestedOptions.listPrefix = ''; 
+                }
+
+
+                switch (tagName) {
+                    case 'H1': newNestedOptions = {...newNestedOptions, fontSize: 18, fontStyle: 'bold'}; break;
+                    case 'H2': newNestedOptions = {...newNestedOptions, fontSize: 16, fontStyle: 'bold'}; break;
+                    case 'H3': newNestedOptions = {...newNestedOptions, fontSize: 14, fontStyle: 'bold'}; break;
+                    case 'H4': case 'H5': case 'H6': newNestedOptions = {...newNestedOptions, fontSize: 12, fontStyle: 'bold'}; break;
+                    case 'STRONG': case 'B': newNestedOptions.fontStyle = 'bold'; break;
+                    case 'EM': case 'I': newNestedOptions.fontStyle = 'italic'; break;
+                    case 'BR':
+                        newY += getLineHeight(options.fontSize);
+                        if (newY > pageHeight - margin) { pdf.addPage(); newY = margin; }
+                        return newY; 
+                    case 'PRE':
+                        const codeEl = node.querySelector('code');
+                        const rawCode = codeEl ? (codeEl.dataset.code || codeEl.innerText) : node.innerText;
+                        const codeFontSize = 9;
+                        const codeLineHeight = getLineHeight(codeFontSize, 1.1);
+                        
+                        const codeLines = pdf.splitTextToSize(rawCode.trim(), maxLineWidth - 10); 
+                        const boxHeight = (codeLines.length * codeLineHeight) + 10;
+
+                        if (newY + boxHeight > pageHeight - margin) { pdf.addPage(); newY = margin; }
+                        
+                        pdf.setFillColor(240, 240, 240); 
+                        pdf.setDrawColor(200, 200, 200); 
+                        pdf.rect(margin - 5, newY - codeLineHeight * 0.2 + 2 , maxLineWidth + 10, boxHeight - 4, 'FD'); 
+                        
+                        pdf.setFont('Courier', 'normal');
+                        pdf.setFontSize(codeFontSize);
+                        codeLines.forEach(line => {
+                            if (newY + codeLineHeight > pageHeight - margin) { pdf.addPage(); newY = margin; }
+                            pdf.text(line, margin, newY); 
+                            newY += codeLineHeight;
+                        });
+                        newY += getLineHeight(options.fontSize) * 0.5; 
+                        return newY; 
+                    case 'CODE':
+                         if (!node.closest('PRE')) { 
+                            newNestedOptions.fontName = 'Courier';
+                            newNestedOptions.fontSize = options.fontSize * 0.9; 
+                         } else { return newY; } 
+                        break;
+                    case 'UL': case 'OL':
+                        const items = Array.from(node.children).filter(child => child.tagName === 'LI');
+                        const listDepth = (options.listDepth || 0) + 1;
+                        let listCounter = 0;
+
+                        items.forEach(async (li) => {
+                            listCounter++;
+                            const itemPrefix = (tagName === 'OL') ? `${listCounter}. ` : '• ';
+                            let liOptions = { 
+                                ...options, 
+                                listPrefix: itemPrefix, 
+                                listDepth: listDepth,
+                            };
+                            
+                            for(const childNode of li.childNodes) {
+                                newY = await processNodePdf(childNode, currentX + 20, newY, liOptions);
+                                // Indent subsequent lines of same LI by clearing the prefix after first use within this LI processing run
+                                liOptions.listPrefix = ' '.repeat(itemPrefix.length); 
+                            }
+                        });
+                        newY += getLineHeight(options.fontSize) * 0.2; 
+                        return newY; 
+                    case 'TABLE':
+                        if (typeof pdf.autoTable === 'function') {
+                            const head = [];
+                            const body = [];
+                            const headerRow = node.querySelector('thead tr, tr:first-child');
+                            if (headerRow) {
+                                head.push(Array.from(headerRow.querySelectorAll('th, td')).map(cell => cell.textContent.trim()));
+                            }
+                            const bodyRows = Array.from(node.querySelectorAll('tbody tr, tr' + (headerRow ? ':not(:first-child)' : '')));
+                            bodyRows.forEach(row => {
+                                body.push(Array.from(row.querySelectorAll('td')).map(cell => cell.textContent.trim()));
+                            });
+                            
+                            if (newY + 20 > pageHeight - margin) { pdf.addPage(); newY = margin; }
+                            pdf.autoTable({
+                                head: head.length > 0 ? head : null,
+                                body: body,
+                                startY: newY,
+                                margin: { left: margin, right: margin },
+                                theme: 'grid', 
+                                styles: { font: 'Helvetica', fontSize: 9, cellPadding: 3 },
+                                headStyles: { fillColor: [220, 220, 220], textColor: 20, fontStyle: 'bold' },
+                                didDrawPage: (data) => { newY = data.cursor.y + 10; }
+                            });
+                            newY = pdf.previousAutoTable.finalY ? pdf.previousAutoTable.finalY + 10 : newY + 20 * (body.length + (head.length > 0 ? 1:0) ); 
+                        } else { 
+                             newY = await processNodePdf(document.createTextNode("[Tableau - autoTable non disponible]"), margin, newY, {...options, fontStyle: 'italic'});
+                        }
+                        return newY; 
+                    case 'DIV': case 'P': 
+                        for(const child of Array.from(node.childNodes)) {
+                           newY = await processNodePdf(child, currentX, newY, newNestedOptions);
+                        }
+                        if (node.nextSibling || node.parentElement.lastChild !== node) { // Add space if not the very last element
+                           newY += getLineHeight(options.fontSize) * 0.3; 
+                        }
+                        return newY;
+                }
+
+                if (node.childNodes && node.childNodes.length > 0 && !node.classList.contains('message-controls')) {
+                    for(const child of Array.from(node.childNodes)) {
+                       newY = await processNodePdf(child, currentX, newY, newNestedOptions);
+                    }
+                } else if (textContent && !['BR', 'PRE', 'UL', 'OL', 'TABLE', 'DIV', 'P', 'LI'].includes(tagName)) { 
+                    pdf.setFont(newNestedOptions.fontName, newNestedOptions.fontStyle);
+                    pdf.setFontSize(newNestedOptions.fontSize);
+                    const textLinesToPrint = pdf.splitTextToSize((newNestedOptions.listPrefix || '') + textContent, maxLineWidth - (currentX - margin));
+                    textLinesToPrint.forEach(line => {
+                        if (newY + getLineHeight(newNestedOptions.fontSize) > pageHeight - margin) {
+                            pdf.addPage();
+                            newY = margin;
+                        }
+                        pdf.text(line, currentX, newY);
+                        newY += getLineHeight(newNestedOptions.fontSize);
+                    });
+                }
+            }
+            return newY;
+        }
+
+        for(const childNode of Array.from(bubbleElement.childNodes)) {
+            yPos = await processNodePdf(childNode, margin, yPos, { listDepth: 0 });
+        }
+
+        pdf.save(`${baseFilename}.pdf`);
+        return Promise.resolve(); 
+    }
+
+    async function generateDocxFromBubble(bubbleElement, baseFilename) {
+        if (typeof docx === 'undefined' || !docx.Document) { 
+            console.error("docx library is not loaded or not client-side compatible. Make sure the CDN link is correct.");
+            if(downloadFormatStatus) downloadFormatStatus.textContent = 'Erreur : La bibliothèque DOCX n\'a pas pu être chargée ou n\'est pas compatible.';
+            return Promise.reject("DOCX library not loaded or incompatible");
+        }
+
+        const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, Table, TableCell, TableRow, WidthType, BorderStyle, ShadingType, convertInchesToTwip, PageOrientation, Indent } = docx;
+        const docChildren = []; 
+
+        const defaultParagraphSpacing = { after: 100, before: 50 };
+
+        // Recursive function to process HTML nodes and convert them to docx elements
+        function processHtmlNodeToDocx(node, currentTextProps = { size: 22, font: "Calibri" }, listInfo = { level: 0, type: null, counter: 0 }) {
+            const elements = []; 
+
+            if (node.nodeType === Node.TEXT_NODE) {
+                const text = node.textContent;
+                // Add text only if it's not just whitespace, or if parent is PRE/CODE
+                if (text.trim().length > 0 || (node.parentNode && ['CODE', 'PRE'].includes(node.parentNode.tagName))) {
+                    elements.push(new TextRun({ text, ...currentTextProps }));
+                }
+            } else if (node.nodeType === Node.ELEMENT_NODE) {
+                const tagName = node.tagName.toUpperCase();
+                let newTextProps = JSON.parse(JSON.stringify(currentTextProps)); 
+                let paragraphChildren = [];
+
+                // Block-level elements usually create new Paragraphs or Tables
+                if (['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'PRE', 'UL', 'OL', 'TABLE', 'DIV', 'BR'].includes(tagName)) {
+                    
+                    // Process children first for P, DIV to gather TextRuns for a single Paragraph
+                    if (tagName === 'P' || tagName === 'DIV') {
+                         Array.from(node.childNodes).forEach(child => {
+                            paragraphChildren.push(...processHtmlNodeToDocx(child, newTextProps, listInfo));
+                        });
+                    }
+
+                    switch (tagName) {
+                        case 'H1': elements.push(new Paragraph({ children: [new TextRun({text: node.textContent, bold: true, size: 32})], heading: HeadingLevel.HEADING_1, spacing: { after: 240, before: 120 } })); break;
+                        case 'H2': elements.push(new Paragraph({ children: [new TextRun({text: node.textContent, bold: true, size: 28})], heading: HeadingLevel.HEADING_2, spacing: { after: 220, before: 110 } })); break;
+                        case 'H3': elements.push(new Paragraph({ children: [new TextRun({text: node.textContent, bold: true, size: 26})], heading: HeadingLevel.HEADING_3, spacing: { after: 200, before: 100 } })); break;
+                        case 'H4': elements.push(new Paragraph({ children: [new TextRun({text: node.textContent, bold: true, size: 24})], heading: HeadingLevel.HEADING_4, spacing: { after: 180, before: 90 } })); break;
+                        case 'H5': elements.push(new Paragraph({ children: [new TextRun({text: node.textContent, bold: true, size: 22})], heading: HeadingLevel.HEADING_5, spacing: { after: 160, before: 80 } })); break;
+                        case 'H6': elements.push(new Paragraph({ children: [new TextRun({text: node.textContent, bold: true, size: 22})], heading: HeadingLevel.HEADING_6, spacing: { after: 140, before: 70 } })); break;
+                        case 'P': if (paragraphChildren.length > 0) elements.push(new Paragraph({ children: paragraphChildren, spacing: defaultParagraphSpacing })); break;
+                        case 'DIV': 
+                            if (paragraphChildren.length > 0) { // If DIV contained inline content, wrap it
+                                elements.push(new Paragraph({ children: paragraphChildren, spacing: defaultParagraphSpacing }));
+                            } // If DIV contained other block elements, they are already in 'elements' from recursive calls
+                            break;
+                        case 'BR': elements.push(new Paragraph({children: [new TextRun({break:1})], spacing:{after:0, before:0}})); break;
+                        case 'PRE':
+                            const codeEl = node.querySelector('code');
+                            const rawCode = codeEl ? (codeEl.dataset.code || codeEl.innerText) : node.innerText;
+                            elements.push(new Paragraph({
+                                children: [new TextRun({ text: "--- CODE BLOCK ---", bold: true, font: "Consolas", size: 20 })], // size in half-points
+                                spacing: { before: 150, after: 50 },
+                                shading: { type: ShadingType.SOLID, color: "F0F0F0", fill: "F0F0F0" },
+                            }));
+                            rawCode.trim().split('\n').forEach(line => {
+                                elements.push(new Paragraph({
+                                    children: [new TextRun({ text: line, font: "Courier New", size: 18 })],
+                                    indentation: { left: convertInchesToTwip(0.2) }, // Basic indent for code
+                                    spacing: { after: 0, line: 200 }, // Tighter line spacing
+                                    shading: { type: ShadingType.SOLID, color: "F0F0F0", fill: "F0F0F0" }
+                                }));
+                            });
+                            elements.push(new Paragraph({
+                                children: [new TextRun({ text: "--- END CODE BLOCK ---", bold: true, font: "Consolas", size: 20 })],
+                                spacing: { before: 50, after: 150 },
+                                shading: { type: ShadingType.SOLID, color: "F0F0F0", fill: "F0F0F0" },
+                            }));
+                            break;
+                        case 'UL': case 'OL':
+                            let itemCounter = 0;
+                            Array.from(node.children).filter(child => child.tagName === 'LI').forEach(li => {
+                                itemCounter++;
+                                const liContentRuns = [];
+                                Array.from(li.childNodes).forEach(child => liContentRuns.push(...processHtmlNodeToDocx(child, newTextProps, {level: listInfo.level + 1, type: tagName, counter: itemCounter })));
+                                
+                                elements.push(new Paragraph({ 
+                                    children: liContentRuns, 
+                                    numbering: { reference: tagName === 'OL' ? "default-numbering" : "default-bullet", level: listInfo.level },
+                                    spacing: {after: 50}
+                                }));
+                            });
+                            break;
+                        case 'TABLE':
+                            const tableRows = [];
+                            Array.from(node.querySelectorAll('tr')).forEach(trNode => {
+                                const tableCells = [];
+                                Array.from(trNode.querySelectorAll('th, td')).forEach(tdNode => {
+                                    const cellParagraphs = [];
+                                    Array.from(tdNode.childNodes).forEach(child => cellParagraphs.push(...processHtmlNodeToDocx(child, {size:18})));
+                                    
+                                    tableCells.push(new TableCell({ 
+                                        children: cellParagraphs.length > 0 ? cellParagraphs : [new Paragraph("")], 
+                                        borders: {
+                                            top: { style: BorderStyle.SINGLE, size: 6, color: "BFBFBF" }, 
+                                            bottom: { style: BorderStyle.SINGLE, size: 6, color: "BFBFBF" },
+                                            left: { style: BorderStyle.SINGLE, size: 6, color: "BFBFBF" },
+                                            right: { style: BorderStyle.SINGLE, size: 6, color: "BFBFBF" },
+                                        },
+                                        shading: tdNode.tagName === 'TH' ? {type: ShadingType.SOLID, color: "E0E0E0", fill: "E0E0E0"} : undefined,
+                                    }));
+                                });
+                                if(tableCells.length > 0) tableRows.push(new TableRow({ children: tableCells }));
+                            });
+                            if (tableRows.length > 0) {
+                                 elements.push(new Table({ rows: tableRows, width: { size: 90, type: WidthType.PERCENT }, alignment: AlignmentType.CENTER }));
+                            }
+                            break;
+                    }
+                } else { // Inline-level elements modify currentTextProps and recurse
+                    if (tagName === 'STRONG' || tagName === 'B') newTextProps.bold = true;
+                    else if (tagName === 'EM' || tagName === 'I') newTextProps.italics = true;
+                    else if (tagName === 'CODE' && !node.closest('PRE')) {
+                        newTextProps.font = "Courier New";
+                        newTextProps.size = (currentTextProps.size || 22) * 0.9; 
+                    }
+                    
+                    if (node.childNodes && node.childNodes.length > 0 && !node.classList.contains('message-controls')) {
+                        Array.from(node.childNodes).forEach(child => {
+                            elements.push(...processHtmlNodeToDocx(child, newTextProps, listInfo));
+                        });
+                    } else if (node.textContent.trim() && !['BR', 'PRE', 'UL', 'OL', 'TABLE', 'DIV', 'P', 'LI'].includes(tagName)) {
+                         if(node.textContent.trim().length > 0) elements.push(new TextRun({ text: node.textContent.trim(), ...newTextProps }));
+                    }
+                }
+            }
+            return elements; 
+        }
+        
+        Array.from(bubbleElement.childNodes).forEach(childNode => {
+            docChildren.push(...processHtmlNodeToDocx(childNode));
+        });
+
+        const finalDocChildren = docChildren.reduce((acc, curr) => {
+            if (curr instanceof Paragraph) {
+                // Ensure children of Paragraph are actual TextRun instances, not nested arrays
+                let flatChildren = [];
+                function flatten(arr) {
+                    arr.forEach(item => {
+                        if (Array.isArray(item)) flatten(item);
+                        else if (item instanceof TextRun) flatChildren.push(item);
+                        // If item is a Paragraph (e.g. from nested DIV), it should have been handled by processHtmlNodeToDocx to be a top-level element
+                    });
+                }
+                flatten(curr.options.children);
+                
+                // Filter out TextRuns that are solely whitespace
+                curr.options.children = flatChildren.filter(run => run instanceof TextRun && run.options.text.trim() !== "");
+
+                if (curr.options.children.length > 0) acc.push(curr);
+            } else {
+                acc.push(curr); 
+            }
+            return acc;
+        }, []);
+
+
+        const doc = new Document({
+            sections: [{
+                properties: {
+                    page: {
+                        size: { orientation: PageOrientation.PORTRAIT, width: convertInchesToTwip(8.5), height: convertInchesToTwip(11) },
+                        margin: { top: convertInchesToTwip(1), right: convertInchesToTwip(1), bottom: convertInchesToTwip(1), left: convertInchesToTwip(1) },
+                    }
+                },
+                children: finalDocChildren,
+            }],
+            numbering: { // Define numbering schemes
+                config: [
+                    { // For Ordered Lists (OL)
+                        reference: "default-numbering",
+                        levels: [
+                            { level: 0, format: "decimal", text: "%1.", alignment: AlignmentType.START, style: { paragraph: { indent: { left: convertInchesToTwip(0.5), hanging: convertInchesToTwip(0.25) }}}},
+                            { level: 1, format: "lowerLetter", text: "%2)", alignment: AlignmentType.START, style: { paragraph: { indent: { left: convertInchesToTwip(0.75), hanging: convertInchesToTwip(0.25) }}}},
+                            { level: 2, format: "lowerRoman", text: "%3.", alignment: AlignmentType.START, style: { paragraph: { indent: { left: convertInchesToTwip(1.0), hanging: convertInchesToTwip(0.25) }}}},
+                        ]
+                    },
+                    { // For Unordered Lists (UL)
+                        reference: "default-bullet",
+                        levels: [
+                             { level: 0, format: "bullet", text: "•", alignment: AlignmentType.START, style: { paragraph: { indent: { left: convertInchesToTwip(0.5), hanging: convertInchesToTwip(0.25) }}}},
+                             { level: 1, format: "bullet", text: "◦", alignment: AlignmentType.START, style: { paragraph: { indent: { left: convertInchesToTwip(0.75), hanging: convertInchesToTwip(0.25) }}}},
+                             { level: 2, format: "bullet", text: "▪", alignment: AlignmentType.START, style: { paragraph: { indent: { left: convertInchesToTwip(1.0), hanging: convertInchesToTwip(0.25) }}}},
+                        ]
+                    }
+                ]
+            },
+             styles: { // Define default document and paragraph styles
+                default: {
+                    document: { run: { size: 22, font: "Calibri" } }, // Default 11pt Calibri
+                    paragraph: { spacing: { after: 120, line: 276 } }, // Default spacing after paragraphs (6pt), line spacing 1.15
+                },
+             }
+        });
+
+        Packer.toBlob(doc).then(blob => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${baseFilename}.docx`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            if(downloadFormatStatus) downloadFormatStatus.textContent = 'Téléchargement DOCX terminé !';
+            return Promise.resolve();
+        }).catch(err => {
+            console.error("Error packing DOCX:", err);
+            if(downloadFormatStatus) downloadFormatStatus.textContent = 'Erreur de génération DOCX.';
+            return Promise.reject(err);
+        });
+    }
+
+    // --- END Download Format Modal Logic ---
+
 
     function formatActivityUrl(url) {
         if (!url) return 'N/A';

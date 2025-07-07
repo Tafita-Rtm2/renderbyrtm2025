@@ -2837,6 +2837,67 @@ body.dark-mode #gemini-model-selector {
 
 /* --- END OF GEMINI ALL MODEL VIEW STYLES --- */
 
+/* --- DOWNLOAD FORMAT MODAL STYLES --- */
+/* .modal-overlay and .modal-content are already defined and styled for the trailer modal.
+   We can reuse them, but might need some specific adjustments if the content is very different. */
+
+#download-format-modal .modal-content {
+    max-width: 450px; /* Smaller modal for format selection */
+    padding: 25px; /* Standard padding */
+    text-align: center; /* Center content */
+}
+
+#download-format-modal h4 {
+    color: var(--accent-color);
+    margin-top: 0;
+    margin-bottom: 25px;
+    font-size: 1.4em;
+}
+
+#download-options-container {
+    display: flex;
+    flex-direction: column; /* Stack buttons vertically */
+    gap: 15px; /* Space between buttons */
+    align-items: stretch; /* Make buttons take full width available in flex column */
+}
+
+.download-option-btn {
+    padding: 12px 20px;
+    font-size: 1.1em;
+    font-family: var(--font-primary);
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    background-color: var(--surface-color);
+    color: var(--accent-color);
+    border: 2px solid var(--accent-color);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.download-option-btn:hover {
+    background-color: var(--accent-color);
+    color: var(--primary-bg);
+    border-color: var(--primary-accent-color);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 4px 10px var(--accent-color);
+}
+
+.download-option-btn:disabled {
+    background-color: var(--text-muted-color) !important;
+    color: var(--surface-color) !important;
+    border-color: var(--text-muted-color) !important;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+#download-format-status {
+    color: var(--text-muted-color);
+    min-height: 20px; /* Reserve space for status messages */
+}
+/* --- END OF DOWNLOAD FORMAT MODAL STYLES --- */
+
 /* --- BOX MOVIE VIEW STYLES --- */
 #box-movie-view {
     /* .view base styles are applied */

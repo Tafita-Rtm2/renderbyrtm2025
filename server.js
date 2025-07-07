@@ -19,134 +19,6 @@ const GEMINI_ALL_MODEL_TEMP_UPLOAD_PATH = 'public/uploads/gemini_all_model_temp/
     }
 });
 
-// New Route for Claude Anthropic All Models
-const CLAUDE_HAJI_MIX_API_KEY = 'e30864f5c326f6e3d70b032000ef5e2fa610cb5d9bc5759711d33036e303cef4'; // Same API key
-const CLAUDE_ALL_MODEL_TEMP_UPLOAD_PATH = 'public/uploads/claude_temp/';
-
-if (!fs.existsSync(CLAUDE_ALL_MODEL_TEMP_UPLOAD_PATH)){
-    fs.mkdirSync(CLAUDE_ALL_MODEL_TEMP_UPLOAD_PATH, { recursive: true });
-}
-app.use('/uploads/claude_temp', express.static(path.join(__dirname, CLAUDE_ALL_MODEL_TEMP_UPLOAD_PATH)));
-
-const claudeAllModelStorage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, CLAUDE_ALL_MODEL_TEMP_UPLOAD_PATH);
-    },
-    filename: function (req, file, cb) {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, "claudefile-" + uniqueSuffix + path.extname(file.originalname));
-    }
-});
-const uploadClaudeAllModel = multer({
-    storage: claudeAllModelStorage,
-    limits: { fileSize: 20 * 1024 * 1024 } // 20MB limit
-});
-
-// const app = express(); // Moved up
-// const PORT = process.env.PORT || 3000; // Moved up
-
-// Middleware
-// Serve static files from the upload directories
-// app.use('/uploads/gemini_temp', express.static(path.join(__dirname, LEGACY_GEMINI_UPLOAD_PATH))); // Moved up
-// app.use('/uploads/gemini_all_model_temp', express.static(path.join(__dirname, GEMINI_ALL_MODEL_TEMP_UPLOAD_PATH))); // Moved up
-// app.use('/uploads/chatgpt_temp', express.static(path.join(__dirname, CHATGPT_ALL_MODEL_TEMP_UPLOAD_PATH))); // Moved up
-// app.use('/uploads/claude_temp', express.static(path.join(__dirname, CLAUDE_ALL_MODEL_TEMP_UPLOAD_PATH))); // Moved up
-
-// Serve main public files
-// app.use(express.static(path.join(__dirname, 'public'))); // Moved up
-// JSON parsing middleware
-// app.use(express.json()); // Moved up
-
-
-app.post('/api/all-claude', uploadClaudeAllModel.single('file'), async (req, res) => {
-    const { ask, model, uid, roleplay, max_tokens } = req.body;
-    let clientUploadedFileUrl = req.body.img_url; // If client sends a URL directly
-    let tempLocalPath = null;
-    let publicFileUrl = null;
-
-    if (!ask && !req.file && !clientUploadedFileUrl) return res.status(400).json({ error: '"ask" or file/img_url is required for Claude.' });
-    if (!uid) { if (req.file) fs.unlinkSync(req.file.path); return res.status(400).json({ error: '"uid" is required.' }); }
-    if (!model) { if (req.file) fs.unlinkSync(req.file.path); return res.status(400).json({ error: '"model" is required.' }); }
-
-    if (req.file) {
-        tempLocalPath = req.file.path;
-        const APP_BASE_URL = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
-        publicFileUrl = new URL(`/uploads/claude_temp/${req.file.filename}`, APP_BASE_URL).toString();
-        console.log(`All Claude Models: File temp saved at ${tempLocalPath}, public URL ${publicFileUrl}`);
-    } else if (clientUploadedFileUrl) {
-        try {
-            const parsedUrl = new URL(clientUploadedFileUrl);
-            if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") throw new Error("Invalid file URL protocol.");
-            publicFileUrl = clientUploadedFileUrl;
-        } catch (e) { 
-            if (tempLocalPath && fs.existsSync(tempLocalPath)) fs.unlinkSync(tempLocalPath);
-            return res.status(400).json({ error: `Invalid img_url: ${e.message}` }); 
-        }
-    }
-
-    let hajiAnthropicApiUrl = `https://haji-mix-api.gleeze.com/api/anthropic?uid=${encodeURIComponent(uid)}&model=${encodeURIComponent(model)}&api_key=${CLAUDE_HAJI_MIX_API_KEY}`;
-    
-    if (ask) hajiAnthropicApiUrl += `&ask=${encodeURIComponent(ask)}`;
-    if (publicFileUrl) hajiAnthropicApiUrl += `&img_url=${encodeURIComponent(publicFileUrl)}`;
-    if (roleplay) hajiAnthropicApiUrl += `&roleplay=${encodeURIComponent(roleplay)}`;
-    if (max_tokens) hajiAnthropicApiUrl += `&max_tokens=${encodeURIComponent(max_tokens)}`;
-    hajiAnthropicApiUrl += `&stream=false`;
-
-    try {
-        const apiResponse = await fetch(hajiAnthropicApiUrl);
-        const responseText = await apiResponse.text();
-        if (tempLocalPath) fs.unlink(tempLocalPath, (err) => { if (err) console.error("Error deleting temp file for All Claude Models:", err); });
-
-        if (!apiResponse.ok) {
-            let eJson = { error: `Haji Mix Anthropic API Error: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
-            try {
-                const parsedError = JSON.parse(responseText);
-                if (parsedError.error) eJson.error = parsedError.error;
-                else if (parsedError.message) eJson.error = parsedError.message;
-                if (parsedError.details) eJson.details = parsedError.details;
-            } catch (c) { /* responseText was not JSON */ }
-            console.error("Haji Mix Anthropic API Error:", eJson);
-            return res.status(apiResponse.status).json(eJson);
-        }
-
-        let data;
-        try { data = JSON.parse(responseText); } 
-        catch (e) {
-            console.warn('Haji Mix Anthropic API response was not JSON, but status was OK. Response text:', responseText);
-            if (typeof responseText === 'string' && responseText.trim().length > 0 && !responseText.toLowerCase().includes('error')) {
-                 return res.json({
-                    author: model, 
-                    response: responseText, 
-                    model_used: model,
-                    supported_models: [model] 
-                });
-            }
-            return res.status(500).json({ error: 'Failed to parse response from Haji Mix Anthropic API.', details: responseText });
-        }
-        
-        const responsePayload = {
-            user_ask: data.user_ask || ask,
-            model_used: data.model_used || model,
-            answer: data.answer,
-            supported_models: Array.isArray(data.supported_models) ? data.supported_models : [],
-            images_processed: data.images_processed !== undefined ? data.images_processed : 0
-        };
-        
-        if (data.error && !data.answer) {
-             console.warn("Haji Mix Anthropic API returned an error in its payload:", data.error);
-        }
-        if (responsePayload.supported_models.length === 0) {
-            console.warn("Haji Mix Anthropic API response did not include 'supported_models' or it was empty.");
-        }
-        res.json(responsePayload);
-
-    } catch (error) {
-        console.error('Server error (Haji Mix Anthropic API):', error);
-        if (tempLocalPath && fs.existsSync(tempLocalPath)) fs.unlink(tempLocalPath, (err) => { if (err) console.error("Error deleting temp file (All Claude Models) on error:", err); });
-        return res.status(500).json({ error: 'Server error processing Haji Mix Anthropic API request.' });
-    }
-});
-
 // Storage configuration for legacy Gemini Vision and GPT-4o Vision
 const legacyGeminiStorage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -181,17 +53,14 @@ const uploadGeminiAllModel = multer({
     limits: { fileSize: 20 * 1024 * 1024 } // Limit file size to 20MB for this feature
 });
 
-const app = express(); // INITIALIZE APP HERE
+
+const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
 // Serve static files from the upload directories
 app.use('/uploads/gemini_temp', express.static(path.join(__dirname, LEGACY_GEMINI_UPLOAD_PATH)));
 app.use('/uploads/gemini_all_model_temp', express.static(path.join(__dirname, GEMINI_ALL_MODEL_TEMP_UPLOAD_PATH)));
-// Ensure new static paths for ChatGPT and Claude are also after app initialization
-app.use('/uploads/chatgpt_temp', express.static(path.join(__dirname, CHATGPT_ALL_MODEL_TEMP_UPLOAD_PATH)));
-app.use('/uploads/claude_temp', express.static(path.join(__dirname, CLAUDE_ALL_MODEL_TEMP_UPLOAD_PATH)));
-
 // Serve main public files
 app.use(express.static(path.join(__dirname, 'public')));
 // JSON parsing middleware

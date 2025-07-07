@@ -59,6 +59,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const subViewMenuTrigger = document.getElementById('sub-view-menu-trigger');
     const sideMenu = document.getElementById('side-menu');
     const homeMenuTriggerIcon = document.getElementById('home-menu-trigger-icon');
+    const topBarWeatherDisplay = document.getElementById('weather-display-container');
+    let topBarChatTitleDisplay = null; // To be created dynamically
+
+    // Helper to get chat name from view ID or side menu
+    function getChatNameForView(viewId) {
+        const sideMenuLink = document.querySelector(`#side-menu a[data-view="${viewId}"]`);
+        if (sideMenuLink) {
+            const titleSpan = sideMenuLink.querySelector('span:not(.menu-item-description)');
+            if (titleSpan) return titleSpan.textContent.trim();
+        }
+        // Fallback names if not found in menu (e.g. if view opened directly)
+        const names = {
+            'ai-chat-view': 'AI Chat',
+            'gemini-chat-view': 'Gemini Vision Chat',
+            'gpt4o-chat-view': 'GPT-4o Chat',
+            'blackbox-ai-view': 'Blackbox AI',
+            'deepseek-ai-view': 'Deepseek AI',
+            'claude-haiku-view': 'Claude Haiku AI',
+            'gemini-all-model-view': 'Gemini All Models'
+        };
+        return names[viewId] || 'Chat';
+    }
+
 
     // --- Centralized showView Function ---
     window.showView = function(viewIdToShow, bypassAdminCheck = false) {
@@ -86,113 +109,107 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             } else if (enteredCode === null) {
                 // User cancelled the prompt, do nothing or show a message
-                // console.log('Admin code prompt cancelled.');
             } else {
-                // User entered empty string
                 alert('Admin code is required to access this panel.');
             }
-            return; // Stop further execution in this call
+            return;
         }
 
-        // --- Existing showView logic starts here ---
         allViewElements.forEach(view => {
             view.classList.remove('active');
             view.style.display = 'none';
         });
 
-        // Explicitly hide or manage AI chat components when not the target view
         const aiChatView = document.getElementById('ai-chat-view');
-        const chatInputBar = document.getElementById('chat-input-bar'); // Assuming this is the correct ID
+        const chatInputBar = document.getElementById('chat-input-bar');
 
         if (viewIdToShow !== 'ai-chat-view') {
-            if (aiChatView && aiChatView.style.display !== 'none') { // Check if it's not already none
-                // This is a safeguard; the main loop should handle hiding aiChatView itself.
-                // aiChatView.style.display = 'none'; // Redundant if main loop is effective
-            }
-            if (chatInputBar) {
-                // Specifically target the chat input bar to ensure it's hidden
-                chatInputBar.style.display = 'none';
-            }
-        } else { // When 'ai-chat-view' IS being shown
-            // Ensure chatInputBar is visible. Its display is part of aiChatView's flex layout.
-            // If aiChatView is set to display:flex, child elements with default display (block/flex) will show.
-            // If chatInputBar was explicitly set to display:none, it needs to be reset.
-            if (chatInputBar) {
-                 chatInputBar.style.display = 'flex'; // Or 'block' if that's its natural state in the layout
-            }
+            if (chatInputBar) chatInputBar.style.display = 'none';
+        } else {
+            if (chatInputBar) chatInputBar.style.display = 'flex';
         }
 
         const viewToShow = document.getElementById(viewIdToShow);
         if (viewToShow) {
-            viewToShow.style.display = 'block'; // Use 'block' or 'flex' as appropriate for the view's CSS
+            viewToShow.style.display = 'block';
             viewToShow.classList.add('active');
         } else {
             console.warn(`View with ID "${viewIdToShow}" not found. Defaulting to home-view.`);
-            const homeView = document.getElementById('home-view');
-            if (homeView) {
-                homeView.style.display = 'block';
-                homeView.classList.add('active');
-            }
+            document.getElementById('home-view').style.display = 'block';
+            document.getElementById('home-view').classList.add('active');
             viewIdToShow = 'home-view';
         }
-         // Special display handling for flex views
-        if (viewIdToShow === 'ai-chat-view' ||
-            viewIdToShow === 'vip-view' || /* vip-view might also be flex */
-            viewIdToShow === 'gemini-chat-view' ||
-            viewIdToShow === 'gpt4o-chat-view' ||
-            viewIdToShow === 'blackbox-ai-view' ||
-            viewIdToShow === 'deepseek-ai-view' ||
-            viewIdToShow === 'claude-haiku-view' ||
-            viewIdToShow === 'email-generator-view') {
-            if(viewToShow) viewToShow.style.display = 'flex';
+
+        const chatViewIds = [
+            'ai-chat-view', 'gemini-chat-view', 'gpt4o-chat-view',
+            'blackbox-ai-view', 'deepseek-ai-view', 'claude-haiku-view',
+            'gemini-all-model-view'
+        ];
+        const isChatView = chatViewIds.includes(viewIdToShow);
+
+        if (viewToShow && (isChatView || viewIdToShow === 'email-generator-view' || viewIdToShow === 'vip-view')) {
+            viewToShow.style.display = 'flex';
+        }
+
+        // Handle top bar content (Weather vs Chat Title)
+        if (isChatView) {
+            if (topBarWeatherDisplay) topBarWeatherDisplay.style.display = 'none';
+            if (!topBarChatTitleDisplay) {
+                topBarChatTitleDisplay = document.createElement('div');
+                topBarChatTitleDisplay.id = 'top-bar-chat-title';
+                topBarChatTitleDisplay.className = 'top-bar-chat-title-display'; // For styling
+                // Insert it before the weather display, or at a suitable place in the top bar
+                const themeToggleContainer = document.getElementById('theme-toggle-container');
+                if (themeToggleContainer && themeToggleContainer.parentNode) {
+                     themeToggleContainer.parentNode.insertBefore(topBarChatTitleDisplay, themeToggleContainer.nextSibling); // Insert after theme toggle
+                } else if (topBarWeatherDisplay && topBarWeatherDisplay.parentNode) {
+                    topBarWeatherDisplay.parentNode.insertBefore(topBarChatTitleDisplay, topBarWeatherDisplay);
+                } else {
+                    // Fallback: append to top-bar if other elements not found
+                    document.getElementById('top-bar')?.appendChild(topBarChatTitleDisplay);
+                }
+            }
+            topBarChatTitleDisplay.textContent = getChatNameForView(viewIdToShow);
+            topBarChatTitleDisplay.style.display = 'block'; // Or 'flex' if it needs flex properties
+        } else {
+            if (topBarWeatherDisplay) topBarWeatherDisplay.style.display = 'flex'; // Assuming flex is its default
+            if (topBarChatTitleDisplay) topBarChatTitleDisplay.style.display = 'none';
         }
 
 
         if (viewIdToShow === 'home-view') {
             if (homeBottomAppIcons) homeBottomAppIcons.style.display = 'flex';
             if (subViewMenuTrigger) subViewMenuTrigger.style.display = 'none';
-            if (homeMenuTriggerIcon) homeMenuTriggerIcon.style.display = 'inline-flex'; // or 'block'
+            if (homeMenuTriggerIcon) homeMenuTriggerIcon.style.display = 'inline-flex';
             if (sideMenu && sideMenu.classList.contains('visible')) sideMenu.classList.remove('visible');
         } else {
             if (homeBottomAppIcons) homeBottomAppIcons.style.display = 'none';
-            if (subViewMenuTrigger) subViewMenuTrigger.style.display = 'inline-flex'; // or 'block'
+            if (subViewMenuTrigger) subViewMenuTrigger.style.display = 'inline-flex';
             if (homeMenuTriggerIcon) homeMenuTriggerIcon.style.display = 'none';
         }
 
         // Feature-specific load calls
         if (viewIdToShow === 'home-view' && typeof loadComments === 'function') loadComments();
         else if (viewIdToShow === 'ai-chat-view') {
-            console.log('[AI CHAT DIAGNOSTIC] showView called for ai-chat-view.');
-            // Logs for checking elements when ai-chat-view is shown
-            console.log('[AI CHAT DIAGNOSTIC] Checking #chat-input-bar in DOM:', document.getElementById('chat-input-bar'));
-            console.log('[AI CHAT DIAGNOSTIC] Checking #chat-input-field in DOM:', document.getElementById('chat-input-field'));
-            console.log('[AI CHAT DIAGNOSTIC] Checking #chat-send-button in DOM:', document.getElementById('chat-send-button'));
-            console.log('[AI CHAT DIAGNOSTIC] Checking #web-search-toggle in DOM:', document.getElementById('web-search-toggle'));
-            console.log('[AI CHAT DIAGNOSTIC] Checking .web-search-container in DOM (within #ai-chat-view):', document.querySelector('#ai-chat-view .web-search-container'));
-
             if (typeof loadChatHistory === 'function') loadChatHistory();
             if (typeof loadWebSearchToggleState === 'function') loadWebSearchToggleState();
         } else if (viewIdToShow === 'image-generator-view' && typeof loadImagePromptHistory === 'function') loadImagePromptHistory();
         else if (viewIdToShow === 'story-generator-view') {
             if (typeof loadStoryHistory === 'function') loadStoryHistory();
             const sgDisplay = document.getElementById('generated-story-display');
-            if(sgDisplay) sgDisplay.innerHTML = '<p>Your generated story will appear here.</p>'; // Reset display
+            if(sgDisplay) sgDisplay.innerHTML = '<p>Your generated story will appear here.</p>';
             currentGeneratedStoryContent = "";
             currentGeneratedStoryTheme = "";
             if(typeof updateStoryVipControlsVisibility === 'function') updateStoryVipControlsVisibility();
-        } else if (viewIdToShow === 'box-movie-view') {
-            // Placeholder for when Box Movie view is shown
-            // For example, load popular movies by default
-            if (typeof fetchPopularMovies === 'function') {
-                fetchPopularMovies();
-            }
+        } else if (viewIdToShow === 'box-movie-view' && typeof fetchPopularMovies === 'function') {
+            fetchPopularMovies();
         } else if (viewIdToShow === 'weather-view') {
-            const weatherView = document.getElementById('weather-view');
-            if (currentWeatherData) { // If data is already fetched
+            const weatherViewEl = document.getElementById('weather-view');
+            if (currentWeatherData) {
                 displayDetailedWeather(currentWeatherData);
             } else {
-                if(weatherView) weatherView.innerHTML = '<p class="weather-loading">Loading detailed weather...</p>';
-                initWeatherDisplay(); // Attempt to fetch it if not available
+                if(weatherViewEl) weatherViewEl.innerHTML = '<p class="weather-loading">Loading detailed weather...</p>';
+                initWeatherDisplay();
             }
         } else if (viewIdToShow === 'admin-panel-view') {
             const adminPanel = document.getElementById('admin-panel-view');
@@ -201,98 +218,62 @@ document.addEventListener('DOMContentLoaded', () => {
                 const commentsTabContent = adminPanel.querySelector('#comments-admin-tab');
                 const analyticsTabButton = adminPanel.querySelector('.admin-tab-button[data-tab="analytics-admin"]');
                 const analyticsTabContent = adminPanel.querySelector('#analytics-admin-tab');
-
                 let analyticsWasActive = analyticsTabButton && analyticsTabButton.classList.contains('active');
-
-                // Reset all tabs
                 adminPanel.querySelectorAll('.admin-tab-button').forEach(b => b.classList.remove('active'));
                 adminPanel.querySelectorAll('.admin-tab-content').forEach(c => c.classList.remove('active'));
-
-                // Set the previously active tab or default to comments
                 if (analyticsWasActive && analyticsTabContent) {
                     analyticsTabButton.classList.add('active');
                     analyticsTabContent.classList.add('active');
                     if (typeof loadAdminAnalytics === 'function') loadAdminAnalytics();
-                } else { // Default to comments tab
+                } else {
                     if (commentsTabButton) commentsTabButton.classList.add('active');
                     if (commentsTabContent) commentsTabContent.classList.add('active');
                     if (typeof loadAdminComments === 'function') loadAdminComments();
                 }
-            } else { // Fallback if adminPanel not found, try loading default
+            } else {
                  if (typeof loadAdminComments === 'function') loadAdminComments();
             }
-        } else if (viewIdToShow === 'user-history-view') {
-            if (typeof loadUserActivityHistory === 'function') {
-                loadUserActivityHistory();
-            }
-        } else if (viewIdToShow === 'comments-view') { // Added for dedicated comments page
-            if (typeof loadAllCommentsPage === 'function') loadAllCommentsPage();
-        }
-        else if (viewIdToShow === 'gemini-chat-view') {
-            // Initialize Gemini Chat specific elements or load history if needed
-            console.log('[GEMINI CHAT DIAGNOSTIC] showView called for gemini-chat-view.');
-            if (typeof loadGeminiChatHistory === "function") { // Will be defined later
-                loadGeminiChatHistory();
-            }
-            // Ensure input bar elements are correctly displayed for Gemini chat
+        } else if (viewIdToShow === 'user-history-view' && typeof loadUserActivityHistory === 'function') {
+            loadUserActivityHistory();
+        } else if (viewIdToShow === 'comments-view' && typeof loadAllCommentsPage === 'function') {
+            loadAllCommentsPage();
+        } else if (viewIdToShow === 'gemini-chat-view') {
+            if (typeof loadGeminiChatHistory === "function") loadGeminiChatHistory();
             const geminiChatInputBar = document.getElementById('gemini-chat-input-bar');
-            if (geminiChatInputBar) {
-                geminiChatInputBar.style.display = 'flex'; // Or its default display style
-            }
-            const geminiChatView = document.getElementById('gemini-chat-view');
-             if (geminiChatView) {
-                geminiChatView.style.display = 'flex';
-            }
+            if (geminiChatInputBar) geminiChatInputBar.style.display = 'flex';
+            const geminiChatViewEl = document.getElementById('gemini-chat-view');
+            if (geminiChatViewEl) geminiChatViewEl.style.display = 'flex';
         } else if (viewIdToShow === 'gpt4o-chat-view') {
-            console.log('[GPT4O CHAT DIAGNOSTIC] showView called for gpt4o-chat-view.');
-            if (typeof loadGpt4oChatHistory === "function") { // Will be defined later
-                loadGpt4oChatHistory();
-            }
+            if (typeof loadGpt4oChatHistory === "function") loadGpt4oChatHistory();
             const gpt4oChatInputBar = document.getElementById('gpt4o-chat-input-bar');
-            if (gpt4oChatInputBar) {
-                gpt4oChatInputBar.style.display = 'flex';
-            }
-            const gpt4oChatView = document.getElementById('gpt4o-chat-view');
-            if (gpt4oChatView) {
-                gpt4oChatView.style.display = 'flex';
-            }
-        } else if (viewIdToShow === 'email-generator-view') {
-            // Initialize or reset Email Generator view state if needed
-            if (typeof initializeEmailGeneratorView === "function") {
-                initializeEmailGeneratorView();
-            }
-            // Flex display for email-generator-view is handled in the common block above
+            if (gpt4oChatInputBar) gpt4oChatInputBar.style.display = 'flex';
+            const gpt4oChatViewEl = document.getElementById('gpt4o-chat-view');
+            if (gpt4oChatViewEl) gpt4oChatViewEl.style.display = 'flex';
+        } else if (viewIdToShow === 'email-generator-view' && typeof initializeEmailGeneratorView === "function") {
+            initializeEmailGeneratorView();
         } else if (viewIdToShow === 'blackbox-ai-view') {
-            console.log('[BLACKBOX AI DIAGNOSTIC] showView called for blackbox-ai-view.');
-            if (typeof loadBlackboxAiChatHistory === "function") { loadBlackboxAiChatHistory(); }
-            if (typeof loadBlackboxWebSearchToggleState === "function") { loadBlackboxWebSearchToggleState(); }
+            if (typeof loadBlackboxAiChatHistory === "function") loadBlackboxAiChatHistory();
+            if (typeof loadBlackboxWebSearchToggleState === "function") loadBlackboxWebSearchToggleState();
             const blackboxChatInputBar = document.getElementById('blackbox-chat-input-bar');
             if (blackboxChatInputBar) blackboxChatInputBar.style.display = 'flex';
         } else if (viewIdToShow === 'deepseek-ai-view') {
-            console.log('[DEEPSEEK AI DIAGNOSTIC] showView called for deepseek-ai-view.');
-            if (typeof loadDeepseekAiChatHistory === "function") { loadDeepseekAiChatHistory(); }
+            if (typeof loadDeepseekAiChatHistory === "function") loadDeepseekAiChatHistory();
             const deepseekChatInputBar = document.getElementById('deepseek-chat-input-bar');
             if (deepseekChatInputBar) deepseekChatInputBar.style.display = 'flex';
         } else if (viewIdToShow === 'claude-haiku-view') {
-            console.log('[CLAUDE HAIKU AI DIAGNOSTIC] showView called for claude-haiku-view.');
-            if (typeof loadClaudeHaikuAiChatHistory === "function") { loadClaudeHaikuAiChatHistory(); }
+            if (typeof loadClaudeHaikuAiChatHistory === "function") loadClaudeHaikuAiChatHistory();
             const claudeChatInputBar = document.getElementById('claude-chat-input-bar');
             if (claudeChatInputBar) claudeChatInputBar.style.display = 'flex';
         } else if (viewIdToShow === 'gemini-all-model-view') {
-            console.log('[GEMINI ALL MODEL DIAGNOSTIC] showView called for gemini-all-model-view.');
-            if (typeof fetchAndPopulateGeminiModels === "function") { fetchAndPopulateGeminiModels(); }
-            // History loading is now handled by fetchAndPopulateGeminiModels or model selector change
+            if (typeof fetchAndPopulateGeminiModels === "function") fetchAndPopulateGeminiModels();
             const geminiAllModelInputBar = document.getElementById('gemini-all-model-chat-input-bar');
             if (geminiAllModelInputBar) geminiAllModelInputBar.style.display = 'flex';
-            // Ensure the view itself is flex if not already handled by the generic flex view block
-            const geminiAllModelView = document.getElementById('gemini-all-model-view');
-            if (geminiAllModelView && geminiAllModelView.style.display !== 'flex') {
-                 geminiAllModelView.style.display = 'flex';
+            const geminiAllModelViewEl = document.getElementById('gemini-all-model-view');
+            if (geminiAllModelViewEl && geminiAllModelViewEl.style.display !== 'flex') {
+                 geminiAllModelViewEl.style.display = 'flex';
             }
         }
 
-
-        // Track view visit at the end of showView, after all specific view logic
         if(typeof trackActivity === 'function') trackActivity('view_visit', { view: viewIdToShow });
     };
 
@@ -761,7 +742,26 @@ document.addEventListener('DOMContentLoaded', () => {
             messageWrapper.id = 'typing-indicator-message';
             currentTypingIndicator = messageWrapper;
         } else {
-            messageBubble.innerHTML = formatTextContent(message);
+            messageBubble.innerHTML = formatTextContentEnhanced(message); // Use enhanced formatter
+            // Add download button for AI messages in general AI Chat
+            if (sender === 'ai') {
+                const controlsDiv = document.createElement('div');
+                controlsDiv.className = 'message-controls';
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'icon-button message-download-btn';
+                downloadBtn.title = translations.download_button_title || "Download";
+                downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>';
+                downloadBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const contentContainer = messageBubble.cloneNode(true);
+                    const existingControls = contentContainer.querySelector('.message-controls');
+                    if (existingControls) existingControls.remove();
+                    openDownloadFormatModal(contentContainer);
+                });
+                controlsDiv.appendChild(downloadBtn);
+                // Copy button can also be added here if desired for general AI chat
+                messageBubble.appendChild(controlsDiv);
+            }
         }
 
         messageWrapper.append(avatarContainer, messageBubble); chatMessagesArea.appendChild(messageWrapper);
@@ -1279,31 +1279,18 @@ document.addEventListener('DOMContentLoaded', () => {
         // }
     }
 
-    function formatTextContent(text) {
-        if (typeof text !== 'string') return ''; // Ensure input is a string
+    function formatTextContent(text) { // Renamed to formatTextContentBasic if needed, but will be replaced by formatTextContentEnhanced
+        if (typeof text !== 'string') return '';
         let resultText = text;
-
-        // 1. Headings (most specific structure)
-        resultText = resultText.replace(/^### (.*$)/gim, '<h3>$1</h3>'); // For ### Title
-        resultText = resultText.replace(/^## (.*$)/gim, '<h4>$1</h4>');   // For ## Subtitle
-
-        // 2. Bold text using **double asterisks** (as per user's specific mention)
-        // This is the primary fix required for this subtask.
+        resultText = resultText.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+        resultText = resultText.replace(/^## (.*$)/gim, '<h4>$1</h4>');
         resultText = resultText.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>');
-
-        // 3. Optional: Handle single asterisks for bold *if* this was the previous intent and is still desired.
-        //    This rule is secondary to the ** rule and should not interfere.
-        //    If single asterisks are for italics, this rule should be for <em>.
-        //    Based on " **Bold Text** or *Bold Text* -> <strong>", we assume single * also means bold.
-        //    The regex `\*([^*]+)\*` is used to avoid issues with already processed `<strong>**text**</strong>`
-        //    and to ensure it doesn't just match a single literal asterisk.
-        resultText = resultText.replace(/\*([^*]+)\*/gim, '<strong>$1</strong>');
-
-        // Note: No other markdown features (like lists, blockquotes, or complex italics) are requested here.
-        // The focus is solely on ensuring '###', '##', and critically '**text**' (and optionally '*text*') are handled.
-
+        resultText = resultText.replace(/\*([^*]+)\*/gim, '<strong>$1</strong>'); // Assuming single * also means bold as per previous logic
         return resultText;
     }
+
+    // formatTextContentEnhanced is now the primary formatter and includes code block handling
+    // It's defined further down but will be used by all chat functions.
 
     async function handleStoryGeneration() {
         if (!storyThemeField || !generatedStoryDisplay || !generateStoryButton) return;
@@ -1537,13 +1524,31 @@ document.addEventListener('DOMContentLoaded', () => {
             geminiTypingIndicator = messageWrapper;
         } else {
             // Sanitize and format message text
-            let formattedMessage = message ? formatTextContent(message) : ''; // formatTextContent from existing chat
+            let formattedMessage = message ? formatTextContentEnhanced(message) : ''; // Use enhanced formatter
 
             if (imageUrl) {
-                // Simple image display, can be enhanced with CSS
                 formattedMessage += `<br><img src="${escapeHTML(imageUrl)}" alt="Chat Image" style="max-width: 100%; border-radius: 8px; margin-top: 8px;">`;
             }
             messageBubble.innerHTML = formattedMessage;
+
+            // Add download button for AI messages in Gemini Vision Chat
+            if (sender === 'gemini') { // Corrected sender condition
+                const controlsDiv = document.createElement('div');
+                controlsDiv.className = 'message-controls';
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'icon-button message-download-btn';
+                downloadBtn.title = translations.download_button_title || "Download";
+                downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>';
+                downloadBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const contentContainer = messageBubble.cloneNode(true);
+                    const existingControls = contentContainer.querySelector('.message-controls');
+                    if (existingControls) existingControls.remove();
+                    openDownloadFormatModal(contentContainer);
+                });
+                controlsDiv.appendChild(downloadBtn);
+                messageBubble.appendChild(controlsDiv);
+            }
         }
 
         messageWrapper.append(avatarContainer, messageBubble);
@@ -1767,11 +1772,29 @@ document.addEventListener('DOMContentLoaded', () => {
             messageWrapper.id = 'gpt4o-typing-indicator-message';
             gpt4oTypingIndicator = messageWrapper;
         } else {
-            let formattedMessage = message ? formatTextContent(message) : '';
+            let formattedMessage = message ? formatTextContentEnhanced(message) : ''; // Use enhanced formatter
             if (imageUrl) {
                 formattedMessage += `<br><img src="${escapeHTML(imageUrl)}" alt="Chat Image" style="max-width: 100%; border-radius: 8px; margin-top: 8px;">`;
             }
             messageBubble.innerHTML = formattedMessage;
+            // Add download button for AI messages in GPT-4o Chat
+            if (sender === 'ai') { // GPT-4o uses 'ai' as sender for its messages
+                const controlsDiv = document.createElement('div');
+                controlsDiv.className = 'message-controls';
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'icon-button message-download-btn';
+                downloadBtn.title = translations.download_button_title || "Download";
+                downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>';
+                downloadBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const contentContainer = messageBubble.cloneNode(true);
+                    const existingControls = contentContainer.querySelector('.message-controls');
+                    if (existingControls) existingControls.remove();
+                    openDownloadFormatModal(contentContainer);
+                });
+                controlsDiv.appendChild(downloadBtn);
+                messageBubble.appendChild(controlsDiv);
+            }
         }
 
         messageWrapper.append(avatarContainer, messageBubble);
@@ -1946,7 +1969,24 @@ document.addEventListener('DOMContentLoaded', () => {
             messageWrapper.id = 'blackbox-typing-indicator-message';
             blackboxTypingIndicator = messageWrapper;
         } else {
-            messageBubble.innerHTML = formatTextContent(message);
+            messageBubble.innerHTML = formatTextContentEnhanced(message); // Use enhanced formatter
+            if (sender === 'ai') {
+                const controlsDiv = document.createElement('div');
+                controlsDiv.className = 'message-controls';
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'icon-button message-download-btn';
+                downloadBtn.title = translations.download_button_title || "Download";
+                downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>';
+                downloadBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const contentContainer = messageBubble.cloneNode(true);
+                    const existingControls = contentContainer.querySelector('.message-controls');
+                    if (existingControls) existingControls.remove();
+                    openDownloadFormatModal(contentContainer);
+                });
+                controlsDiv.appendChild(downloadBtn);
+                messageBubble.appendChild(controlsDiv);
+            }
         }
         messageWrapper.append(avatarContainer, messageBubble);
         blackboxChatMessagesArea.appendChild(messageWrapper);
@@ -2066,7 +2106,24 @@ document.addEventListener('DOMContentLoaded', () => {
             messageWrapper.id = 'deepseek-typing-indicator-message';
             deepseekTypingIndicator = messageWrapper;
         } else {
-            messageBubble.innerHTML = formatTextContent(message);
+            messageBubble.innerHTML = formatTextContentEnhanced(message); // Use enhanced formatter
+            if (sender === 'ai') {
+                const controlsDiv = document.createElement('div');
+                controlsDiv.className = 'message-controls';
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'icon-button message-download-btn';
+                downloadBtn.title = translations.download_button_title || "Download";
+                downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>';
+                downloadBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const contentContainer = messageBubble.cloneNode(true);
+                    const existingControls = contentContainer.querySelector('.message-controls');
+                    if (existingControls) existingControls.remove();
+                    openDownloadFormatModal(contentContainer);
+                });
+                controlsDiv.appendChild(downloadBtn);
+                messageBubble.appendChild(controlsDiv);
+            }
         }
         messageWrapper.append(avatarContainer, messageBubble);
         deepseekChatMessagesArea.appendChild(messageWrapper);
@@ -2169,7 +2226,24 @@ document.addEventListener('DOMContentLoaded', () => {
             messageWrapper.id = 'claude-typing-indicator-message';
             claudeTypingIndicator = messageWrapper;
         } else {
-            messageBubble.innerHTML = formatTextContent(message);
+            messageBubble.innerHTML = formatTextContentEnhanced(message); // Use enhanced formatter
+            if (sender === 'ai') {
+                const controlsDiv = document.createElement('div');
+                controlsDiv.className = 'message-controls';
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'icon-button message-download-btn';
+                downloadBtn.title = translations.download_button_title || "Download";
+                downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>';
+                downloadBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const contentContainer = messageBubble.cloneNode(true);
+                    const existingControls = contentContainer.querySelector('.message-controls');
+                    if (existingControls) existingControls.remove();
+                    openDownloadFormatModal(contentContainer);
+                });
+                controlsDiv.appendChild(downloadBtn);
+                messageBubble.appendChild(controlsDiv);
+            }
         }
         messageWrapper.append(avatarContainer, messageBubble);
         claudeChatMessagesArea.appendChild(messageWrapper);
@@ -2317,25 +2391,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const downloadBtn = document.createElement('button');
             downloadBtn.className = 'icon-button message-download-btn';
-            downloadBtn.title = translations.download_button_title || "Download"; // Add this key
+            downloadBtn.title = translations.download_button_title || "Download";
             downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>';
-            downloadBtn.addEventListener('click', () => {
-                // Basic TXT download for now
-                const textContent = messageBubble.textContent || "";
-                const filename = `gemini_response_${Date.now()}.txt`;
-                const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                // TODO: Add PDF/DOCX options later
+            downloadBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent click from bubbling to message bubble if that has other listeners
+                // Pass the content of the message bubble to the modal opener
+                // We need to pass the element that contains the formatted content, which is messageBubble itself,
+                // but specifically the part that formatTextContentEnhanced generated, excluding controls.
+                // A good way is to clone the bubble, remove controls, then pass its innerHTML or the element.
+                // For simplicity now, we pass messageBubble. The generation functions will need to be smart.
+                const contentContainer = messageBubble.cloneNode(true);
+                const existingControls = contentContainer.querySelector('.message-controls');
+                if (existingControls) existingControls.remove();
+
+                openDownloadFormatModal(contentContainer);
             });
 
-            if (sender === 'ai') { // Only add controls to AI messages for now
+            if (sender === 'ai') { // Only add controls to AI messages
                 controlsDiv.appendChild(copyBtn);
                 controlsDiv.appendChild(downloadBtn);
                 messageBubble.appendChild(controlsDiv);
@@ -3046,31 +3118,672 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('#welcome-description-section .feature-highlight-item').forEach(item => {
         const viewId = item.dataset.view;
         if (viewId) {
-            // Make the whole item clickable
-            item.style.cursor = 'pointer'; // Already done for p, but good for whole item
+            item.style.cursor = 'pointer';
             item.addEventListener('click', function(event) {
-                // Prevent mis-clicks if user is selecting text in description
-                if (window.getSelection().toString()) {
-                    return;
-                }
-                // Allow clicks on actual links within the description to proceed normally
-                if (event.target.tagName === 'A' && event.target.href) {
-                    return;
-                }
+                if (window.getSelection().toString()) return;
+                if (event.target.tagName === 'A' && event.target.href) return;
                 window.showView(viewId);
             });
-
-            // Specifically for the paragraph, ensure it also navigates and gets styling.
-            // The parent click listener might already cover this, but explicit class for styling is good.
             const descriptionP = item.querySelector('p');
-            if (descriptionP) {
-                descriptionP.classList.add('clickable-description');
-                // The parent item click listener should handle the navigation.
-                // If we wanted only the p to be clickable, the listener would be here.
-            }
+            if (descriptionP) descriptionP.classList.add('clickable-description');
         }
     });
     // --- END OF I18N Basic Setup ---
+
+    // --- Download Format Modal Logic ---
+    const downloadFormatModal = document.getElementById('download-format-modal');
+    const closeDownloadFormatModalButton = document.getElementById('close-download-format-modal');
+    const downloadOptionsContainer = document.getElementById('download-options-container');
+    const downloadFormatStatus = document.getElementById('download-format-status');
+    let currentMessageBubbleForDownload = null; // To store the message bubble content
+
+    function openDownloadFormatModal(bubbleElement) {
+        if (!downloadFormatModal || !downloadFormatStatus) return;
+        currentMessageBubbleForDownload = bubbleElement;
+        downloadFormatStatus.textContent = ''; // Clear previous status
+        // Disable buttons initially if needed, or enable all
+        downloadOptionsContainer.querySelectorAll('.download-option-btn').forEach(btn => btn.disabled = false);
+        downloadFormatModal.style.display = 'flex'; // Show modal
+        downloadFormatModal.classList.add('visible');
+    }
+
+    function closeDownloadFormatModal() {
+        if (!downloadFormatModal) return;
+        downloadFormatModal.style.display = 'none';
+        downloadFormatModal.classList.remove('visible');
+        currentMessageBubbleForDownload = null;
+    }
+
+    if (closeDownloadFormatModalButton) {
+        closeDownloadFormatModalButton.addEventListener('click', closeDownloadFormatModal);
+    }
+    if (downloadFormatModal) { // Close on overlay click
+        downloadFormatModal.addEventListener('click', (event) => {
+            if (event.target === downloadFormatModal) {
+                closeDownloadFormatModal();
+            }
+        });
+    }
+
+    if (downloadOptionsContainer) {
+        downloadOptionsContainer.addEventListener('click', async (event) => {
+            if (event.target.classList.contains('download-option-btn')) {
+                const format = event.target.dataset.format;
+                if (!currentMessageBubbleForDownload || !format) return;
+
+                downloadFormatStatus.textContent = `Préparation du téléchargement en ${format.toUpperCase()}...`;
+                event.target.disabled = true; // Disable clicked button
+
+                try {
+                    const filename = `chat_message_${Date.now()}`;
+                    if (format === 'txt') {
+                        await generateTxtFromBubble(currentMessageBubbleForDownload, filename);
+                    } else if (format === 'pdf') {
+                        // await generatePdfFromBubble(currentMessageBubbleForDownload, filename); // To be implemented
+                        downloadFormatStatus.textContent = 'La génération PDF sera bientôt disponible !';
+                        console.warn("PDF generation not yet implemented.");
+                        // Re-enable button after message
+                        setTimeout(() => { event.target.disabled = false; downloadFormatStatus.textContent = '';}, 2000);
+                        return; // Prevent closing modal yet
+                    } else if (format === 'docx') {
+                        // await generateDocxFromBubble(currentMessageBubbleForDownload, filename); // To be implemented
+                        downloadFormatStatus.textContent = 'La génération DOCX sera bientôt disponible !';
+                        console.warn("DOCX generation not yet implemented.");
+                        setTimeout(() => { event.target.disabled = false; downloadFormatStatus.textContent = '';}, 2000);
+                        return; // Prevent closing modal yet
+                    }
+                    downloadFormatStatus.textContent = `Téléchargement en ${format.toUpperCase()} terminé !`;
+                    setTimeout(() => {
+                        closeDownloadFormatModal();
+                        event.target.disabled = false; // Re-enable button for next time
+                    }, 1500);
+                } catch (error) {
+                    console.error(`Error generating ${format}:`, error);
+                    downloadFormatStatus.textContent = `Erreur lors de la génération ${format.toUpperCase()}: ${error.message}`;
+                    event.target.disabled = false; // Re-enable on error
+                }
+            }
+        });
+    }
+
+    async function generateTxtFromBubble(bubbleElement, baseFilename) {
+        let markdownContent = '';
+        const listLevelCounters = {}; // To manage numbering for nested OLs
+
+        function htmlToMarkdown(node, currentListInfo = { type: null, level: 0 }) {
+            let md = '';
+            if (node.nodeType === Node.TEXT_NODE) {
+                // Replace multiple spaces/newlines with a single space for inline text,
+                // but preserve newlines if they are significant (e.g. inside PRE)
+                if (node.parentNode.tagName === 'PRE' || node.parentNode.tagName === 'CODE') {
+                    md = node.textContent;
+                } else {
+                    md = node.textContent.replace(/\s+/g, ' ');
+                }
+            } else if (node.nodeType === Node.ELEMENT_NODE) {
+                const tagName = node.tagName.toUpperCase();
+                let childrenMd = '';
+
+                // Special handling for LI content before processing its children for nested lists
+                if (tagName === 'LI') {
+                    Array.from(node.childNodes).forEach(child => {
+                         // If child is UL/OL, it's a nested list. Otherwise, process as normal content.
+                        if (child.nodeType === Node.ELEMENT_NODE && (child.tagName === 'UL' || child.tagName === 'OL')) {
+                             // Process nested list separately after current LI content line
+                        } else {
+                            childrenMd += htmlToMarkdown(child, currentListInfo);
+                        }
+                    });
+                } else { // For other elements, process all children first
+                    Array.from(node.childNodes).forEach(child => {
+                        childrenMd += htmlToMarkdown(child, currentListInfo);
+                    });
+                }
+
+
+                switch (tagName) {
+                    case 'H1': md = `# ${childrenMd.trim()}\n\n`; break;
+                    case 'H2': md = `## ${childrenMd.trim()}\n\n`; break;
+                    case 'H3': md = `### ${childrenMd.trim()}\n\n`; break;
+                    case 'H4': md = `#### ${childrenMd.trim()}\n\n`; break;
+                    case 'H5': md = `##### ${childrenMd.trim()}\n\n`; break;
+                    case 'H6': md = `###### ${childrenMd.trim()}\n\n`; break;
+                    case 'P': md = `${childrenMd.trim()}\n\n`; break;
+                    case 'STRONG': case 'B': md = `**${childrenMd.trim()}**`; break;
+                    case 'EM': case 'I': md = `*${childrenMd.trim()}*`; break;
+                    case 'BR': md = '\n'; break;
+                    case 'PRE':
+                        // Assuming the actual code is in a <code> child, possibly from dataset.code
+                        const codeEl = node.querySelector('code');
+                        const lang = codeEl ? (codeEl.className.match(/language-(\w+)/)?.[1] || '') : '';
+                        // Prioritize dataset.code for raw original code if available
+                        const rawCode = codeEl ? (codeEl.dataset.code || codeEl.textContent) : node.textContent;
+                        md = `\`\`\`${lang}\n${rawCode.trim()}\n\`\`\`\n\n`;
+                        break;
+                    case 'CODE':
+                        if (!node.closest('PRE')) md = `\`${childrenMd.trim()}\``;
+                        else md = childrenMd.trim(); // Text content of <code> inside <pre>
+                        break;
+                    case 'UL':
+                        let ulContent = '';
+                        Array.from(node.children).filter(c => c.tagName === 'LI').forEach(li => {
+                            ulContent += htmlToMarkdown(li, { type: 'UL', level: currentListInfo.level + 1 });
+                        });
+                        md = ulContent + (currentListInfo.level === 0 ? '\n' : ''); // Add extra newline after top-level list
+                        break;
+                    case 'OL':
+                        let olContent = '';
+                        listLevelCounters[currentListInfo.level + 1] = 0; // Reset counter for this level
+                        Array.from(node.children).filter(c => c.tagName === 'LI').forEach(li => {
+                             listLevelCounters[currentListInfo.level + 1]++;
+                            olContent += htmlToMarkdown(li, { type: 'OL', level: currentListInfo.level + 1, counter: listLevelCounters[currentListInfo.level + 1] });
+                        });
+                        md = olContent + (currentListInfo.level === 0 ? '\n' : '');
+                        break;
+                    case 'LI':
+                        const indent = '  '.repeat(currentListInfo.level -1 > 0 ? currentListInfo.level -1 : 0);
+                        if (currentListInfo.type === 'OL') {
+                            md = `${indent}${currentListInfo.counter}. ${childrenMd.trim()}\n`;
+                        } else { // UL
+                            md = `${indent}* ${childrenMd.trim()}\n`; // Using * for UL consistently
+                        }
+                        // Process nested lists if any, after the current LI's main content
+                        Array.from(node.childNodes).forEach(child => {
+                            if (child.nodeType === Node.ELEMENT_NODE && (child.tagName === 'UL' || child.tagName === 'OL')) {
+                                md += htmlToMarkdown(child, { type: child.tagName, level: currentListInfo.level }); // Pass current level, it will be incremented by UL/OL
+                            }
+                        });
+                        break;
+                    case 'TABLE':
+                        // Basic Markdown table conversion
+                        let tableMd = '';
+                        const rows = Array.from(node.querySelectorAll('tr'));
+                        rows.forEach((row, rowIndex) => {
+                            const cells = Array.from(row.querySelectorAll('th, td'));
+                            tableMd += `| ${cells.map(cell => htmlToMarkdown(cell).trim()).join(' | ')} |\n`;
+                            if (rowIndex === 0 && row.querySelector('th')) { // Header row
+                                tableMd += `| ${cells.map(() => '---').join(' | ')} |\n`;
+                            }
+                        });
+                        md = tableMd + '\n';
+                        break;
+                    default:
+                        // For other elements (like DIV, SPAN), just process children.
+                        // If it's an unknown block element, add newlines.
+                        if (window.getComputedStyle(node).display === 'block' && tagName !== 'LI') {
+                            md = `${childrenMd.trim()}\n\n`;
+                        } else {
+                            md = childrenMd;
+                        }
+                        break;
+                }
+            }
+            return md;
+        }
+
+        markdownContent = htmlToMarkdown(bubbleElement).trim();
+
+        // Final cleanup: ensure consistent newlines, max 2 consecutive.
+        markdownContent = markdownContent.replace(/\n\s*\n/g, '\n\n');
+
+        const blob = new Blob([markdownContent], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${baseFilename}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    async function generatePdfFromBubble(bubbleElement, baseFilename) {
+        if (typeof jspdf === 'undefined' || !jspdf.jsPDF) { // Check for jsPDF constructor
+            console.error("jsPDF is not loaded or 'jspdf.jsPDF' is not available. Make sure the CDN link is correct in index.html.");
+            if(downloadFormatStatus) downloadFormatStatus.textContent = 'Erreur : La bibliothèque PDF n\'a pas pu être chargée.';
+            return Promise.reject("jsPDF not loaded or not available as constructor");
+        }
+        const { jsPDF } = jspdf; // If jspdf is the global, jsPDF is a property.
+        const pdf = new jsPDF({ // Correct instantiation
+            orientation: 'p',
+            unit: 'pt',
+            format: 'a4'
+        });
+
+        let yPos = 40;
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const margin = 40;
+        const maxLineWidth = pageWidth - 2 * margin;
+
+        // Embed a standard font that supports a wider range of characters if possible
+        // For jsPDF, this usually means using a built-in one like 'Helvetica' or 'Times'
+        // or embedding a custom font (which is more complex with CDN usage).
+        // Defaulting to Helvetica as it's generally good.
+        pdf.setFont('Helvetica', 'normal');
+        pdf.setFontSize(11); // Default font size
+
+        const getLineHeight = (size, multiplier = 1.2) => size * multiplier;
+
+        async function processNodePdf(node, currentX, currentY, currentOptions) {
+            let newY = currentY;
+            const defaultOptions = {
+                fontName: 'Helvetica',
+                fontStyle: 'normal',
+                fontSize: 11,
+                // listPrefix is dynamically built during list processing
+            };
+            let options = { ...defaultOptions, ...currentOptions };
+
+            if (node.nodeType === Node.TEXT_NODE) {
+                const trimmedText = node.textContent.replace(/\s+/g, ' ').trim();
+                if (trimmedText) {
+                    pdf.setFont(options.fontName, options.fontStyle);
+                    pdf.setFontSize(options.fontSize);
+                    const textToSplit = (options.listPrefix || '') + trimmedText;
+                    // Calculate available width for text splitting based on currentX
+                    const availableWidth = maxLineWidth - (currentX - margin);
+                    const textLines = pdf.splitTextToSize(textToSplit, availableWidth > 0 ? availableWidth : maxLineWidth);
+
+                    textLines.forEach(line => {
+                        if (newY + getLineHeight(options.fontSize) > pageHeight - margin) {
+                            pdf.addPage();
+                            newY = margin;
+                             // Reset font after page break
+                            pdf.setFont(options.fontName, options.fontStyle);
+                            pdf.setFontSize(options.fontSize);
+                        }
+                        pdf.text(line, currentX, newY);
+                        newY += getLineHeight(options.fontSize);
+                    });
+                    if(options.listPrefix) options.listPrefix = ' '.repeat((options.listPrefix || '').length); // Indent subsequent lines
+                }
+            } else if (node.nodeType === Node.ELEMENT_NODE) {
+                const tagName = node.tagName.toUpperCase();
+                let newNestedOptions = { ...options };
+                // Reset listPrefix for children unless it's part of LI content that continues
+                if (tagName !== 'LI' && tagName !== 'SPAN' && tagName !== 'STRONG' && tagName !== 'EM' && tagName !== 'B' && tagName !== 'I' && tagName !== 'CODE') {
+                    newNestedOptions.listPrefix = '';
+                }
+
+                switch (tagName) {
+                    case 'H1': newNestedOptions = {...newNestedOptions, fontSize: 18, fontStyle: 'bold'}; break;
+                    case 'H2': newNestedOptions = {...newNestedOptions, fontSize: 16, fontStyle: 'bold'}; break;
+                    case 'H3': newNestedOptions = {...newNestedOptions, fontSize: 14, fontStyle: 'bold'}; break;
+                    case 'H4': case 'H5': case 'H6': newNestedOptions = {...newNestedOptions, fontSize: 12, fontStyle: 'bold'}; break;
+                    case 'STRONG': case 'B': newNestedOptions.fontStyle = 'bold'; break;
+                    case 'EM': case 'I': newNestedOptions.fontStyle = 'italic'; break;
+                    case 'BR':
+                        newY += getLineHeight(options.fontSize, 0.8); // Smaller gap for BR
+                        if (newY > pageHeight - margin) { pdf.addPage(); newY = margin; }
+                        return newY;
+                    case 'PRE':
+                        const codeEl = node.querySelector('code');
+                        const rawCode = codeEl ? (codeEl.dataset.code || codeEl.innerText) : node.innerText;
+                        const codeFontSize = 9;
+                        const codeLineHeight = getLineHeight(codeFontSize, 1.15); // Slightly more for code
+
+                        const codeLines = pdf.splitTextToSize(rawCode.trim(), maxLineWidth - 10);
+                        const boxHeight = (codeLines.length * codeLineHeight) + 10; // Padding for box
+
+                        if (newY + boxHeight > pageHeight - margin) { pdf.addPage(); newY = margin; }
+
+                        pdf.setFillColor(245, 245, 245);
+                        pdf.setDrawColor(220, 220, 220);
+                        pdf.rect(margin - 5, newY - codeLineHeight * 0.1, maxLineWidth + 10, boxHeight, 'FD');
+
+                        pdf.setFont('Courier', 'normal');
+                        pdf.setFontSize(codeFontSize);
+                        let codeTextY = newY + 5; // Start text with padding
+                        codeLines.forEach(line => {
+                            if (codeTextY + codeLineHeight > pageHeight - margin) {
+                                pdf.addPage(); newY = margin; codeTextY = newY + 5;
+                                // Redraw box header if split? For now, no.
+                                pdf.setFillColor(245, 245, 245);
+                                pdf.setDrawColor(220, 220, 220);
+                                // Estimate remaining box height or full if new page
+                                const remainingBoxHeight = pageHeight - margin - newY > boxHeight ? boxHeight : pageHeight - margin - newY -5;
+                                pdf.rect(margin - 5, newY - codeLineHeight * 0.1, maxLineWidth + 10, remainingBoxHeight , 'FD');
+                            }
+                            pdf.text(line, margin, codeTextY);
+                            codeTextY += codeLineHeight;
+                        });
+                        newY = codeTextY - codeLineHeight + (getLineHeight(options.fontSize) * 0.5); // Position after the code block
+                        pdf.setFont(options.fontName, options.fontStyle); // Reset font
+                        pdf.setFontSize(options.fontSize);
+                        return newY;
+                    case 'CODE':
+                         if (!node.closest('PRE')) {
+                            newNestedOptions.fontName = 'Courier';
+                            newNestedOptions.fontSize = options.fontSize * 0.9;
+                         } else { return newY; } // Handled by PRE's text extraction
+                        break;
+                    case 'UL': case 'OL':
+                        const items = Array.from(node.children).filter(child => child.tagName === 'LI');
+                        const listDepth = (options.listDepth || 0) + 1; // Current depth for items of this list
+                        let listCounter = 0;
+
+                        items.forEach(async (li) => {
+                            listCounter++;
+                            const itemPrefix = (tagName === 'OL') ? `${listCounter}. ` : '• ';
+                            let liOptions = {
+                                ...options, // Inherit current styles like font size for LI text
+                                listPrefix: itemPrefix,
+                                listDepth: listDepth, // Pass depth for potential nested lists within this LI
+                            };
+
+                            // Process children of LI. The first text node will get the prefix.
+                            let firstTextNodeProcessed = false;
+                            for(const childNode of li.childNodes) {
+                                if(childNode.nodeType === Node.TEXT_NODE && childNode.textContent.trim() && !firstTextNodeProcessed){
+                                   newY = await processNodePdf(childNode, currentX + (20 * listDepth), newY, liOptions);
+                                   firstTextNodeProcessed = true;
+                                   liOptions.listPrefix = ' '.repeat(itemPrefix.length); // Indent further lines of same LI item
+                                } else {
+                                   newY = await processNodePdf(childNode, currentX + (20 * listDepth), newY, liOptions);
+                                }
+                            }
+                        });
+                        newY += getLineHeight(options.fontSize) * 0.2;
+                        return newY;
+                    case 'TABLE':
+                        if (typeof pdf.autoTable === 'function') {
+                            const head = [];
+                            const body = [];
+                            const headerRow = node.querySelector('thead tr, tr:first-child');
+                            if (headerRow) {
+                                head.push(Array.from(headerRow.querySelectorAll('th, td')).map(cell => cell.textContent.trim()));
+                            }
+                            const bodyRows = Array.from(node.querySelectorAll('tbody tr, tr' + (headerRow ? ':not(:first-child)' : '')));
+                            bodyRows.forEach(row => {
+                                body.push(Array.from(row.querySelectorAll('td')).map(cell => cell.textContent.trim()));
+                            });
+
+                            if (newY + 20 > pageHeight - margin) { pdf.addPage(); newY = margin; }
+                            pdf.autoTable({
+                                head: head.length > 0 ? head : null,
+                                body: body,
+                                startY: newY,
+                                margin: { left: margin, right: margin },
+                                theme: 'grid',
+                                styles: { font: 'Helvetica', fontSize: 9, cellPadding: 3, overflow: 'linebreak' },
+                                headStyles: { fillColor: [220, 220, 220], textColor: 20, fontStyle: 'bold' },
+                                didDrawPage: (data) => { newY = data.cursor.y + 10; } // Update yPos after table
+                            });
+                            newY = pdf.previousAutoTable.finalY ? pdf.previousAutoTable.finalY + 15 : newY + (20 * (body.length + (head.length > 0 ? 1:0)));
+                        } else {
+                             newY = await processNodePdf(document.createTextNode("[Aperçu du tableau non disponible sans le module externe jsPDF-AutoTable]"), margin, newY, {...options, fontStyle: 'italic'});
+                        }
+                        return newY;
+                    case 'DIV': case 'P':
+                        // Add a small space before block if not first element on page
+                        if (newY > margin + getLineHeight(options.fontSize, 0.5) && (node.previousSibling || node.parentElement.firstChild !==node) ) {
+                           newY += getLineHeight(options.fontSize) * 0.1;
+                        }
+                        for(const child of Array.from(node.childNodes)) {
+                           newY = await processNodePdf(child, currentX, newY, newNestedOptions);
+                        }
+                        // Add a bit more space after P or DIV if it's a block, unless it's the last element.
+                        if (node.nextSibling || (node.parentElement && node.parentElement.lastChild !== node) ) {
+                           newY += getLineHeight(options.fontSize) * 0.3;
+                        }
+                        return newY;
+                }
+
+                // Generic child processing for elements that mainly apply style (e.g., SPAN)
+                // or unhandled block elements that should just pass content through.
+                if (node.childNodes && node.childNodes.length > 0 && !node.classList.contains('message-controls')) {
+                    for(const child of Array.from(node.childNodes)) {
+                       newY = await processNodePdf(child, currentX, newY, newNestedOptions);
+                    }
+                } else if (node.textContent.trim() && !['BR', 'PRE', 'UL', 'OL', 'TABLE', 'DIV', 'P', 'LI'].includes(tagName)) {
+                    // If it's an unhandled element with text content (e.g. SPAN directly)
+                    pdf.setFont(newNestedOptions.fontName, newNestedOptions.fontStyle);
+                    pdf.setFontSize(newNestedOptions.fontSize);
+                    const textLinesToPrint = pdf.splitTextToSize((newNestedOptions.listPrefix || '') + node.textContent.trim(), maxLineWidth - (currentX - margin));
+                    textLinesToPrint.forEach(line => {
+                        if (newY + getLineHeight(newNestedOptions.fontSize) > pageHeight - margin) {
+                            pdf.addPage();
+                            newY = margin;
+                             pdf.setFont(newNestedOptions.fontName, newNestedOptions.fontStyle); // Reset font on new page
+                             pdf.setFontSize(newNestedOptions.fontSize);
+                        }
+                        pdf.text(line, currentX, newY);
+                        newY += getLineHeight(newNestedOptions.fontSize);
+                    });
+                }
+            }
+            return newY; // Return the updated Y position
+        }
+
+        // Start processing with initial listDepth and an empty counter object
+        for(const childNode of Array.from(bubbleElement.childNodes)) {
+            yPos = await processNodePdf(childNode, margin, yPos, { listDepth: 0 });
+        }
+
+        pdf.save(`${baseFilename}.pdf`);
+        return Promise.resolve();
+    }
+
+    async function generateDocxFromBubble(bubbleElement, baseFilename) {
+        if (typeof docx === 'undefined' || !docx.Document) {
+            console.error("docx library is not loaded or not client-side compatible. Make sure the CDN link is correct.");
+            if(downloadFormatStatus) downloadFormatStatus.textContent = 'Erreur : La bibliothèque DOCX n\'a pas pu être chargée ou n\'est pas compatible.';
+            return Promise.reject("DOCX library not loaded or incompatible");
+        }
+
+        const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, Table, TableCell, TableRow, WidthType, BorderStyle, ShadingType, convertInchesToTwip, PageOrientation, Indent } = docx;
+        const docChildren = [];
+
+        const defaultParagraphSpacing = { after: 100, before: 50 };
+
+        // Recursive function to process HTML nodes and convert them to docx elements
+        function processHtmlNodeToDocx(node, currentTextProps = { size: 22, font: "Calibri" }, listInfo = { level: 0, type: null, counter: 0 }) {
+            const elements = [];
+
+            if (node.nodeType === Node.TEXT_NODE) {
+                const text = node.textContent;
+                // Add text only if it's not just whitespace, or if parent is PRE/CODE
+                if (text.trim().length > 0 || (node.parentNode && ['CODE', 'PRE'].includes(node.parentNode.tagName))) {
+                    elements.push(new TextRun({ text, ...currentTextProps }));
+                }
+            } else if (node.nodeType === Node.ELEMENT_NODE) {
+                const tagName = node.tagName.toUpperCase();
+                let newTextProps = JSON.parse(JSON.stringify(currentTextProps));
+                let paragraphChildren = [];
+
+                // Block-level elements usually create new Paragraphs or Tables
+                if (['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'PRE', 'UL', 'OL', 'TABLE', 'DIV', 'BR'].includes(tagName)) {
+
+                    // Process children first for P, DIV to gather TextRuns for a single Paragraph
+                    if (tagName === 'P' || tagName === 'DIV') {
+                         Array.from(node.childNodes).forEach(child => {
+                            paragraphChildren.push(...processHtmlNodeToDocx(child, newTextProps, listInfo));
+                        });
+                    }
+
+                    switch (tagName) {
+                        case 'H1': elements.push(new Paragraph({ children: [new TextRun({text: node.textContent, bold: true, size: 32})], heading: HeadingLevel.HEADING_1, spacing: { after: 240, before: 120 } })); break;
+                        case 'H2': elements.push(new Paragraph({ children: [new TextRun({text: node.textContent, bold: true, size: 28})], heading: HeadingLevel.HEADING_2, spacing: { after: 220, before: 110 } })); break;
+                        case 'H3': elements.push(new Paragraph({ children: [new TextRun({text: node.textContent, bold: true, size: 26})], heading: HeadingLevel.HEADING_3, spacing: { after: 200, before: 100 } })); break;
+                        case 'H4': elements.push(new Paragraph({ children: [new TextRun({text: node.textContent, bold: true, size: 24})], heading: HeadingLevel.HEADING_4, spacing: { after: 180, before: 90 } })); break;
+                        case 'H5': elements.push(new Paragraph({ children: [new TextRun({text: node.textContent, bold: true, size: 22})], heading: HeadingLevel.HEADING_5, spacing: { after: 160, before: 80 } })); break;
+                        case 'H6': elements.push(new Paragraph({ children: [new TextRun({text: node.textContent, bold: true, size: 22})], heading: HeadingLevel.HEADING_6, spacing: { after: 140, before: 70 } })); break;
+                        case 'P': if (paragraphChildren.length > 0) elements.push(new Paragraph({ children: paragraphChildren, spacing: defaultParagraphSpacing })); break;
+                        case 'DIV':
+                            if (paragraphChildren.length > 0) { // If DIV contained inline content, wrap it
+                                elements.push(new Paragraph({ children: paragraphChildren, spacing: defaultParagraphSpacing }));
+                            } // If DIV contained other block elements, they are already in 'elements' from recursive calls
+                            break;
+                        case 'BR': elements.push(new Paragraph({children: [new TextRun({break:1})], spacing:{after:0, before:0}})); break;
+                        case 'PRE':
+                            const codeEl = node.querySelector('code');
+                            const rawCode = codeEl ? (codeEl.dataset.code || codeEl.innerText) : node.innerText;
+                            elements.push(new Paragraph({
+                                children: [new TextRun({ text: "--- CODE BLOCK ---", bold: true, font: "Consolas", size: 20 })], // size in half-points
+                                spacing: { before: 150, after: 50 },
+                                shading: { type: ShadingType.SOLID, color: "F0F0F0", fill: "F0F0F0" },
+                            }));
+                            rawCode.trim().split('\n').forEach(line => {
+                                elements.push(new Paragraph({
+                                    children: [new TextRun({ text: line, font: "Courier New", size: 18 })],
+                                    indentation: { left: convertInchesToTwip(0.2) }, // Basic indent for code
+                                    spacing: { after: 0, line: 200 }, // Tighter line spacing
+                                    shading: { type: ShadingType.SOLID, color: "F0F0F0", fill: "F0F0F0" }
+                                }));
+                            });
+                            elements.push(new Paragraph({
+                                children: [new TextRun({ text: "--- END CODE BLOCK ---", bold: true, font: "Consolas", size: 20 })],
+                                spacing: { before: 50, after: 150 },
+                                shading: { type: ShadingType.SOLID, color: "F0F0F0", fill: "F0F0F0" },
+                            }));
+                            break;
+                        case 'UL': case 'OL':
+                            let itemCounter = 0;
+                            Array.from(node.children).filter(child => child.tagName === 'LI').forEach(li => {
+                                itemCounter++;
+                                const liContentRuns = [];
+                                Array.from(li.childNodes).forEach(child => liContentRuns.push(...processHtmlNodeToDocx(child, newTextProps, {level: listInfo.level + 1, type: tagName, counter: itemCounter })));
+
+                                elements.push(new Paragraph({
+                                    children: liContentRuns,
+                                    numbering: { reference: tagName === 'OL' ? "default-numbering" : "default-bullet", level: listInfo.level },
+                                    spacing: {after: 50}
+                                }));
+                            });
+                            break;
+                        case 'TABLE':
+                            const tableRows = [];
+                            Array.from(node.querySelectorAll('tr')).forEach(trNode => {
+                                const tableCells = [];
+                                Array.from(trNode.querySelectorAll('th, td')).forEach(tdNode => {
+                                    const cellParagraphs = [];
+                                    Array.from(tdNode.childNodes).forEach(child => cellParagraphs.push(...processHtmlNodeToDocx(child, {size:18})));
+
+                                    tableCells.push(new TableCell({
+                                        children: cellParagraphs.length > 0 ? cellParagraphs : [new Paragraph("")],
+                                        borders: {
+                                            top: { style: BorderStyle.SINGLE, size: 6, color: "BFBFBF" },
+                                            bottom: { style: BorderStyle.SINGLE, size: 6, color: "BFBFBF" },
+                                            left: { style: BorderStyle.SINGLE, size: 6, color: "BFBFBF" },
+                                            right: { style: BorderStyle.SINGLE, size: 6, color: "BFBFBF" },
+                                        },
+                                        shading: tdNode.tagName === 'TH' ? {type: ShadingType.SOLID, color: "E0E0E0", fill: "E0E0E0"} : undefined,
+                                    }));
+                                });
+                                if(tableCells.length > 0) tableRows.push(new TableRow({ children: tableCells }));
+                            });
+                            if (tableRows.length > 0) {
+                                 elements.push(new Table({ rows: tableRows, width: { size: 90, type: WidthType.PERCENT }, alignment: AlignmentType.CENTER }));
+                            }
+                            break;
+                    }
+                } else { // Inline-level elements modify currentTextProps and recurse
+                    if (tagName === 'STRONG' || tagName === 'B') newTextProps.bold = true;
+                    else if (tagName === 'EM' || tagName === 'I') newTextProps.italics = true;
+                    else if (tagName === 'CODE' && !node.closest('PRE')) {
+                        newTextProps.font = "Courier New";
+                        newTextProps.size = (currentTextProps.size || 22) * 0.9;
+                    }
+
+                    if (node.childNodes && node.childNodes.length > 0 && !node.classList.contains('message-controls')) {
+                        Array.from(node.childNodes).forEach(child => {
+                            elements.push(...processHtmlNodeToDocx(child, newTextProps, listInfo));
+                        });
+                    } else if (node.textContent.trim() && !['BR', 'PRE', 'UL', 'OL', 'TABLE', 'DIV', 'P', 'LI'].includes(tagName)) {
+                         if(node.textContent.trim().length > 0) elements.push(new TextRun({ text: node.textContent.trim(), ...newTextProps }));
+                    }
+                }
+            }
+            return elements;
+        }
+
+        Array.from(bubbleElement.childNodes).forEach(childNode => {
+            docChildren.push(...processHtmlNodeToDocx(childNode));
+        });
+
+        const finalDocChildren = docChildren.reduce((acc, curr) => {
+            if (curr instanceof Paragraph) {
+                // Ensure children of Paragraph are actual TextRun instances, not nested arrays
+                let flatChildren = [];
+                function flatten(arr) {
+                    arr.forEach(item => {
+                        if (Array.isArray(item)) flatten(item);
+                        else if (item instanceof TextRun) flatChildren.push(item);
+                        // If item is a Paragraph (e.g. from nested DIV), it should have been handled by processHtmlNodeToDocx to be a top-level element
+                    });
+                }
+                flatten(curr.options.children);
+
+                // Filter out TextRuns that are solely whitespace
+                curr.options.children = flatChildren.filter(run => run instanceof TextRun && run.options.text.trim() !== "");
+
+                if (curr.options.children.length > 0) acc.push(curr);
+            } else {
+                acc.push(curr);
+            }
+            return acc;
+        }, []);
+
+
+        const doc = new Document({
+            sections: [{
+                properties: {
+                    page: {
+                        size: { orientation: PageOrientation.PORTRAIT, width: convertInchesToTwip(8.5), height: convertInchesToTwip(11) },
+                        margin: { top: convertInchesToTwip(1), right: convertInchesToTwip(1), bottom: convertInchesToTwip(1), left: convertInchesToTwip(1) },
+                    }
+                },
+                children: finalDocChildren,
+            }],
+            numbering: { // Define numbering schemes
+                config: [
+                    { // For Ordered Lists (OL)
+                        reference: "default-numbering",
+                        levels: [
+                            { level: 0, format: "decimal", text: "%1.", alignment: AlignmentType.START, style: { paragraph: { indent: { left: convertInchesToTwip(0.5), hanging: convertInchesToTwip(0.25) }}}},
+                            { level: 1, format: "lowerLetter", text: "%2)", alignment: AlignmentType.START, style: { paragraph: { indent: { left: convertInchesToTwip(0.75), hanging: convertInchesToTwip(0.25) }}}},
+                            { level: 2, format: "lowerRoman", text: "%3.", alignment: AlignmentType.START, style: { paragraph: { indent: { left: convertInchesToTwip(1.0), hanging: convertInchesToTwip(0.25) }}}},
+                        ]
+                    },
+                    { // For Unordered Lists (UL)
+                        reference: "default-bullet",
+                        levels: [
+                             { level: 0, format: "bullet", text: "•", alignment: AlignmentType.START, style: { paragraph: { indent: { left: convertInchesToTwip(0.5), hanging: convertInchesToTwip(0.25) }}}},
+                             { level: 1, format: "bullet", text: "◦", alignment: AlignmentType.START, style: { paragraph: { indent: { left: convertInchesToTwip(0.75), hanging: convertInchesToTwip(0.25) }}}},
+                             { level: 2, format: "bullet", text: "▪", alignment: AlignmentType.START, style: { paragraph: { indent: { left: convertInchesToTwip(1.0), hanging: convertInchesToTwip(0.25) }}}},
+                        ]
+                    }
+                ]
+            },
+             styles: { // Define default document and paragraph styles
+                default: {
+                    document: { run: { size: 22, font: "Calibri" } }, // Default 11pt Calibri
+                    paragraph: { spacing: { after: 120, line: 276 } }, // Default spacing after paragraphs (6pt), line spacing 1.15
+                },
+             }
+        });
+
+        Packer.toBlob(doc).then(blob => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${baseFilename}.docx`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            if(downloadFormatStatus) downloadFormatStatus.textContent = 'Téléchargement DOCX terminé !';
+            return Promise.resolve();
+        }).catch(err => {
+            console.error("Error packing DOCX:", err);
+            if(downloadFormatStatus) downloadFormatStatus.textContent = 'Erreur de génération DOCX.';
+            return Promise.reject(err);
+        });
+    }
+
+    // --- END Download Format Modal Logic ---
+
 
     function formatActivityUrl(url) {
         if (!url) return 'N/A';

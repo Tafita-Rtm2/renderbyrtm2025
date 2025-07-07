@@ -240,39 +240,82 @@ h4 { font-size: 1.2em; } /* e.g., Sub-section titles or item titles */
 /* --- General .icon-button Styling --- */
 .icon-button {
     background-color: transparent;
-    border: 1px solid var(--border-color);
-    color: var(--text-color); /* For any text next to icon */
-    padding: 8px; /* Adjust for desired button size */
+    border: 2px solid var(--border-color); /* Increased border thickness */
+    color: var(--text-color);
+    padding: 8px;
     margin: 4px;
-    border-radius: 50%; /* Circular for standalone icon buttons */
+    border-radius: 50%;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease; /* Added box-shadow transition */
     outline: none;
+    position: relative; /* For pseudo-elements if needed for more futuristic effects */
 }
+.icon-button::before { /* Subtle futuristic glow effect */
+    content: '';
+    position: absolute;
+    top: -3px; left: -3px; right: -3px; bottom: -3px;
+    border-radius: 50%;
+    border: 1px solid transparent;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    pointer-events: none; /* So it doesn't interfere with clicks */
+}
+
 .icon-button:hover {
     background-color: var(--accent-color);
-    border-color: var(--accent-color);
+    border-color: var(--primary-accent-color); /* Darker accent for border on hover */
     color: var(--primary-bg);
-    transform: translateY(-2px);
+    transform: translateY(-2px) scale(1.05); /* Slightly larger pop */
+    box-shadow: 0 0 10px var(--accent-color), 0 0 20px var(--accent-color); /* Enhanced glow */
 }
+.icon-button:hover::before {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 8px var(--accent-color);
+}
+
 .icon-button:focus {
-    box-shadow: 0 0 0 2px var(--primary-bg), 0 0 0 4px var(--accent-color);
+    box-shadow: 0 0 0 2px var(--primary-bg), 0 0 0 4px var(--accent-color), 0 0 12px var(--accent-color); /* More prominent focus glow */
+    border-color: var(--accent-color);
 }
 .icon-button:disabled {
     background-color: var(--text-muted-color) !important;
     border-color: var(--text-muted-color) !important;
     cursor: not-allowed;
     transform: none !important;
+    box-shadow: none !important;
+}
+.icon-button:disabled::before {
+    border-color: transparent !important;
+    box-shadow: none !important;
 }
 .icon-button:disabled .icon {
     fill: var(--surface-color) !important;
 }
 
-
 /* --- Top Bar --- */
+/* Style for the dynamically added chat title in the top bar */
+.top-bar-chat-title-display {
+    font-size: 1.1em;
+    font-weight: 500;
+    color: var(--accent-color);
+    margin-left: 15px; /* Adjust as needed for spacing */
+    flex-grow: 1; /* Allow it to take available space */
+    text-align: center; /* Center the title */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+@media (max-width: 768px) {
+    .top-bar-chat-title-display {
+        margin-left: 10px;
+        font-size: 1em;
+        text-align: left; /* Align left on mobile for better use of space next to menu icon */
+    }
+}
+
+
 #top-bar {
     position: fixed;
     top: 0;
@@ -461,10 +504,10 @@ body:not(.dark-mode) .theme-switch input:checked + .slider:before {
 
 .home-app-btn {
     background-color: var(--surface-color);
-    border: 1px solid var(--primary-accent-color);
+    border: 2px solid var(--primary-accent-color); /* Slightly thicker border */
     border-radius: 15px;
-    width: 60px;
-    height: 60px;
+    width: 65px; /* Slightly larger */
+    height: 65px; /* Slightly larger */
     padding: 5px;
     color: var(--text-color);
     cursor: pointer;
@@ -473,25 +516,116 @@ body:not(.dark-mode) .theme-switch input:checked + .slider:before {
     align-items: center;
     justify-content: center;
     text-align: center;
-    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, background-color 0.2s ease;
+    transition: transform 0.2s ease-out, box-shadow 0.3s ease-out, background-color 0.2s ease, border-color 0.3s ease; /* Added border-color transition */
     font-size: 0.7em;
     gap: 4px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Subtle initial shadow */
 }
 .home-app-btn .icon {
     width: 28px;
     height: 28px;
     fill: var(--icon-fill-default);
     margin-bottom: 0;
+    transition: fill 0.2s ease;
 }
 .home-app-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 12px var(--accent-color); /* Use accent color with alpha for shadow */
-    background-color: var(--primary-accent-color);
-    color: var(--secondary-bg); /* Text color on hover, typically contrast to button bg */
+    transform: translateY(-4px) scale(1.05); /* More pronounced hover effect */
+    box-shadow: 0 8px 18px rgba(0, 255, 255, 0.5), 0 0 15px var(--action-color); /* Dual color futuristic glow */
+    background-color: var(--surface-color); /* Brighter background on hover */
+    color: var(--accent-color); /* Text color matches accent */
+    border-color: var(--action-color); /* Border color changes to action color */
 }
 .home-app-btn:hover .icon {
-    fill: var(--secondary-bg); /* Icon color on hover */
+    fill: var(--action-color); /* Icon color changes to action color */
 }
+
+
+/* Specific button styles with enhanced futuristic borders/glows */
+/* Chat send buttons */
+#chat-send-button,
+#gemini-chat-send-button,
+#gpt4o-chat-send-button,
+#blackbox-chat-send-button,
+#deepseek-chat-send-button,
+#claude-chat-send-button,
+#gemini-all-model-chat-send-button {
+    border-width: 2px; /* Ensure border is visible if it was none */
+    border-style: solid;
+    border-color: var(--action-color); /* Initial border matching background */
+    box-shadow: 0 0 8px transparent; /* Placeholder for transition */
+}
+#chat-send-button:hover,
+#gemini-chat-send-button:hover,
+#gpt4o-chat-send-button:hover,
+#blackbox-chat-send-button:hover,
+#deepseek-chat-send-button:hover,
+#claude-chat-send-button:hover,
+#gemini-all-model-chat-send-button:hover {
+    border-color: var(--highlight-yellow); /* Glowing border on hover */
+    box-shadow: 0 0 12px var(--highlight-yellow);
+}
+
+/* Primary action buttons (e.g., Generate Image, Generate Story) */
+#generate-image-button,
+#generate-story-button,
+.btn-submit-comment, /* Comment submit on home */
+#generate-temp-email-button { /* Email generator */
+    border: 2px solid transparent; /* Initial transparent border */
+    box-shadow: 0 0 8px transparent, inset 0 0 5px rgba(255,255,255,0.1); /* Subtle inset */
+    transition: background-color 0.3s ease, transform 0.2s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+#generate-image-button:hover,
+#generate-story-button:hover,
+.btn-submit-comment:hover,
+#generate-temp-email-button:hover {
+    border-color: var(--highlight-yellow); /* Or var(--accent-color) */
+    box-shadow: 0 0 10px var(--highlight-yellow), 0 0 20px var(--action-color), inset 0 0 8px rgba(255,255,255,0.2);
+}
+
+
+/* Secondary/Utility buttons (e.g., download, copy, refresh) */
+#download-image-button,
+#story-listen-button,
+#story-stop-speech-button,
+#story-translate-button,
+#story-download-button-text,
+#copy-email-button,
+#refresh-inbox-button,
+.btn-history-regenerate, /* Image history regenerate */
+.box-movie-back-btn, /* Movie detail back */
+.watch-trailer-btn, /* Movie trailer */
+.btn-action-movie { /* Other movie actions */
+    border-width: 2px;
+    border-style: solid;
+    border-color: var(--border-color); /* Default border */
+    box-shadow: 0 0 5px transparent;
+    transition: background-color 0.3s ease, transform 0.2s ease, border-color 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
+}
+
+#download-image-button:hover,
+#story-listen-button:hover,
+#story-stop-speech-button:hover,
+#story-translate-button:hover,
+#story-download-button-text:hover,
+#copy-email-button:hover,
+#refresh-inbox-button:hover,
+.btn-history-regenerate:hover,
+.box-movie-back-btn:hover,
+.watch-trailer-btn:hover,
+.btn-action-movie:hover:not(:disabled) {
+    border-color: var(--secondary-accent-color); /* Example: Magenta/Red border */
+    box-shadow: 0 0 10px var(--secondary-accent-color);
+    color: var(--secondary-accent-color); /* Text color can also change */
+}
+#download-image-button:hover .icon, /* If icon color needs to match text */
+#story-listen-button:hover .icon,
+#story-stop-speech-button:hover .icon,
+#story-translate-button:hover .icon,
+#story-download-button-text:hover .icon,
+#copy-email-button:hover .icon {
+    fill: var(--secondary-accent-color);
+}
+
 
 /* --- TRAILER MODAL STYLES --- */
 .modal-overlay {
@@ -777,8 +911,30 @@ body:not(.dark-mode) .theme-switch input:checked + .slider:before {
     display: flex !important;
     align-items: flex-end !important;
     margin-bottom: 0 !important;
-    max-width: 85% !important;
+    /* max-width: 85% !important; */ /* Adjusted by new rule below */
 }
+/* Increase max-width of chat bubbles for wider appearance */
+.chat-messages-area .chat-bubble, /* Generic for all chat areas if a common class is added to message areas */
+#chat-messages-area .chat-bubble,
+#gemini-chat-messages-area .chat-bubble,
+#gpt4o-chat-messages-area .chat-bubble,
+#blackbox-chat-messages-area .chat-bubble,
+#deepseek-chat-messages-area .chat-bubble,
+#claude-chat-messages-area .chat-bubble,
+#gemini-all-model-chat-messages-area .chat-bubble {
+    max-width: calc(100% - 40px - 12px - 10px) !important; /* Full width minus avatar, its margins, and a little extra padding */
+    /* Example: 100% - avatar_width (30px) - avatar_margin (6px*2=12px) - extra_space (10px) */
+    /* This allows the bubble to take almost all available horizontal space next to the small avatar */
+    overflow-wrap: break-word; /* Ensure long words/strings break to prevent overflow */
+    word-wrap: break-word; /* Legacy support */
+    word-break: break-word; /* Added for better CJK character handling and aggressive breaking */
+}
+
+/* Remove the media query that was reducing max-width on larger screens,
+   as the new calc() based max-width should adapt well.
+   If specific desktop adjustments are needed, they can be added back carefully. */
+/* @media (min-width: 769px) { ... } */
+
 
 .chat-message-wrapper.user {
     align-self: flex-end !important;
@@ -790,17 +946,26 @@ body:not(.dark-mode) .theme-switch input:checked + .slider:before {
     flex-direction: row !important;
 }
 
+/* Mobile specific adjustments for avatar alignment - These might be less relevant with a fixed viewport, but kept for potential adjustments */
+/* @media (max-width: 768px) { ... } */ /* Commenting out specific mobile avatar adjustments as viewport change is primary strategy */
+
 .chat-avatar-container {
-    width: 36px !important;
-    height: 36px !important;
+    width: 30px !important; /* Reduced avatar size */
+    height: 30px !important; /* Reduced avatar size */
     border-radius: 50% !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    margin: 0 8px !important;
+    margin: 0 6px !important; /* Reduced margin around avatar */
     flex-shrink: 0 !important;
     border: 1px solid var(--border-color) !important;
 }
+.chat-avatar-container .icon,
+.chat-avatar-container img { /* Ensure img/svg inside also scale down */
+    width: 18px !important; /* Smaller icon/image inside avatar */
+    height: 18px !important;
+}
+
 
 .chat-message-wrapper.user .chat-avatar-container {
     background-color: var(--accent-color) !important;
@@ -2454,177 +2619,284 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 
 /* --- GEMINI ALL MODEL VIEW STYLES --- */
 #gemini-all-model-view {
-    /* Basic structure inherited from .view and JS (display:flex, flex-direction:column, height) */
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - var(--top-bar-height) - 30px); /* Full height minus top bar and some padding */
+    padding: 0;
+    box-sizing: border-box;
+    background-color: var(--secondary-bg);
+    border-radius: 10px;
+    overflow: hidden;
 }
 
 #gemini-all-model-view .chat-view-header {
     display: flex;
     align-items: center;
-    padding: 10px 15px;
-    background-color: var(--surface-color); /* Or var(--secondary-bg) */
+    padding: 12px 20px; /* Adjusted padding */
+    background-color: var(--surface-color);
     border-bottom: 1px solid var(--border-color);
     flex-shrink: 0;
+    gap: 15px; /* Added gap */
 }
 
 #gemini-all-model-view .chat-header-logo {
-    width: 32px; /* Adjust size as needed */
-    height: 32px;
-    margin-right: 10px;
+    width: 36px; /* Standardized size */
+    height: 36px;
+    object-fit: contain; /* Ensure logo scales well */
 }
 
 #gemini-all-model-view .chat-view-header h2 {
     margin: 0;
-    font-size: 1.2em; /* Adjust size */
+    font-size: 1.3em; /* Enhanced size */
     color: var(--accent-color);
-    flex-grow: 1; /* Allow title to take space */
+    flex-grow: 1;
+    font-weight: 500; /* Adjusted weight */
+    letter-spacing: 0.5px; /* Adjusted spacing */
 }
 
 #gemini-all-model-view .model-selector-container {
-    margin-left: auto; /* Pushes selector to the right if title takes space */
+    margin-left: auto;
+    position: relative;
 }
 
 #gemini-model-selector {
-    padding: 8px 12px;
-    border-radius: 6px;
+    min-width: 220px; /* Increased width */
+    padding: 10px 15px;
+    padding-right: 40px; /* Space for custom arrow */
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23a0a0a0' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center; /* Adjusted position */
+    background-size: 18px 14px; /* Adjusted size */
+    border-radius: 8px; /* More rounded */
     border: 1px solid var(--border-color);
     background-color: var(--primary-bg);
     color: var(--text-color);
     font-family: var(--font-primary);
-    font-size: 0.9em;
+    font-size: 0.95em; /* Slightly larger font */
     outline: none;
     cursor: pointer;
-}
-#gemini-model-selector:focus {
-    border-color: var(--accent-color);
-    box-shadow: 0 0 5px var(--accent-color);
-}
-
-/* Messages area and input bar will largely use existing chat styles by ID */
-#gemini-all-model-chat-messages-area {
-    /* Inherits from general chat message area styles if IDs are similar enough or new specific styles needed */
-    /* For example, it uses: flex-grow, overflow-y, padding, background-color, border-bottom, display:flex, flex-direction:column, gap */
-}
-
-#gemini-all-model-chat-input-bar {
-    /* Inherits from general chat input bar styles */
-    /* display:flex, align-items, padding, background-color, border-top, min-height, flex-shrink */
-}
-
-#gemini-all-model-attach-file-button {
-    /* Similar to #gemini-chat-attach-image-button */
-    background-color: var(--surface-color);
-    border: 1px solid var(--border-color);
-    width: 44px; /* Slightly smaller if needed */
-    height: 44px;
-    border-radius: 50%;
-    margin-right: 8px;
-    flex-shrink: 0;
-}
-#gemini-all-model-attach-file-button .icon { fill: var(--accent-color); }
-#gemini-all-model-attach-file-button:hover { background-color: var(--accent-color); border-color: var(--accent-color); }
-#gemini-all-model-attach-file-button:hover .icon { fill: var(--primary-bg); }
-
-
-#gemini-all-model-file-preview-container {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    margin-right: 8px;
-    padding: 5px;
-    background-color: var(--surface-color);
-    border-radius: 4px;
-    font-size: 0.8em;
-    max-width: 150px; /* Limit preview width */
-    overflow: hidden;
-}
-.file-preview-name {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    color: var(--text-muted-color);
-}
-.file-preview-image {
-    max-height: 30px;
-    max-width: 50px;
-    border-radius: 3px;
-    border: 1px solid var(--border-color);
-}
-
-
-#gemini-all-model-chat-input-field {
-    /* Inherits general input field styling but ID specific for JS targeting */
-}
-#gemini-all-model-chat-send-button {
-    /* Inherits general send button styling */
-}
-
-/* User message bubble color for Gemini All Model (can be unique or inherit) */
-#gemini-all-model-chat-messages-area .chat-message-wrapper.user .chat-bubble {
-    background-color: var(--success-green) !important; /* Example: a distinct green */
-    color: var(--primary-bg) !important;
-}
-#gemini-all-model-chat-messages-area .chat-message-wrapper.user .chat-bubble a,
-#gemini-all-model-chat-messages-area .chat-message-wrapper.user .chat-bubble strong {
-    color: var(--primary-bg) !important; /* Ensure contrast */
-}
-
-/* More specific styling for the Gemini All Model header elements */
-#gemini-all-model-view .chat-view-header {
-    gap: 15px; /* Add gap between header items */
-    padding: 12px 20px; /* Adjust padding */
-}
-
-#gemini-all-model-view .chat-header-logo {
-    width: 36px;
-    height: 36px;
-}
-
-#gemini-all-model-view .chat-view-header h2 {
-    font-size: 1.3em;
-    font-weight: 500;
-    letter-spacing: 0.5px;
-}
-
-#gemini-all-model-view .model-selector-container {
-    position: relative; /* For custom arrow later if needed */
-}
-
-#gemini-model-selector {
-    min-width: 200px; /* Give it some space */
-    padding: 10px 15px; /* More padding */
-    padding-right: 35px; /* Space for custom arrow */
-    appearance: none; /* Remove default browser appearance */
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23a0a0a0' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E"); /* Basic SVG arrow */
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 16px 12px; /* Adjust arrow size */
-    border-radius: 8px; /* More rounded */
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 body.dark-mode #gemini-model-selector {
      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23e0e0e0' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
 }
-
 #gemini-model-selector:hover {
     border-color: var(--primary-accent-color);
 }
+#gemini-model-selector:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px var(--accent-color); /* More prominent focus */
+}
 
-/* File preview container enhancements */
+/* Messages area for Gemini All Model - inherits from general chat styles but can be overridden */
+#gemini-all-model-chat-messages-area {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 20px;
+    background-color: var(--primary-bg);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 18px; /* Increased gap between messages */
+}
+#gemini-all-model-chat-messages-area::-webkit-scrollbar { width: 8px; }
+#gemini-all-model-chat-messages-area::-webkit-scrollbar-track { background: var(--primary-bg); }
+#gemini-all-model-chat-messages-area::-webkit-scrollbar-thumb { background-color: var(--accent-color); border-radius: 4px; }
+
+/* Input bar for Gemini All Model */
+#gemini-all-model-chat-input-bar {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px; /* Adjusted padding */
+    background-color: var(--primary-bg);
+    border-top: 1px solid var(--surface-color);
+    min-height: 70px; /* Ensure enough height */
+    flex-shrink: 0;
+    gap: 10px; /* Gap between input bar items */
+}
+
+#gemini-all-model-attach-file-button {
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
+    width: 48px; /* Consistent size */
+    height: 48px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#gemini-all-model-attach-file-button .icon { fill: var(--accent-color); width: 24px; height: 24px; }
+#gemini-all-model-attach-file-button:hover { background-color: var(--accent-color); border-color: var(--accent-color); }
+#gemini-all-model-attach-file-button:hover .icon { fill: var(--primary-bg); }
+
 #gemini-all-model-file-preview-container {
-    border: 1px dashed var(--border-color);
-    padding: 8px;
-    max-width: 250px; /* Allow more width for filename */
-    min-height: 38px; /* Align with button height */
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Space between icon/name and image */
+    margin-right: 5px; /* Reduced margin as gap is used in parent */
+    padding: 8px 10px; /* Adjusted padding */
+    background-color: var(--surface-color);
+    border: 1px dashed var(--border-color); /* Dashed border */
+    border-radius: 6px; /* Rounded corners */
+    font-size: 0.85em; /* Slightly larger font */
+    max-width: 200px; /* Adjusted max width */
+    min-height: 40px; /* Ensure some height */
     box-sizing: border-box;
+    overflow: hidden; /* Clip content */
+}
+.file-preview-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-muted-color);
+    flex-grow: 1; /* Allow name to take available space */
 }
 .file-preview-image {
-    max-height: 35px; /* Slightly larger preview */
-    max-width: 60px;
+    max-height: 38px; /* Slightly larger preview image */
+    max-width: 50px;
+    border-radius: 4px; /* Rounded corners for image */
+    border: 1px solid var(--border-color);
+    object-fit: cover; /* Ensure image covers the area nicely */
 }
 
+#gemini-all-model-chat-input-field {
+    flex-grow: 1;
+    padding: 14px 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 25px; /* Rounded input field */
+    background-color: var(--surface-color);
+    color: var(--text-color);
+    font-family: var(--font-primary);
+    outline: none;
+    min-height: 48px; /* Consistent height */
+    height: 48px;
+    box-sizing: border-box;
+    font-size: 1em; /* Standard font size */
+}
+#gemini-all-model-chat-input-field:focus {
+    border-color: var(--action-color);
+    box-shadow: 0 0 8px var(--action-color);
+}
+
+#gemini-all-model-chat-send-button {
+    background-color: var(--action-color);
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: none;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#gemini-all-model-chat-send-button .icon {
+    fill: var(--primary-bg);
+    width: 26px;
+    height: 26px;
+}
+#gemini-all-model-chat-send-button:hover {
+    background-color: var(--primary-accent-color);
+}
+#gemini-all-model-chat-send-button:disabled {
+    background-color: var(--text-muted-color) !important;
+    cursor: not-allowed !important;
+}
+
+
+/* User message bubble color for Gemini All Model (Modernized) */
+/* This overrides the previous green color */
+#gemini-all-model-chat-messages-area .chat-message-wrapper.user .chat-bubble {
+    background-color: var(--accent-color) !important; /* Standard user bubble color (e.g., blue in light, cyan in dark) */
+    color: var(--primary-bg) !important; /* Text color for user bubble (e.g., white) */
+    border-bottom-right-radius: 6px !important; /* Common chat bubble styling */
+    border-bottom-left-radius: 22px !important; /* Keep other corners more rounded */
+}
+#gemini-all-model-chat-messages-area .chat-message-wrapper.user .chat-bubble a,
+#gemini-all-model-chat-messages-area .chat-message-wrapper.user .chat-bubble strong {
+    color: var(--primary-bg) !important; /* Ensure contrast for links/strong text */
+}
+
+/* AI (Gemini All Model) message bubble color */
+#gemini-all-model-chat-messages-area .chat-message-wrapper.ai .chat-bubble {
+    background-color: var(--surface-color) !important; /* Standard AI bubble color */
+    color: var(--text-color) !important;
+    border-bottom-left-radius: 6px !important; /* Common chat bubble styling */
+    border-bottom-right-radius: 22px !important;
+}
+#gemini-all-model-chat-messages-area .chat-message-wrapper.ai .chat-bubble a {
+    color: var(--accent-color) !important; /* Links in AI bubbles */
+}
+#gemini-all-model-chat-messages-area .chat-message-wrapper.ai .chat-bubble strong {
+    color: var(--text-color) !important; /* Or var(--accent-color) if preferred */
+}
+
+/* --- END OF GEMINI ALL MODEL VIEW STYLES --- */
+
+/* --- DOWNLOAD FORMAT MODAL STYLES --- */
+/* .modal-overlay and .modal-content are already defined and styled for the trailer modal.
+   We can reuse them, but might need some specific adjustments if the content is very different. */
+
+#download-format-modal .modal-content {
+    max-width: 450px; /* Smaller modal for format selection */
+    padding: 25px; /* Standard padding */
+    text-align: center; /* Center content */
+}
+
+#download-format-modal h4 {
+    color: var(--accent-color);
+    margin-top: 0;
+    margin-bottom: 25px;
+    font-size: 1.4em;
+}
+
+#download-options-container {
+    display: flex;
+    flex-direction: column; /* Stack buttons vertically */
+    gap: 15px; /* Space between buttons */
+    align-items: stretch; /* Make buttons take full width available in flex column */
+}
+
+.download-option-btn {
+    padding: 12px 20px;
+    font-size: 1.1em;
+    font-family: var(--font-primary);
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    background-color: var(--surface-color);
+    color: var(--accent-color);
+    border: 2px solid var(--accent-color);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.download-option-btn:hover {
+    background-color: var(--accent-color);
+    color: var(--primary-bg);
+    border-color: var(--primary-accent-color);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 4px 10px var(--accent-color);
+}
+
+.download-option-btn:disabled {
+    background-color: var(--text-muted-color) !important;
+    color: var(--surface-color) !important;
+    border-color: var(--text-muted-color) !important;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+#download-format-status {
+    color: var(--text-muted-color);
+    min-height: 20px; /* Reserve space for status messages */
+}
+/* --- END OF DOWNLOAD FORMAT MODAL STYLES --- */
 
 /* --- BOX MOVIE VIEW STYLES --- */
 #box-movie-view {
@@ -2916,9 +3188,11 @@ body.dark-mode .code-block-wrapper {
     margin: 0;
     padding: 15px;
     overflow-x: auto; /* Horizontal scroll for long lines */
-    white-space: pre; /* Preserve whitespace and line breaks */
+    white-space: pre; /* Preserve whitespace and line breaks, crucial for code */
     font-family: 'Courier New', Courier, monospace;
     font-size: 0.9em;
+    max-width: 100%; /* Ensures <pre> itself doesn't overflow its parent (.code-block-wrapper) */
+    box-sizing: border-box; /* Include padding and border in the element's total width and height */
     line-height: 1.5;
     background-color: transparent !important; /* Pre should be transparent, wrapper has bg */
 }

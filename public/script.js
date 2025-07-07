@@ -59,6 +59,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const subViewMenuTrigger = document.getElementById('sub-view-menu-trigger');
     const sideMenu = document.getElementById('side-menu');
     const homeMenuTriggerIcon = document.getElementById('home-menu-trigger-icon');
+    const topBarWeatherDisplay = document.getElementById('weather-display-container');
+    let topBarChatTitleDisplay = null; // To be created dynamically
+
+    // Helper to get chat name from view ID or side menu
+    function getChatNameForView(viewId) {
+        const sideMenuLink = document.querySelector(`#side-menu a[data-view="${viewId}"]`);
+        if (sideMenuLink) {
+            const titleSpan = sideMenuLink.querySelector('span:not(.menu-item-description)');
+            if (titleSpan) return titleSpan.textContent.trim();
+        }
+        // Fallback names if not found in menu (e.g. if view opened directly)
+        const names = {
+            'ai-chat-view': 'AI Chat',
+            'gemini-chat-view': 'Gemini Vision Chat',
+            'gpt4o-chat-view': 'GPT-4o Chat',
+            'blackbox-ai-view': 'Blackbox AI',
+            'deepseek-ai-view': 'Deepseek AI',
+            'claude-haiku-view': 'Claude Haiku AI',
+            'gemini-all-model-view': 'Gemini All Models'
+        };
+        return names[viewId] || 'Chat';
+    }
+
 
     // --- Centralized showView Function ---
     window.showView = function(viewIdToShow, bypassAdminCheck = false) {
@@ -86,113 +109,107 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             } else if (enteredCode === null) {
                 // User cancelled the prompt, do nothing or show a message
-                // console.log('Admin code prompt cancelled.');
             } else {
-                // User entered empty string
                 alert('Admin code is required to access this panel.');
             }
-            return; // Stop further execution in this call
+            return;
         }
 
-        // --- Existing showView logic starts here ---
         allViewElements.forEach(view => {
             view.classList.remove('active');
             view.style.display = 'none';
         });
 
-        // Explicitly hide or manage AI chat components when not the target view
         const aiChatView = document.getElementById('ai-chat-view');
-        const chatInputBar = document.getElementById('chat-input-bar'); // Assuming this is the correct ID
+        const chatInputBar = document.getElementById('chat-input-bar');
 
         if (viewIdToShow !== 'ai-chat-view') {
-            if (aiChatView && aiChatView.style.display !== 'none') { // Check if it's not already none
-                // This is a safeguard; the main loop should handle hiding aiChatView itself.
-                // aiChatView.style.display = 'none'; // Redundant if main loop is effective
-            }
-            if (chatInputBar) {
-                // Specifically target the chat input bar to ensure it's hidden
-                chatInputBar.style.display = 'none';
-            }
-        } else { // When 'ai-chat-view' IS being shown
-            // Ensure chatInputBar is visible. Its display is part of aiChatView's flex layout.
-            // If aiChatView is set to display:flex, child elements with default display (block/flex) will show.
-            // If chatInputBar was explicitly set to display:none, it needs to be reset.
-            if (chatInputBar) {
-                 chatInputBar.style.display = 'flex'; // Or 'block' if that's its natural state in the layout
-            }
+            if (chatInputBar) chatInputBar.style.display = 'none';
+        } else {
+            if (chatInputBar) chatInputBar.style.display = 'flex';
         }
 
         const viewToShow = document.getElementById(viewIdToShow);
         if (viewToShow) {
-            viewToShow.style.display = 'block'; // Use 'block' or 'flex' as appropriate for the view's CSS
+            viewToShow.style.display = 'block';
             viewToShow.classList.add('active');
         } else {
             console.warn(`View with ID "${viewIdToShow}" not found. Defaulting to home-view.`);
-            const homeView = document.getElementById('home-view');
-            if (homeView) {
-                homeView.style.display = 'block';
-                homeView.classList.add('active');
-            }
+            document.getElementById('home-view').style.display = 'block';
+            document.getElementById('home-view').classList.add('active');
             viewIdToShow = 'home-view';
         }
-         // Special display handling for flex views
-        if (viewIdToShow === 'ai-chat-view' ||
-            viewIdToShow === 'vip-view' || /* vip-view might also be flex */
-            viewIdToShow === 'gemini-chat-view' ||
-            viewIdToShow === 'gpt4o-chat-view' ||
-            viewIdToShow === 'blackbox-ai-view' ||
-            viewIdToShow === 'deepseek-ai-view' ||
-            viewIdToShow === 'claude-haiku-view' ||
-            viewIdToShow === 'email-generator-view') {
-            if(viewToShow) viewToShow.style.display = 'flex';
+
+        const chatViewIds = [
+            'ai-chat-view', 'gemini-chat-view', 'gpt4o-chat-view',
+            'blackbox-ai-view', 'deepseek-ai-view', 'claude-haiku-view',
+            'gemini-all-model-view'
+        ];
+        const isChatView = chatViewIds.includes(viewIdToShow);
+
+        if (viewToShow && (isChatView || viewIdToShow === 'email-generator-view' || viewIdToShow === 'vip-view')) {
+            viewToShow.style.display = 'flex';
+        }
+
+        // Handle top bar content (Weather vs Chat Title)
+        if (isChatView) {
+            if (topBarWeatherDisplay) topBarWeatherDisplay.style.display = 'none';
+            if (!topBarChatTitleDisplay) {
+                topBarChatTitleDisplay = document.createElement('div');
+                topBarChatTitleDisplay.id = 'top-bar-chat-title';
+                topBarChatTitleDisplay.className = 'top-bar-chat-title-display'; // For styling
+                // Insert it before the weather display, or at a suitable place in the top bar
+                const themeToggleContainer = document.getElementById('theme-toggle-container');
+                if (themeToggleContainer && themeToggleContainer.parentNode) {
+                     themeToggleContainer.parentNode.insertBefore(topBarChatTitleDisplay, themeToggleContainer.nextSibling); // Insert after theme toggle
+                } else if (topBarWeatherDisplay && topBarWeatherDisplay.parentNode) {
+                    topBarWeatherDisplay.parentNode.insertBefore(topBarChatTitleDisplay, topBarWeatherDisplay);
+                } else {
+                    // Fallback: append to top-bar if other elements not found
+                    document.getElementById('top-bar')?.appendChild(topBarChatTitleDisplay);
+                }
+            }
+            topBarChatTitleDisplay.textContent = getChatNameForView(viewIdToShow);
+            topBarChatTitleDisplay.style.display = 'block'; // Or 'flex' if it needs flex properties
+        } else {
+            if (topBarWeatherDisplay) topBarWeatherDisplay.style.display = 'flex'; // Assuming flex is its default
+            if (topBarChatTitleDisplay) topBarChatTitleDisplay.style.display = 'none';
         }
 
 
         if (viewIdToShow === 'home-view') {
             if (homeBottomAppIcons) homeBottomAppIcons.style.display = 'flex';
             if (subViewMenuTrigger) subViewMenuTrigger.style.display = 'none';
-            if (homeMenuTriggerIcon) homeMenuTriggerIcon.style.display = 'inline-flex'; // or 'block'
+            if (homeMenuTriggerIcon) homeMenuTriggerIcon.style.display = 'inline-flex';
             if (sideMenu && sideMenu.classList.contains('visible')) sideMenu.classList.remove('visible');
         } else {
             if (homeBottomAppIcons) homeBottomAppIcons.style.display = 'none';
-            if (subViewMenuTrigger) subViewMenuTrigger.style.display = 'inline-flex'; // or 'block'
+            if (subViewMenuTrigger) subViewMenuTrigger.style.display = 'inline-flex';
             if (homeMenuTriggerIcon) homeMenuTriggerIcon.style.display = 'none';
         }
 
         // Feature-specific load calls
         if (viewIdToShow === 'home-view' && typeof loadComments === 'function') loadComments();
         else if (viewIdToShow === 'ai-chat-view') {
-            console.log('[AI CHAT DIAGNOSTIC] showView called for ai-chat-view.');
-            // Logs for checking elements when ai-chat-view is shown
-            console.log('[AI CHAT DIAGNOSTIC] Checking #chat-input-bar in DOM:', document.getElementById('chat-input-bar'));
-            console.log('[AI CHAT DIAGNOSTIC] Checking #chat-input-field in DOM:', document.getElementById('chat-input-field'));
-            console.log('[AI CHAT DIAGNOSTIC] Checking #chat-send-button in DOM:', document.getElementById('chat-send-button'));
-            console.log('[AI CHAT DIAGNOSTIC] Checking #web-search-toggle in DOM:', document.getElementById('web-search-toggle'));
-            console.log('[AI CHAT DIAGNOSTIC] Checking .web-search-container in DOM (within #ai-chat-view):', document.querySelector('#ai-chat-view .web-search-container'));
-
             if (typeof loadChatHistory === 'function') loadChatHistory();
             if (typeof loadWebSearchToggleState === 'function') loadWebSearchToggleState();
         } else if (viewIdToShow === 'image-generator-view' && typeof loadImagePromptHistory === 'function') loadImagePromptHistory();
         else if (viewIdToShow === 'story-generator-view') {
             if (typeof loadStoryHistory === 'function') loadStoryHistory();
             const sgDisplay = document.getElementById('generated-story-display');
-            if(sgDisplay) sgDisplay.innerHTML = '<p>Your generated story will appear here.</p>'; // Reset display
+            if(sgDisplay) sgDisplay.innerHTML = '<p>Your generated story will appear here.</p>';
             currentGeneratedStoryContent = "";
             currentGeneratedStoryTheme = "";
             if(typeof updateStoryVipControlsVisibility === 'function') updateStoryVipControlsVisibility();
-        } else if (viewIdToShow === 'box-movie-view') {
-            // Placeholder for when Box Movie view is shown
-            // For example, load popular movies by default
-            if (typeof fetchPopularMovies === 'function') {
-                fetchPopularMovies();
-            }
+        } else if (viewIdToShow === 'box-movie-view' && typeof fetchPopularMovies === 'function') {
+            fetchPopularMovies();
         } else if (viewIdToShow === 'weather-view') {
-            const weatherView = document.getElementById('weather-view');
-            if (currentWeatherData) { // If data is already fetched
+            const weatherViewEl = document.getElementById('weather-view');
+            if (currentWeatherData) {
                 displayDetailedWeather(currentWeatherData);
             } else {
-                if(weatherView) weatherView.innerHTML = '<p class="weather-loading">Loading detailed weather...</p>';
-                initWeatherDisplay(); // Attempt to fetch it if not available
+                if(weatherViewEl) weatherViewEl.innerHTML = '<p class="weather-loading">Loading detailed weather...</p>';
+                initWeatherDisplay();
             }
         } else if (viewIdToShow === 'admin-panel-view') {
             const adminPanel = document.getElementById('admin-panel-view');
@@ -201,98 +218,62 @@ document.addEventListener('DOMContentLoaded', () => {
                 const commentsTabContent = adminPanel.querySelector('#comments-admin-tab');
                 const analyticsTabButton = adminPanel.querySelector('.admin-tab-button[data-tab="analytics-admin"]');
                 const analyticsTabContent = adminPanel.querySelector('#analytics-admin-tab');
-
                 let analyticsWasActive = analyticsTabButton && analyticsTabButton.classList.contains('active');
-
-                // Reset all tabs
                 adminPanel.querySelectorAll('.admin-tab-button').forEach(b => b.classList.remove('active'));
                 adminPanel.querySelectorAll('.admin-tab-content').forEach(c => c.classList.remove('active'));
-
-                // Set the previously active tab or default to comments
                 if (analyticsWasActive && analyticsTabContent) {
                     analyticsTabButton.classList.add('active');
                     analyticsTabContent.classList.add('active');
                     if (typeof loadAdminAnalytics === 'function') loadAdminAnalytics();
-                } else { // Default to comments tab
+                } else {
                     if (commentsTabButton) commentsTabButton.classList.add('active');
                     if (commentsTabContent) commentsTabContent.classList.add('active');
                     if (typeof loadAdminComments === 'function') loadAdminComments();
                 }
-            } else { // Fallback if adminPanel not found, try loading default
+            } else {
                  if (typeof loadAdminComments === 'function') loadAdminComments();
             }
-        } else if (viewIdToShow === 'user-history-view') {
-            if (typeof loadUserActivityHistory === 'function') {
-                loadUserActivityHistory();
-            }
-        } else if (viewIdToShow === 'comments-view') { // Added for dedicated comments page
-            if (typeof loadAllCommentsPage === 'function') loadAllCommentsPage();
-        }
-        else if (viewIdToShow === 'gemini-chat-view') {
-            // Initialize Gemini Chat specific elements or load history if needed
-            console.log('[GEMINI CHAT DIAGNOSTIC] showView called for gemini-chat-view.');
-            if (typeof loadGeminiChatHistory === "function") { // Will be defined later
-                loadGeminiChatHistory();
-            }
-            // Ensure input bar elements are correctly displayed for Gemini chat
+        } else if (viewIdToShow === 'user-history-view' && typeof loadUserActivityHistory === 'function') {
+            loadUserActivityHistory();
+        } else if (viewIdToShow === 'comments-view' && typeof loadAllCommentsPage === 'function') {
+            loadAllCommentsPage();
+        } else if (viewIdToShow === 'gemini-chat-view') {
+            if (typeof loadGeminiChatHistory === "function") loadGeminiChatHistory();
             const geminiChatInputBar = document.getElementById('gemini-chat-input-bar');
-            if (geminiChatInputBar) {
-                geminiChatInputBar.style.display = 'flex'; // Or its default display style
-            }
-            const geminiChatView = document.getElementById('gemini-chat-view');
-             if (geminiChatView) {
-                geminiChatView.style.display = 'flex';
-            }
+            if (geminiChatInputBar) geminiChatInputBar.style.display = 'flex';
+            const geminiChatViewEl = document.getElementById('gemini-chat-view');
+            if (geminiChatViewEl) geminiChatViewEl.style.display = 'flex';
         } else if (viewIdToShow === 'gpt4o-chat-view') {
-            console.log('[GPT4O CHAT DIAGNOSTIC] showView called for gpt4o-chat-view.');
-            if (typeof loadGpt4oChatHistory === "function") { // Will be defined later
-                loadGpt4oChatHistory();
-            }
+            if (typeof loadGpt4oChatHistory === "function") loadGpt4oChatHistory();
             const gpt4oChatInputBar = document.getElementById('gpt4o-chat-input-bar');
-            if (gpt4oChatInputBar) {
-                gpt4oChatInputBar.style.display = 'flex';
-            }
-            const gpt4oChatView = document.getElementById('gpt4o-chat-view');
-            if (gpt4oChatView) {
-                gpt4oChatView.style.display = 'flex';
-            }
-        } else if (viewIdToShow === 'email-generator-view') {
-            // Initialize or reset Email Generator view state if needed
-            if (typeof initializeEmailGeneratorView === "function") {
-                initializeEmailGeneratorView();
-            }
-            // Flex display for email-generator-view is handled in the common block above
+            if (gpt4oChatInputBar) gpt4oChatInputBar.style.display = 'flex';
+            const gpt4oChatViewEl = document.getElementById('gpt4o-chat-view');
+            if (gpt4oChatViewEl) gpt4oChatViewEl.style.display = 'flex';
+        } else if (viewIdToShow === 'email-generator-view' && typeof initializeEmailGeneratorView === "function") {
+            initializeEmailGeneratorView();
         } else if (viewIdToShow === 'blackbox-ai-view') {
-            console.log('[BLACKBOX AI DIAGNOSTIC] showView called for blackbox-ai-view.');
-            if (typeof loadBlackboxAiChatHistory === "function") { loadBlackboxAiChatHistory(); }
-            if (typeof loadBlackboxWebSearchToggleState === "function") { loadBlackboxWebSearchToggleState(); }
+            if (typeof loadBlackboxAiChatHistory === "function") loadBlackboxAiChatHistory();
+            if (typeof loadBlackboxWebSearchToggleState === "function") loadBlackboxWebSearchToggleState();
             const blackboxChatInputBar = document.getElementById('blackbox-chat-input-bar');
             if (blackboxChatInputBar) blackboxChatInputBar.style.display = 'flex';
         } else if (viewIdToShow === 'deepseek-ai-view') {
-            console.log('[DEEPSEEK AI DIAGNOSTIC] showView called for deepseek-ai-view.');
-            if (typeof loadDeepseekAiChatHistory === "function") { loadDeepseekAiChatHistory(); }
+            if (typeof loadDeepseekAiChatHistory === "function") loadDeepseekAiChatHistory();
             const deepseekChatInputBar = document.getElementById('deepseek-chat-input-bar');
             if (deepseekChatInputBar) deepseekChatInputBar.style.display = 'flex';
         } else if (viewIdToShow === 'claude-haiku-view') {
-            console.log('[CLAUDE HAIKU AI DIAGNOSTIC] showView called for claude-haiku-view.');
-            if (typeof loadClaudeHaikuAiChatHistory === "function") { loadClaudeHaikuAiChatHistory(); }
+            if (typeof loadClaudeHaikuAiChatHistory === "function") loadClaudeHaikuAiChatHistory();
             const claudeChatInputBar = document.getElementById('claude-chat-input-bar');
             if (claudeChatInputBar) claudeChatInputBar.style.display = 'flex';
         } else if (viewIdToShow === 'gemini-all-model-view') {
-            console.log('[GEMINI ALL MODEL DIAGNOSTIC] showView called for gemini-all-model-view.');
-            if (typeof fetchAndPopulateGeminiModels === "function") { fetchAndPopulateGeminiModels(); }
-            // History loading is now handled by fetchAndPopulateGeminiModels or model selector change
+            if (typeof fetchAndPopulateGeminiModels === "function") fetchAndPopulateGeminiModels();
             const geminiAllModelInputBar = document.getElementById('gemini-all-model-chat-input-bar');
             if (geminiAllModelInputBar) geminiAllModelInputBar.style.display = 'flex';
-            // Ensure the view itself is flex if not already handled by the generic flex view block
-            const geminiAllModelView = document.getElementById('gemini-all-model-view');
-            if (geminiAllModelView && geminiAllModelView.style.display !== 'flex') {
-                 geminiAllModelView.style.display = 'flex';
+            const geminiAllModelViewEl = document.getElementById('gemini-all-model-view');
+            if (geminiAllModelViewEl && geminiAllModelViewEl.style.display !== 'flex') {
+                 geminiAllModelViewEl.style.display = 'flex';
             }
         }
 
-
-        // Track view visit at the end of showView, after all specific view logic
         if(typeof trackActivity === 'function') trackActivity('view_visit', { view: viewIdToShow });
     };
 

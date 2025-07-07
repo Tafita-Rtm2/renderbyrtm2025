@@ -626,6 +626,83 @@ app.post('/api/gemini-all-model', uploadGeminiAllModel.single('file'), async (re
     }
 });
 
+// New Route for All ChatGPT Models
+const CHATGPT_HAJI_MIX_API_KEY = 'e30864f5c326f6e3d70b032000ef5e2fa610cb5d9bc5759711d33036e303cef4'; // Same as Gemini for now, as per user instruction
+app.post('/api/all-chatgpt', async (req, res) => { // Not using multer here yet, assuming text-only for now
+    const { ask, model, uid, roleplay, max_tokens, img_url } = req.body;
+
+    if (!ask && !img_url) return res.status(400).json({ error: '"ask" or "img_url" is required.' });
+    if (!uid) return res.status(400).json({ error: '"uid" is required.' });
+    if (!model) return res.status(400).json({ error: '"model" is required.' });
+
+    let hajiOpenAiApiUrl = `https://haji-mix-api.gleeze.com/api/openai?uid=${encodeURIComponent(uid)}&model=${encodeURIComponent(model)}&api_key=${CHATGPT_HAJI_MIX_API_KEY}`;
+    
+    if (ask) hajiOpenAiApiUrl += `&ask=${encodeURIComponent(ask)}`;
+    if (img_url) hajiOpenAiApiUrl += `&img_url=${encodeURIComponent(img_url)}`; // For future image support
+    if (roleplay) hajiOpenAiApiUrl += `&roleplay=${encodeURIComponent(roleplay)}`;
+    if (max_tokens) hajiOpenAiApiUrl += `&max_tokens=${encodeURIComponent(max_tokens)}`;
+    hajiOpenAiApiUrl += `&stream=false`; // Explicitly set stream to false
+
+    try {
+        const apiResponse = await fetch(hajiOpenAiApiUrl);
+        const responseText = await apiResponse.text();
+
+        if (!apiResponse.ok) {
+            let eJson = { error: `Haji Mix OpenAI API Error: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
+            try {
+                const parsedError = JSON.parse(responseText);
+                if (parsedError.error) eJson.error = parsedError.error;
+                else if (parsedError.message) eJson.error = parsedError.message;
+                if (parsedError.details) eJson.details = parsedError.details;
+            } catch (c) { /* responseText was not JSON */ }
+            console.error("Haji Mix OpenAI API Error:", eJson);
+            return res.status(apiResponse.status).json(eJson);
+        }
+
+        let data;
+        try { data = JSON.parse(responseText); } 
+        catch (e) {
+            console.warn('Haji Mix OpenAI API response was not JSON, but status was OK. Response text:', responseText);
+            // Attempt to send raw text if it seems like a direct answer and not an error structure
+            if (typeof responseText === 'string' && responseText.trim().length > 0 && !responseText.toLowerCase().includes('error')) {
+                 return res.json({
+                    author: model, // Use selected model as author
+                    response: responseText, // Send the raw text as response
+                    model_used: model,
+                    supported_models: [model] // Fallback, actual list might be missing
+                });
+            }
+            return res.status(500).json({ error: 'Failed to parse response from Haji Mix OpenAI API.', details: responseText });
+        }
+        
+        // Construct a consistent response payload
+        const responsePayload = {
+            user_ask: data.user_ask || ask, // from request if not in response
+            model_used: data.model_used || model, // from request if not in response
+            answer: data.answer,
+            supported_models: Array.isArray(data.supported_models) ? data.supported_models : [],
+            // images_processed: data.images_processed // if API returns this
+        };
+        
+        if (data.error && !data.answer) {
+             console.warn("Haji Mix OpenAI API returned an error in its payload:", data.error);
+        }
+        if (responsePayload.supported_models.length === 0) {
+             // If API doesn't send back supported_models, we might populate it with the requested model
+             // or have a predefined list for known ChatGPT models if the API is inconsistent.
+             // For now, if it's empty, the frontend dropdown might just show the currently selected one.
+            console.warn("Haji Mix OpenAI API response did not include 'supported_models' or it was empty.");
+        }
+
+        res.json(responsePayload);
+
+    } catch (error) {
+        console.error('Server error (Haji Mix OpenAI API):', error);
+        return res.status(500).json({ error: 'Server error processing Haji Mix OpenAI API request.' });
+    }
+});
+
+
 // Fallback to index.html
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));

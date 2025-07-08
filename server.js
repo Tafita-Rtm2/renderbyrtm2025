@@ -676,9 +676,9 @@ const uploadClaudeAllModel = multer({
 
 app.post('/api/claude-all-model', uploadClaudeAllModel.single('file'), async (req, res) => {
     const { ask, model, uid, roleplay, max_tokens } = req.body;
-    let clientUploadedFileUrl = req.body.img_url;
+    let clientUploadedFileUrl = req.body.img_url; 
     let tempLocalPath = null;
-    let publicFileUrl = null;
+    let publicFileUrl = null; 
 
     if (!ask && !req.file && !clientUploadedFileUrl) return res.status(400).json({ error: '"ask" or a file/img_url is required for Claude.' });
     if (!uid) { if (req.file) fs.unlinkSync(req.file.path); return res.status(400).json({ error: '"uid" is required.' }); }
@@ -700,7 +700,7 @@ app.post('/api/claude-all-model', uploadClaudeAllModel.single('file'), async (re
     }
 
     let hajiAnthropicApiUrl = `https://haji-mix-api.gleeze.com/api/anthropic?uid=${encodeURIComponent(uid)}&model=${encodeURIComponent(model)}&api_key=${HAJI_MIX_ANTHROPIC_API_KEY}`;
-
+    
     if (ask) hajiAnthropicApiUrl += `&ask=${encodeURIComponent(ask)}`;
     if (publicFileUrl) hajiAnthropicApiUrl += `&img_url=${encodeURIComponent(publicFileUrl)}`;
     if (roleplay) hajiAnthropicApiUrl += `&roleplay=${encodeURIComponent(roleplay)}`;
@@ -725,7 +725,7 @@ app.post('/api/claude-all-model', uploadClaudeAllModel.single('file'), async (re
         }
 
         let data;
-        try { data = JSON.parse(responseText); }
+        try { data = JSON.parse(responseText); } 
         catch (e) {
             console.warn('Haji Mix Anthropic API response was not JSON, but status was OK. Response text:', responseText);
             if (typeof responseText === 'string' && responseText.trim().length > 0 && !responseText.toLowerCase().includes('error')) {
@@ -736,19 +736,37 @@ app.post('/api/claude-all-model', uploadClaudeAllModel.single('file'), async (re
             }
             return res.status(500).json({ error: 'Failed to parse response from Haji Mix Anthropic API.', details: responseText });
         }
+        
+        // Check if the essential 'answer' field is present
+        if (data.answer === undefined || data.answer === null) {
+            console.warn("Haji Mix Anthropic API response was OK but 'answer' field is missing or null. Data:", data);
+            // Also check if there was a data.error field that might explain this
+            if (data.error) {
+                 return res.status(500).json({ error: `Anthropic API reported an error: ${data.error}`, details: data });
+            }
+            return res.status(500).json({ error: 'Anthropic API response is missing the "answer" field.', details: data });
+        }
 
         const responsePayload = {
             user_ask: data.user_ask || ask, model_used: data.model_used || model,
             author: data.model_used || model, response: data.answer,
-            supported_models: Array.isArray(data.supported_models) ? data.supported_models : [model], // Ensure fallback
+            supported_models: Array.isArray(data.supported_models) && data.supported_models.length > 0 ? data.supported_models : [model], // Ensure fallback and not empty
             images_processed: data.images_processed !== undefined ? data.images_processed : (publicFileUrl ? 1 : 0)
         };
-
-        if (data.error && !data.answer) {
-             console.warn("Haji Mix Anthropic API returned an error in its payload:", data.error);
+        
+        // This specific check might be redundant if the above check for data.answer handles it,
+        // but keeping it if API might return both error and a (possibly empty) answer.
+        if (data.error && !data.answer) { 
+             console.warn("Haji Mix Anthropic API returned an error in its payload (and no answer):", data.error);
+             // If we reached here, it implies data.answer was somehow present, which contradicts the check.
+             // However, if data.error is present, it should probably take precedence.
+             // For safety, if data.error is present, let's return it as an error to the client.
+             return res.status(500).json({ error: `Anthropic API reported an error: ${data.error}`, details: data });
         }
-        if (responsePayload.supported_models.length === 0) {
-            console.warn("Anthropic API: 'supported_models' was empty, ensuring current model is included.");
+
+        // Ensure supported_models is never sent as an empty array if the primary model is known.
+        if (!responsePayload.supported_models || responsePayload.supported_models.length === 0) {
+            console.warn("Anthropic API: 'supported_models' was empty after processing, ensuring current model is included.");
             responsePayload.supported_models = [model];
         }
         res.json(responsePayload);

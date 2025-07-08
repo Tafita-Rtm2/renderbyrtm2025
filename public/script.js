@@ -169,11 +169,55 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('top-bar')?.appendChild(topBarChatTitleDisplay);
                 }
             }
-            topBarChatTitleDisplay.textContent = getChatNameForView(viewIdToShow); // Ensure getChatNameForView handles the new ID
-            topBarChatTitleDisplay.style.display = 'block'; 
-        } else {
+            topBarChatTitleDisplay.textContent = getChatNameForView(viewIdToShow); 
+            topBarChatTitleDisplay.style.display = 'block';
+            if (topBarModelNameDisplay) topBarModelNameDisplay.style.display = 'none'; // Hide specific model name display
+            // Hide all top-bar model selectors
+            if (topBarGeminiSelectorWrapper) topBarGeminiSelectorWrapper.style.display = 'none';
+            if (topBarChatGPTSelectorWrapper) topBarChatGPTSelectorWrapper.style.display = 'none';
+            if (topBarClaudeSelectorWrapper) topBarClaudeSelectorWrapper.style.display = 'none';
+
+        } else { // Not a chat view
             if (topBarWeatherDisplay) topBarWeatherDisplay.style.display = 'flex'; 
             if (topBarChatTitleDisplay) topBarChatTitleDisplay.style.display = 'none';
+            if (topBarModelNameDisplay) topBarModelNameDisplay.style.display = 'none';
+             // Hide all top-bar model selectors
+            if (topBarGeminiSelectorWrapper) topBarGeminiSelectorWrapper.style.display = 'none';
+            if (topBarChatGPTSelectorWrapper) topBarChatGPTSelectorWrapper.style.display = 'none';
+            if (topBarClaudeSelectorWrapper) topBarClaudeSelectorWrapper.style.display = 'none';
+        }
+
+        // Specific logic for "All Model" views to show their selectors in top bar
+        if (viewIdToShow === 'gemini-all-model-view') {
+            if (topBarChatTitleDisplay) topBarChatTitleDisplay.style.display = 'none'; // Hide generic chat title
+            if (topBarGeminiSelectorWrapper) topBarGeminiSelectorWrapper.style.display = 'flex'; // Show Gemini selector
+            if (topBarModelNameDisplay && currentSelectedGeminiModel) { // Update model name display
+                topBarModelNameDisplay.textContent = `Gemini: ${currentSelectedGeminiModel}`;
+                topBarModelNameDisplay.style.display = 'inline';
+            } else if (topBarModelNameDisplay) {
+                 topBarModelNameDisplay.textContent = 'Gemini Models'; // Default if no model selected yet
+                 topBarModelNameDisplay.style.display = 'inline';
+            }
+        } else if (viewIdToShow === 'all-chatgpt-models-view') {
+            if (topBarChatTitleDisplay) topBarChatTitleDisplay.style.display = 'none';
+            if (topBarChatGPTSelectorWrapper) topBarChatGPTSelectorWrapper.style.display = 'flex';
+             if (topBarModelNameDisplay && currentSelectedChatGPTModel) {
+                topBarModelNameDisplay.textContent = `ChatGPT: ${currentSelectedChatGPTModel}`;
+                topBarModelNameDisplay.style.display = 'inline';
+            } else if (topBarModelNameDisplay) {
+                topBarModelNameDisplay.textContent = 'ChatGPT Models';
+                topBarModelNameDisplay.style.display = 'inline';
+            }
+        } else if (viewIdToShow === 'claude-all-model-view') {
+            if (topBarChatTitleDisplay) topBarChatTitleDisplay.style.display = 'none';
+            if (topBarClaudeSelectorWrapper) topBarClaudeSelectorWrapper.style.display = 'flex';
+            if (topBarModelNameDisplay && currentSelectedClaudeModel) {
+                topBarModelNameDisplay.textContent = `Claude: ${currentSelectedClaudeModel}`;
+                topBarModelNameDisplay.style.display = 'inline';
+            } else if (topBarModelNameDisplay) {
+                topBarModelNameDisplay.textContent = 'Claude Models';
+                topBarModelNameDisplay.style.display = 'inline';
+            }
         }
 
 
@@ -2341,8 +2385,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- GEMINI ALL MODEL CHAT LOGIC ---
     const geminiAllModelChatView = document.getElementById('gemini-all-model-view');
-    const geminiAllModelHeaderTitle = geminiAllModelChatView ? geminiAllModelChatView.querySelector('.chat-view-header h2') : null; 
-    const geminiModelSelector = document.getElementById('gemini-model-selector');
+    // const geminiAllModelHeaderTitle = geminiAllModelChatView ? geminiAllModelChatView.querySelector('.chat-view-header h2') : null; // No longer in this view's header
+    const geminiModelSelector = document.getElementById('top-bar-gemini-model-selector'); // UPDATED ID
+    const topBarGeminiSelectorWrapper = document.getElementById('top-bar-gemini-selector-wrapper'); // New wrapper
     const geminiAllModelChatMessagesArea = document.getElementById('gemini-all-model-chat-messages-area');
     const geminiAllModelChatInputField = document.getElementById('gemini-all-model-chat-input-field');
     const geminiAllModelChatSendButton = document.getElementById('gemini-all-model-chat-send-button');
@@ -2360,7 +2405,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- All ChatGPT Models Elements ---
     const allChatGPTModelsView = document.getElementById('all-chatgpt-models-view');
-    const allChatGPTModelSelector = document.getElementById('all-chatgpt-model-selector');
+    const allChatGPTModelSelector = document.getElementById('top-bar-all-chatgpt-model-selector'); // UPDATED ID
+    const topBarChatGPTSelectorWrapper = document.getElementById('top-bar-chatgpt-selector-wrapper'); // New wrapper
     const allChatGPTChatMessagesArea = document.getElementById('all-chatgpt-chat-messages-area');
     const allChatGPTChatInputField = document.getElementById('all-chatgpt-chat-input-field');
     const allChatGPTChatSendButton = document.getElementById('all-chatgpt-chat-send-button');
@@ -2375,7 +2421,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentSelectedChatGPTModel = '';
     const CHATGPT_DEFAULT_ROLEPLAY = "You are ChatGPT, a large language model trained by OpenAI.";
     // Updated to use an img tag for the ChatGPT logo
-    const chatGPTAvatarSvg = `<img src="/ChatGPT-Logo.svg" alt="ChatGPT" class="chatgpt-avatar-logo">`;
+    const chatGPTAvatarSvg = `<img src="chatgpt.jpg" alt="ChatGPT" class="chatgpt-avatar-logo">`;
 
 
     function addGeminiAllModelMessageToChat(message, sender, imageUrl = null, isTyping = false, messageId = null) {
@@ -2564,10 +2610,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     // Initial population attempt (might be empty until first API call)
-    // fetchAndPopulateGeminiModels(); // This will be called in showView
+    // fetchAndPopulateGeminiModels(); // This is called in showView
 
     async function fetchAndPopulateGeminiModels() {
-        if (!geminiModelSelector) return;
+        if (!geminiModelSelector) return; // Now refers to top-bar-gemini-model-selector
 
         const cachedModels = localStorage.getItem('supportedGeminiModelsList');
         if (cachedModels) {
@@ -2647,11 +2693,33 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (geminiAllModelChatInputField) {
                  geminiAllModelChatInputField.placeholder = `Ask ${currentSelectedGeminiModel}...`;
             }
+            // Update top bar model name display
+            if (topBarModelNameDisplay && document.getElementById('gemini-all-model-view').classList.contains('active')) {
+                topBarModelNameDisplay.textContent = `Gemini: ${currentSelectedGeminiModel}`;
+                topBarModelNameDisplay.style.display = 'inline';
+            }
         }
     }
 
-    // Note: populateGeminiModelDropdown was already quite good.
-    // The main change is how fetchAndPopulateGeminiModels calls it and setInitialGeminiModelSelection.
+    if (geminiModelSelector) { // Ensure this listener is correctly attached to the new top-bar selector
+        geminiModelSelector.addEventListener('change', () => {
+            currentSelectedGeminiModel = geminiModelSelector.value;
+            if (currentSelectedGeminiModel) {
+                localStorage.setItem('lastSelectedGeminiAllModel', currentSelectedGeminiModel);
+                loadGeminiAllModelChatHistory(currentSelectedGeminiModel);
+                if(geminiAllModelChatInputField) geminiAllModelChatInputField.placeholder = `Ask ${currentSelectedGeminiModel}...`;
+                if (topBarModelNameDisplay && document.getElementById('gemini-all-model-view').classList.contains('active')) {
+                    topBarModelNameDisplay.textContent = `Gemini: ${currentSelectedGeminiModel}`;
+                }
+            } else {
+                if(geminiAllModelChatMessagesArea) geminiAllModelChatMessagesArea.innerHTML = ""; 
+                if(geminiAllModelChatInputField) geminiAllModelChatInputField.placeholder = translations.gemini_all_model_placeholder || "Ask Gemini (any model)...";
+                if (topBarModelNameDisplay && document.getElementById('gemini-all-model-view').classList.contains('active')) {
+                    topBarModelNameDisplay.textContent = 'Gemini Models';
+                }
+            }
+        });
+    }
 
     // Enhanced text formatting (initial version, can be expanded)
     function formatTextContentEnhanced(text) {
@@ -3020,19 +3088,30 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (allChatGPTChatInputField) {
                  allChatGPTChatInputField.placeholder = `Ask ${currentSelectedChatGPTModel}...`;
             }
+            // Update top bar model name display
+            if (topBarModelNameDisplay && document.getElementById('all-chatgpt-models-view').classList.contains('active')) {
+                topBarModelNameDisplay.textContent = `ChatGPT: ${currentSelectedChatGPTModel}`;
+                topBarModelNameDisplay.style.display = 'inline';
+            }
         }
     }
 
-    if (allChatGPTModelSelector) {
+    if (allChatGPTModelSelector) { // Attached to top-bar-all-chatgpt-model-selector
         allChatGPTModelSelector.addEventListener('change', () => {
             currentSelectedChatGPTModel = allChatGPTModelSelector.value;
             if (currentSelectedChatGPTModel) {
                 localStorage.setItem('lastSelectedChatGPTAllModel', currentSelectedChatGPTModel);
                 loadChatGPTAllModelChatHistory(currentSelectedChatGPTModel);
                 if(allChatGPTChatInputField) allChatGPTChatInputField.placeholder = `Ask ${currentSelectedChatGPTModel}...`;
+                if (topBarModelNameDisplay && document.getElementById('all-chatgpt-models-view').classList.contains('active')) {
+                    topBarModelNameDisplay.textContent = `ChatGPT: ${currentSelectedChatGPTModel}`;
+                }
             } else {
                 if(allChatGPTChatMessagesArea) allChatGPTChatMessagesArea.innerHTML = "";
                 if(allChatGPTChatInputField) allChatGPTChatInputField.placeholder = translations.all_chatgpt_placeholder || "Ask ChatGPT (any model)...";
+                if (topBarModelNameDisplay && document.getElementById('all-chatgpt-models-view').classList.contains('active')) {
+                    topBarModelNameDisplay.textContent = 'ChatGPT Models';
+                }
             }
         });
     }
@@ -3136,8 +3215,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- CLAUDE ALL MODEL CHAT LOGIC ---
     const claudeAllModelChatView = document.getElementById('claude-all-model-view');
-    // const claudeAllModelHeaderTitle = claudeAllModelChatView ? claudeAllModelChatView.querySelector('.chat-view-header h2') : null; // Not strictly needed for now
-    const claudeModelSelector = document.getElementById('claude-model-selector');
+    const claudeModelSelector = document.getElementById('top-bar-claude-model-selector'); // UPDATED ID
+    const topBarClaudeSelectorWrapper = document.getElementById('top-bar-claude-selector-wrapper'); // New wrapper
+    const topBarModelNameDisplay = document.getElementById('top-bar-model-name-display'); // New top bar model name display
     const claudeAllModelChatMessagesArea = document.getElementById('claude-all-model-chat-messages-area');
     const claudeAllModelChatInputField = document.getElementById('claude-all-model-chat-input-field');
     const claudeAllModelChatSendButton = document.getElementById('claude-all-model-chat-send-button');
@@ -3152,7 +3232,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentSelectedClaudeModel = '';
     const CLAUDE_ALL_MODEL_DEFAULT_ROLEPLAY = "You are a helpful and versatile AI assistant from Anthropic, known as Claude.";
     // Using an img tag for the Claude AI logo
-    const claudeOverallAvatarSvg = `<img src="/Claude AI logo.svg" alt="Claude AI" class="claude-avatar-logo">`;
+    const claudeOverallAvatarSvg = `<img src="claude.jpg" alt="Claude AI" class="claude-avatar-logo">`;
 
 
     function addClaudeAllModelMessageToChat(message, sender, imageUrl = null, isTyping = false, messageId = null) {
@@ -3337,19 +3417,30 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (claudeAllModelChatInputField) {
                  claudeAllModelChatInputField.placeholder = `Ask ${currentSelectedClaudeModel}...`;
             }
+            // Update top bar model name display
+            if (topBarModelNameDisplay && document.getElementById('claude-all-model-view').classList.contains('active')) {
+                topBarModelNameDisplay.textContent = `Claude: ${currentSelectedClaudeModel}`;
+                topBarModelNameDisplay.style.display = 'inline';
+            }
         }
     }
 
-    if (claudeModelSelector) {
+    if (claudeModelSelector) { // Attached to top-bar-claude-model-selector
         claudeModelSelector.addEventListener('change', () => {
             currentSelectedClaudeModel = claudeModelSelector.value;
             if (currentSelectedClaudeModel) {
                 localStorage.setItem('lastSelectedClaudeAllModel', currentSelectedClaudeModel);
                 loadClaudeAllModelChatHistory(currentSelectedClaudeModel);
                 if(claudeAllModelChatInputField) claudeAllModelChatInputField.placeholder = `Ask ${currentSelectedClaudeModel}...`;
+                if (topBarModelNameDisplay && document.getElementById('claude-all-model-view').classList.contains('active')) {
+                    topBarModelNameDisplay.textContent = `Claude: ${currentSelectedClaudeModel}`;
+                }
             } else {
                 if(claudeAllModelChatMessagesArea) claudeAllModelChatMessagesArea.innerHTML = "";
                 if(claudeAllModelChatInputField) claudeAllModelChatInputField.placeholder = translations.claude_all_model_placeholder || "Ask Claude (any model)...";
+                if (topBarModelNameDisplay && document.getElementById('claude-all-model-view').classList.contains('active')) {
+                    topBarModelNameDisplay.textContent = 'Claude Models';
+                }
             }
         });
     }

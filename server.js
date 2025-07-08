@@ -5,58 +5,66 @@ const { MongoClient, ObjectId } = require('mongodb');
 const multer = require('multer'); // For handling file uploads
 const fs = require('fs'); // For file system operations like deleting files
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+// Configure Multer for disk storage
 
-// --- START Constants, Paths, Multer, API Keys, Middleware ---
-
-// Upload Path Constants
+// Original UPLOAD_PATH for existing Gemini Vision and GPT-4o Vision
 const LEGACY_GEMINI_UPLOAD_PATH = 'public/uploads/gemini_temp/';
+// New UPLOAD_PATH for the "Gemini All Model" feature
 const GEMINI_ALL_MODEL_TEMP_UPLOAD_PATH = 'public/uploads/gemini_all_model_temp/';
-const CLAUDE_ALL_MODEL_TEMP_UPLOAD_PATH = 'public/uploads/claude_all_model_temp/';
-const CHATGPT_ALL_MODEL_TEMP_UPLOAD_PATH = 'public/uploads/chatgpt_temp/';
 
 // Ensure upload directories exist
-[
-    LEGACY_GEMINI_UPLOAD_PATH, 
-    GEMINI_ALL_MODEL_TEMP_UPLOAD_PATH, 
-    CLAUDE_ALL_MODEL_TEMP_UPLOAD_PATH, 
-    CHATGPT_ALL_MODEL_TEMP_UPLOAD_PATH
-].forEach(dir => {
+[LEGACY_GEMINI_UPLOAD_PATH, GEMINI_ALL_MODEL_TEMP_UPLOAD_PATH].forEach(dir => {
     if (!fs.existsSync(dir)){
         fs.mkdirSync(dir, { recursive: true });
     }
 });
 
-// Multer Storage Configurations & Instances
+// Storage configuration for legacy Gemini Vision and GPT-4o Vision
 const legacyGeminiStorage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, LEGACY_GEMINI_UPLOAD_PATH),
-    filename: (req, file, cb) => cb(null, `${file.fieldname}-${Date.now()}-${Math.round(Math.random() * 1E9)}${path.extname(file.originalname)}`)
-});
-const uploadLegacyVision = multer({ storage: legacyGeminiStorage, limits: { fileSize: 10 * 1024 * 1024 } });
-
-const geminiAllModelStorage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, GEMINI_ALL_MODEL_TEMP_UPLOAD_PATH),
-    filename: (req, file, cb) => cb(null, `${file.fieldname}-${Date.now()}-${Math.round(Math.random() * 1E9)}${path.extname(file.originalname)}`)
-});
-const uploadGeminiAllModel = multer({ storage: geminiAllModelStorage, limits: { fileSize: 20 * 1024 * 1024 } });
-
-const claudeAllModelStorage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, CLAUDE_ALL_MODEL_TEMP_UPLOAD_PATH),
-    filename: (req, file, cb) => cb(null, `${file.fieldname}-${Date.now()}-${Math.round(Math.random() * 1E9)}${path.extname(file.originalname)}`)
-});
-const uploadClaudeAllModel = multer({ storage: claudeAllModelStorage, limits: { fileSize: 20 * 1024 * 1024 } });
-
-const chatGPTAllModelStorage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, CHATGPT_ALL_MODEL_TEMP_UPLOAD_PATH);
+        cb(null, LEGACY_GEMINI_UPLOAD_PATH);
     },
     filename: function (req, file, cb) {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, "chatgptfile-" + uniqueSuffix + path.extname(file.originalname));
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
     }
 });
-const uploadChatGPTAllModel = multer({ storage: chatGPTAllModelStorage, limits: { fileSize: 20 * 1024 * 1024 } });
+
+// Multer instance for legacy uploads (original Gemini Vision, GPT-4o Vision)
+const uploadLegacyVision = multer({
+    storage: legacyGeminiStorage,
+    limits: { fileSize: 10 * 1024 * 1024 } // Original limit 10MB
+});
+
+// Storage configuration for the new "Gemini All Model" feature
+const geminiAllModelStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, GEMINI_ALL_MODEL_TEMP_UPLOAD_PATH);
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+// Multer instance for "Gemini All Model" uploads
+const uploadGeminiAllModel = multer({
+    storage: geminiAllModelStorage,
+    limits: { fileSize: 20 * 1024 * 1024 } // Limit file size to 20MB for this feature
+});
+
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Middleware
+// Serve static files from the upload directories
+app.use('/uploads/gemini_temp', express.static(path.join(__dirname, LEGACY_GEMINI_UPLOAD_PATH)));
+app.use('/uploads/gemini_all_model_temp', express.static(path.join(__dirname, GEMINI_ALL_MODEL_TEMP_UPLOAD_PATH)));
+// Serve main public files
+app.use(express.static(path.join(__dirname, 'public')));
+// JSON parsing middleware
+app.use(express.json());
 
 
 // API Keys
@@ -67,37 +75,9 @@ const GEMINI_API_URL = 'https://kaiz-apis.gleeze.com/api/gemini-vision';
 const GEMINI_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
 const GPT4O_LATEST_API_URL = 'https://kaiz-apis.gleeze.com/api/gpt4o-latest';
 const GPT4O_LATEST_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
+
+// New AI Model API Keys
 const BLACKBOX_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
-const DEEPSEEK_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
-const CLAUDE_HAIKU_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
-const HAJI_MIX_GEMINI_API_KEY = 'e30864f5c326f6e3d70b032000ef5e2fa610cb5d9bc5759711d33036e303cef4';
-const HAJI_MIX_CLAUDE_API_KEY = 'e30864f5c326f6e3d70b032000ef5e2fa610cb5d9bc5759711d33036e303cef4';
-const CHATGPT_HAJI_MIX_API_KEY = 'e30864f5c326f6e3d70b032000ef5e2fa610cb5d9bc5759711d33036e303cef4';
-const TEMPMAIL_API_KEY_CONST = '793fcf57-8820-40ea-b34e-7addd227e2e6';
-
-// TMDB API Configuration
-const TMDB_API_KEY = '973515c7684f56d1472bba67b13d676b';
-const TMDB_ACCESS_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI5NzM1MTVjNzY4NGY1NmQxNDcyYmJhNjdiMTNkNjc2YiIsIm5iZiI6MTc1MDc1NDgwNy41OTksInN1YiI6IjY4NWE2NWY3OWM3M2UyMWMzYWU2NGJmNSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.qofUiAxiL4ed8ONCxljkTqbsddbvFyVB4_Jwp_HyDnM';
-const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
-
-// Admin Code
-const ADMIN_VERIFICATION_CODE = '2201018280';
-
-
-// Middleware
-// Serve static files from the upload directories
-app.use('/uploads/gemini_temp', express.static(path.join(__dirname, LEGACY_GEMINI_UPLOAD_PATH)));
-app.use('/uploads/gemini_all_model_temp', express.static(path.join(__dirname, GEMINI_ALL_MODEL_TEMP_UPLOAD_PATH)));
-app.use('/uploads/claude_all_model_temp', express.static(path.join(__dirname, CLAUDE_ALL_MODEL_TEMP_UPLOAD_PATH)));
-app.use('/uploads/chatgpt_temp', express.static(path.join(__dirname, CHATGPT_ALL_MODEL_TEMP_UPLOAD_PATH)));
-app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.json());
-
-// --- END Constants, Paths, Multer, API Keys, Middleware ---
-
-
-// MongoDB Connection
-const mongoUri = "mongodb+srv://rtmtafita:tafitaniaina1206@rtmchat.pzebpqh.mongodb.net/?retryWrites=true&w=majority&appName=rtmchat";
 const DEEPSEEK_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
 const CLAUDE_HAIKU_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
 const HAJI_MIX_GEMINI_API_KEY = 'e30864f5c326f6e3d70b032000ef5e2fa610cb5d9bc5759711d33036e303cef4';
@@ -257,9 +237,7 @@ app.post('/api/gemini-chat', uploadLegacyVision.single('imageFile'), async (req,
     try {
         const apiResponse = await fetch(fullApiUrl);
         const responseText = await apiResponse.text();
-        if (tempImagePath && fs.existsSync(tempImagePath)) {
-            fs.unlink(tempImagePath, (err) => { if (err) console.error("Error deleting temp image for Gemini Vision:", err); });
-        }
+        if (tempImagePath) fs.unlink(tempImagePath, (err) => { if (err) console.error("Error deleting temp image for Gemini Vision:", err); });
         if (!apiResponse.ok) {
             let errorJson = { error: `External Gemini API Error: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
             try { errorJson = JSON.parse(responseText); if(!errorJson.error && !errorJson.message) { errorJson.error = `External Gemini API Error: ${apiResponse.status} ${apiResponse.statusText}`; } } catch (e) { /* Not JSON */ }
@@ -272,9 +250,7 @@ app.post('/api/gemini-chat', uploadLegacyVision.single('imageFile'), async (req,
         else return res.status(500).json({ error: 'Unexpected response structure from Gemini API.', details: data });
     } catch (error) {
         console.error('Server error while calling Gemini API:', error);
-        if (tempImagePath && fs.existsSync(tempImagePath)) { // Added safety check here
-            fs.unlink(tempImagePath, (err) => { if (err) console.error("Error deleting temp image for Gemini Vision on error:", err); });
-        }
+        if (tempImagePath && fs.existsSync(tempImagePath)) fs.unlink(tempImagePath, (err) => { if (err) console.error("Error deleting temp image for Gemini Vision on error:", err); });
         return res.status(500).json({ error: 'Server error while processing Gemini chat request.' });
     }
 });
@@ -316,9 +292,7 @@ app.post('/api/gpt4o-chat', uploadLegacyVision.single('imageFile'), async (req, 
         else return res.status(500).json({ error: 'Unexpected response structure from GPT-4o API.', details: data });
     } catch (error) {
         console.error('Server error while calling GPT-4o API:', error);
-        if (tempImagePath && fs.existsSync(tempImagePath)) { // Added safety check here
-            fs.unlink(tempImagePath, (err) => { if (err) console.error("Error deleting temp image for GPT-4o Vision on error:", err); });
-        }
+        if (tempImagePath && fs.existsSync(tempImagePath)) fs.unlink(tempImagePath, (err) => { if (err) console.error("Error deleting temp image for GPT-4o Vision on error:", err); });
         return res.status(500).json({ error: 'Server error while processing GPT-4o chat request.' });
     }
 });
@@ -603,9 +577,7 @@ app.post('/api/gemini-all-model', uploadGeminiAllModel.single('file'), async (re
     try {
         const apiResponse = await fetch(hajiApiUrl);
         const responseText = await apiResponse.text();
-        if (tempLocalPath && fs.existsSync(tempLocalPath)) {
-            fs.unlink(tempLocalPath, (err) => { if (err) console.error("Error deleting temp file for Gemini All Model:", err); });
-        }
+        if (tempLocalPath) fs.unlink(tempLocalPath, (err) => { if (err) console.error("Error deleting temp file for Gemini All Model:", err); });
 
         if (!apiResponse.ok) {
             let eJson={error:`Haji Mix Gemini API Error: ${apiResponse.status} ${apiResponse.statusText}`,details:responseText};
@@ -649,9 +621,7 @@ app.post('/api/gemini-all-model', uploadGeminiAllModel.single('file'), async (re
 
     } catch (error) {
         console.error('Server error (Haji Mix Gemini API):', error);
-        if (tempLocalPath && fs.existsSync(tempLocalPath)) { // Safety check
-            fs.unlink(tempLocalPath, (err) => { if (err) console.error("Error deleting temp file (Gemini All Model) on error:", err); });
-        }
+        if (tempLocalPath && fs.existsSync(tempLocalPath)) fs.unlink(tempLocalPath, (err) => { if (err) console.error("Error deleting temp file (Gemini All Model) on error:", err); });
         return res.status(500).json({ error: 'Server error processing Haji Mix Gemini API request.' });
     }
 });
@@ -716,9 +686,7 @@ app.post('/api/all-chatgpt', uploadChatGPTAllModel.single('file'), async (req, r
     try {
         const apiResponse = await fetch(hajiOpenAiApiUrl);
         const responseText = await apiResponse.text();
-        if (tempLocalPath && fs.existsSync(tempLocalPath)) {
-            fs.unlink(tempLocalPath, (err) => { if (err) console.error("Error deleting temp file for All ChatGPT Models:", err); });
-        }
+        if (tempLocalPath) fs.unlink(tempLocalPath, (err) => { if (err) console.error("Error deleting temp file for All ChatGPT Models:", err); });
 
         if (!apiResponse.ok) {
             let eJson = { error: `Haji Mix OpenAI API Error: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };

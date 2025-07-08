@@ -209,7 +209,7 @@ const DEEPSEEK_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
 const CLAUDE_HAIKU_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
 const HAJI_MIX_GEMINI_API_KEY = 'e30864f5c326f6e3d70b032000ef5e2fa610cb5d9bc5759711d33036e303cef4';
 const HAJI_MIX_CLAUDE_API_KEY = 'e30864f5c326f6e3d70b032000ef5e2fa610cb5d9bc5759711d33036e303cef4'; // As per user instruction
-// CHATGPT_HAJI_MIX_API_KEY is defined later, removing this duplicate.
+const CHATGPT_HAJI_MIX_API_KEY = 'e30864f5c326f6e3d70b032000ef5e2fa610cb5d9bc5759711d33036e303cef4'; // Consolidated declaration
 
 // TMDB API Configuration
 const TMDB_API_KEY = '973515c7684f56d1472bba67b13d676b';
@@ -755,7 +755,7 @@ app.post('/api/gemini-all-model', uploadGeminiAllModel.single('file'), async (re
 });
 
 // New Route for All ChatGPT Models
-const CHATGPT_HAJI_MIX_API_KEY = 'e30864f5c326f6e3d70b032000ef5e2fa610cb5d9bc5759711d33036e303cef4'; 
+// const CHATGPT_HAJI_MIX_API_KEY = 'e30864f5c326f6e3d70b032000ef5e2fa610cb5d9bc5759711d33036e303cef4'; // Moved to top
 const CHATGPT_ALL_MODEL_TEMP_UPLOAD_PATH = 'public/uploads/chatgpt_temp/';
 
 if (!fs.existsSync(CHATGPT_ALL_MODEL_TEMP_UPLOAD_PATH)){

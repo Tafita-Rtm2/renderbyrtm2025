@@ -84,16 +84,15 @@
             </li>
             <li>
                 <a href="#" data-view="all-chatgpt-models-view">
-                    <!-- Placeholder for ChatGPT/OpenAI Icon -->
-                    <svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 15c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm0-8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z"></path></svg> 
+                    <img src="/ChatGPT-Logo.svg" alt="All ChatGPT Models" class="icon icon-side-menu-item chatgpt-logo-icon">
                     <span data-translate="all_chatgpt_models_view_title">All ChatGPT Models</span>
                     <span class="menu-item-description" data-translate="all_chatgpt_models_description">Chat with various ChatGPT models.</span>
                 </a>
             </li>
+            <!-- Corrected duplicate claude-all-model-view entry to point to the correct view -->
             <li>
                 <a href="#" data-view="claude-all-model-view">
-                    <!-- Placeholder for Claude Icon - using a generic AI icon for now -->
-                    <svg viewBox="0 0 24 24" class="icon icon-side-menu-item"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 15c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm0-8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z"></path></svg>
+                    <img src="/Claude AI logo.svg" alt="Claude All Models" class="icon icon-side-menu-item claude-logo-icon">
                     <span data-translate="claude_all_model_view_title">Claude All Models</span>
                     <span class="menu-item-description" data-translate="claude_all_model_description">Chat with Claude models, with file upload.</span>
                 </a>
@@ -626,8 +625,7 @@
         <!-- All ChatGPT Models View -->
         <div id="all-chatgpt-models-view" class="view" style="display: none;">
             <div class="chat-view-header">
-                 <!-- Placeholder for OpenAI/ChatGPT icon -->
-                <svg viewBox="0 0 24 24" class="chat-header-logo icon"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 15c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm0-8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z"></path></svg>
+                <img src="/ChatGPT-Logo.svg" alt="ChatGPT Logo" class="chat-header-logo chatgpt-logo-icon">
                 <h2 data-translate="all_chatgpt_models_chat_title">All ChatGPT Models</h2>
                 <div class="model-selector-container">
                     <label for="all-chatgpt-model-selector" class="sr-only" data-translate="all_chatgpt_model_selector_label">Select Model:</label>
@@ -656,8 +654,7 @@
         <!-- Claude All Model View -->
         <div id="claude-all-model-view" class="view" style="display: none;">
             <div class="chat-view-header">
-                <!-- Placeholder for Claude Icon -->
-                <svg viewBox="0 0 24 24" class="chat-header-logo icon"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1.97 14.97l-3.06-3.06c-.4-.4-.4-1.04 0-1.44s1.04-.4 1.44 0l2.34 2.34 5.37-7.16c.33-.44.96-.53 1.4-.2.44.33.53.96.2 1.4l-6.08 8.1c-.37.49-1.07.57-1.54.19l-.07-.07z"></path></svg>
+                <img src="/Claude AI logo.svg" alt="Claude AI Logo" class="chat-header-logo claude-logo-icon">
                 <h2 data-translate="claude_all_model_chat_title">Claude All Models</h2>
                 <div class="model-selector-container">
                     <label for="claude-model-selector" class="sr-only" data-translate="claude_model_selector_label">Select Model:</label>

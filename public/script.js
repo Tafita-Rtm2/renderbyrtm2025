@@ -2374,8 +2374,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let supportedChatGPTModels = [];
     let currentSelectedChatGPTModel = '';
     const CHATGPT_DEFAULT_ROLEPLAY = "You are ChatGPT, a large language model trained by OpenAI.";
-    // Placeholder SVG for ChatGPT AI avatar - can be replaced with an <img> if an icon is available
-    const chatGPTAvatarSvg = `<svg viewBox="0 0 24 24" class="icon icon-chat-ai"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 15c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm0-8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z"></path></svg>`;
+    // Updated to use an img tag for the ChatGPT logo
+    const chatGPTAvatarSvg = `<img src="/ChatGPT-Logo.svg" alt="ChatGPT" class="chatgpt-avatar-logo">`;
 
 
     function addGeminiAllModelMessageToChat(message, sender, imageUrl = null, isTyping = false, messageId = null) {
@@ -3151,8 +3151,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let supportedClaudeModels = []; // Will be populated from API
     let currentSelectedClaudeModel = '';
     const CLAUDE_ALL_MODEL_DEFAULT_ROLEPLAY = "You are a helpful and versatile AI assistant from Anthropic, known as Claude.";
-    // Using a specific SVG for Claude avatar
-    const claudeOverallAvatarSvg = `<svg viewBox="0 0 24 24" class="icon icon-chat-ai claude-avatar-logo"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1.97 14.97l-3.06-3.06c-.4-.4-.4-1.04 0-1.44s1.04-.4 1.44 0l2.34 2.34 5.37-7.16c.33-.44.96-.53 1.4-.2.44.33.53.96.2 1.4l-6.08 8.1c-.37.49-1.07.57-1.54.19l-.07-.07z"></path></svg>`;
+    // Using an img tag for the Claude AI logo
+    const claudeOverallAvatarSvg = `<img src="/Claude AI logo.svg" alt="Claude AI" class="claude-avatar-logo">`;
 
 
     function addClaudeAllModelMessageToChat(message, sender, imageUrl = null, isTyping = false, messageId = null) {
@@ -3438,12 +3438,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(errorData.error || `API request failed: ${response.status}`);
             }
             const aiResponse = await response.json(); 
-
-            // --- Start of Added Diagnostic Logging ---
-            console.log('Claude All Model - Raw aiResponse from backend:', JSON.stringify(aiResponse, null, 2));
-            console.log('Claude All Model - Checking aiResponse.response:', aiResponse ? aiResponse.response : 'aiResponse is undefined');
-            console.log('Claude All Model - Checking aiResponse.error:', aiResponse ? aiResponse.error : 'aiResponse is undefined');
-            // --- End of Added Diagnostic Logging ---
 
             if (aiResponse.supported_models && Array.isArray(aiResponse.supported_models) && 
                 JSON.stringify(supportedClaudeModels) !== JSON.stringify(aiResponse.supported_models)) {

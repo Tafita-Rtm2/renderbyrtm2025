@@ -3085,6 +3085,219 @@ body.dark-mode #all-chatgpt-model-selector {
 }
 /* --- END OF ALL CHATGPT MODELS VIEW STYLES --- */
 
+/* --- CLAUDE ALL MODEL VIEW STYLES --- */
+#claude-all-model-view { /* Basic structure mirroring other "All Model" views */
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - var(--top-bar-height) - 30px);
+    padding: 0;
+    box-sizing: border-box;
+    background-color: var(--secondary-bg);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+#claude-all-model-view .chat-view-header {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    background-color: var(--surface-color);
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+    gap: 15px;
+}
+
+#claude-all-model-view .chat-header-logo.claude-logo-icon, /* For header */
+.claude-avatar-logo { /* For chat messages */
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+    border-radius: 4px; /* Slight rounding for logos if they are square-ish */
+}
+/* Ensure side menu Claude icon is also styled if it uses claude-logo-icon */
+#side-menu li a .claude-logo-icon.icon-side-menu-item {
+    width: 20px; /* Standard side menu icon size */
+    height: 20px;
+    /* object-fit: contain; /* already applied */
+}
+
+
+#claude-all-model-view .chat-view-header h2 {
+    margin: 0;
+    font-size: 1.3em;
+    color: var(--accent-color);
+    flex-grow: 1;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+#claude-all-model-view .model-selector-container {
+    margin-left: auto;
+    position: relative;
+}
+
+#claude-model-selector { /* Mirroring other model selectors */
+    min-width: 220px;
+    padding: 10px 15px;
+    padding-right: 40px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23a0a0a0' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 18px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background-color: var(--primary-bg);
+    color: var(--text-color);
+    font-family: var(--font-primary);
+    font-size: 0.95em;
+    outline: none;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+body.dark-mode #claude-model-selector {
+     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23e0e0e0' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+}
+#claude-model-selector:hover {
+    border-color: var(--primary-accent-color);
+}
+#claude-model-selector:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px var(--accent-color);
+}
+
+#claude-all-model-chat-messages-area {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 20px;
+    background-color: var(--primary-bg);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+#claude-all-model-chat-messages-area::-webkit-scrollbar { width: 8px; }
+#claude-all-model-chat-messages-area::-webkit-scrollbar-track { background: var(--primary-bg); }
+#claude-all-model-chat-messages-area::-webkit-scrollbar-thumb { background-color: var(--accent-color); border-radius: 4px; }
+
+/* User message bubble for Claude All Model - using a distinct color */
+#claude-all-model-chat-messages-area .chat-message-wrapper.user .chat-bubble {
+    background-color: #b388ff !important; /* A pleasant lavender/purple for Claude user messages */
+    color: #ffffff !important;
+    border-bottom-right-radius: 6px !important;
+    border-bottom-left-radius: 22px !important;
+}
+#claude-all-model-chat-messages-area .chat-message-wrapper.user .chat-bubble a,
+#claude-all-model-chat-messages-area .chat-message-wrapper.user .chat-bubble strong {
+    color: #f5f0ff !important; /* Very light lavender for links/strong text */
+}
+
+/* AI (Claude All Model) message bubble */
+#claude-all-model-chat-messages-area .chat-message-wrapper.ai .chat-bubble {
+    background-color: var(--surface-color) !important;
+    color: var(--text-color) !important;
+    border-bottom-left-radius: 6px !important;
+    border-bottom-right-radius: 22px !important;
+}
+/* Avatar for Claude in chat messages is handled by .claude-avatar-logo */
+
+#claude-all-model-chat-input-bar {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    background-color: var(--primary-bg);
+    border-top: 1px solid var(--surface-color);
+    min-height: 70px;
+    flex-shrink: 0;
+    gap: 10px;
+}
+
+#claude-all-model-attach-file-button {
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#claude-all-model-attach-file-button .icon { fill: var(--accent-color); width: 24px; height: 24px; }
+#claude-all-model-attach-file-button:hover { background-color: var(--accent-color); border-color: var(--accent-color); }
+#claude-all-model-attach-file-button:hover .icon { fill: var(--primary-bg); }
+
+#claude-all-model-file-preview-container { /* Reusing Gemini's preview style structure */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: 5px;
+    padding: 8px 10px;
+    background-color: var(--surface-color);
+    border: 1px dashed var(--border-color);
+    border-radius: 6px;
+    font-size: 0.85em;
+    max-width: 200px;
+    min-height: 40px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+/* .file-preview-name and .file-preview-image are generic and should apply */
+
+#claude-all-model-chat-input-field {
+    flex-grow: 1;
+    padding: 14px 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 25px;
+    background-color: var(--surface-color);
+    color: var(--text-color);
+    font-family: var(--font-primary);
+    outline: none;
+    min-height: 48px;
+    height: 48px;
+    box-sizing: border-box;
+    font-size: 1em;
+}
+#claude-all-model-chat-input-field:focus {
+    border-color: var(--action-color);
+    box-shadow: 0 0 8px var(--action-color);
+}
+
+#claude-all-model-chat-send-button {
+    background-color: #d66800; /* Claude-associated orange/brownish color for send button */
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: none;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#claude-all-model-chat-send-button .icon {
+    fill: var(--primary-bg);
+    width: 26px;
+    height: 26px;
+}
+#claude-all-model-chat-send-button:hover {
+    background-color: #b35700; /* Darker shade for hover */
+}
+#claude-all-model-chat-send-button:disabled {
+    background-color: var(--text-muted-color) !important;
+    cursor: not-allowed !important;
+}
+
+/* Ensure ChatGPT logo icon specific class for side menu and header is targetable if needed */
+.chatgpt-logo-icon {
+    /* Base styles are from .icon or .chat-header-logo */
+    /* If specific adjustments for ChatGPT logo SVG are needed, add here */
+    /* e.g., if it has an odd aspect ratio or needs padding */
+}
+
+/* --- END OF CLAUDE ALL MODEL VIEW STYLES --- */
 
 /* --- DOWNLOAD FORMAT MODAL STYLES --- */
 /* .modal-overlay and .modal-content are already defined and styled for the trailer modal.

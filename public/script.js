@@ -143,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const chatViewIds = [
             'ai-chat-view', 'gemini-chat-view', 'gpt4o-chat-view',
             'blackbox-ai-view', 'deepseek-ai-view', 'claude-haiku-view',
-            'gemini-all-model-view', 'all-chatgpt-models-view' // Added new view
+            'gemini-all-model-view', 'all-chatgpt-models-view', 'claude-all-model-view' // Added new Claude view
         ];
         const isChatView = chatViewIds.includes(viewIdToShow);
 
@@ -279,7 +279,17 @@ document.addEventListener('DOMContentLoaded', () => {
             if (allChatGPTViewEl && allChatGPTViewEl.style.display !== 'flex') {
                  allChatGPTViewEl.style.display = 'flex';
             }
+        } else if (viewIdToShow === 'claude-all-model-view') {
+            console.log('[CLAUDE ALL MODELS DIAGNOSTIC] showView called for claude-all-model-view.');
+            if (typeof fetchAndPopulateClaudeModels === "function") { fetchAndPopulateClaudeModels(); }
+            const claudeAllModelInputBar = document.getElementById('claude-all-model-chat-input-bar');
+            if (claudeAllModelInputBar) claudeAllModelInputBar.style.display = 'flex';
+            const claudeAllModelViewEl = document.getElementById('claude-all-model-view');
+            if (claudeAllModelViewEl && claudeAllModelViewEl.style.display !== 'flex') {
+                 claudeAllModelViewEl.style.display = 'flex';
+            }
         }
+
 
         if(typeof trackActivity === 'function') trackActivity('view_visit', { view: viewIdToShow });
     };
@@ -3122,6 +3132,352 @@ document.addEventListener('DOMContentLoaded', () => {
     // Note: File attachment logic for allChatGPTAttachFileButton is intentionally omitted for now.
     // --- END OF ALL CHATGPT MODELS CHAT LOGIC ---
 
+    // --- CLAUDE ALL MODEL CHAT LOGIC ---
+    const claudeAllModelChatView = document.getElementById('claude-all-model-view');
+    // const claudeAllModelHeaderTitle = claudeAllModelChatView ? claudeAllModelChatView.querySelector('.chat-view-header h2') : null; // Not strictly needed for now
+    const claudeModelSelector = document.getElementById('claude-model-selector');
+    const claudeAllModelChatMessagesArea = document.getElementById('claude-all-model-chat-messages-area');
+    const claudeAllModelChatInputField = document.getElementById('claude-all-model-chat-input-field');
+    const claudeAllModelChatSendButton = document.getElementById('claude-all-model-chat-send-button');
+    const claudeAllModelAttachFileButton = document.getElementById('claude-all-model-attach-file-button');
+    const claudeAllModelFileUpload = document.getElementById('claude-all-model-file-upload');
+    const claudeAllModelFilePreviewContainer = document.getElementById('claude-all-model-file-preview-container');
+
+    const claudeAllModelHistoryKeyPrefix = 'claudeAllModelHistory_';
+    let claudeAllModelTypingIndicator = null;
+    let currentClaudeAllModelFile = null;
+    let supportedClaudeModels = []; // Will be populated from API
+    let currentSelectedClaudeModel = '';
+    const CLAUDE_ALL_MODEL_DEFAULT_ROLEPLAY = "You are a helpful and versatile AI assistant from Anthropic, known as Claude.";
+    // Using a generic SVG for Claude avatar, can be replaced with an <img> if a specific logo is available
+    const claudeOverallAvatarSvg = `<svg viewBox="0 0 24 24" class="icon icon-chat-ai"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1.97 14.97l-3.06-3.06c-.4-.4-.4-1.04 0-1.44s1.04-.4 1.44 0l2.34 2.34 5.37-7.16c.33-.44.96-.53 1.4-.2.44.33.53.96.2 1.4l-6.08 8.1c-.37.49-1.07.57-1.54.19l-.07-.07z"></path></svg>`;
+
+
+    function addClaudeAllModelMessageToChat(message, sender, imageUrl = null, isTyping = false, messageId = null) {
+        if (!claudeAllModelChatMessagesArea) return;
+
+        if (claudeAllModelTypingIndicator && claudeAllModelTypingIndicator.parentNode) {
+            claudeAllModelTypingIndicator.remove();
+            claudeAllModelTypingIndicator = null;
+        }
+
+        const messageWrapper = document.createElement('div');
+        messageWrapper.classList.add('chat-message-wrapper', sender === 'user' ? 'user' : 'ai');
+        if (messageId) messageWrapper.dataset.messageId = messageId;
+
+        const avatarContainer = document.createElement('div');
+        avatarContainer.classList.add('chat-avatar-container');
+        avatarContainer.innerHTML = sender === 'user' ? userAvatarSvg : claudeOverallAvatarSvg;
+
+        const messageBubble = document.createElement('div');
+        messageBubble.classList.add('chat-bubble');
+
+        if (isTyping) {
+            messageBubble.innerHTML = typingIndicatorHTML;
+            messageWrapper.id = 'claude-all-model-typing-indicator';
+            claudeAllModelTypingIndicator = messageWrapper;
+        } else {
+            messageBubble.innerHTML = formatTextContentEnhanced(message || "");
+            if (imageUrl) {
+                 messageBubble.innerHTML += `<br><img src="${escapeHTML(imageUrl)}" alt="Chat Image" style="max-width: 100%; border-radius: 8px; margin-top: 8px;">`;
+            }
+            // Add copy and download controls for AI messages
+            if (sender === 'ai') {
+                const controlsDiv = document.createElement('div');
+                controlsDiv.className = 'message-controls';
+
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'icon-button message-copy-btn';
+                copyBtn.title = translations.copy_button_title || "Copy";
+                copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
+                copyBtn.addEventListener('click', () => {
+                    const textToCopy = messageBubble.textContent || "";
+                    navigator.clipboard.writeText(textToCopy).then(() => {
+                        copyBtn.innerHTML = `<svg viewBox="0 0 24 24" class="icon"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>`;
+                        setTimeout(() => {
+                             copyBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>';
+                        }, 1500);
+                    }).catch(err => console.error('Failed to copy text: ', err));
+                });
+
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'icon-button message-download-btn';
+                downloadBtn.title = translations.download_button_title || "Download";
+                downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" class="icon"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>';
+                downloadBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const contentContainer = messageBubble.cloneNode(true);
+                    const existingControls = contentContainer.querySelector('.message-controls');
+                    if (existingControls) existingControls.remove();
+                    openDownloadFormatModal(contentContainer);
+                });
+                controlsDiv.appendChild(copyBtn);
+                controlsDiv.appendChild(downloadBtn);
+                messageBubble.appendChild(controlsDiv);
+            }
+        }
+        messageWrapper.append(avatarContainer, messageBubble);
+        claudeAllModelChatMessagesArea.appendChild(messageWrapper);
+        claudeAllModelChatMessagesArea.scrollTop = claudeAllModelChatMessagesArea.scrollHeight;
+    }
+
+    function saveClaudeAllModelChatHistory(message, sender, imageUrl, modelName, messageId = null) {
+        if (!chatUID || !modelName) return;
+        const historyKey = `${claudeAllModelHistoryKeyPrefix}${chatUID}_${modelName}`;
+        let history = [];
+        try { const stored = localStorage.getItem(historyKey); if (stored) history = JSON.parse(stored); } catch (e) { console.error("Error parsing Claude All Model history:", e); }
+        history.push({ message, sender, imageUrl, timestamp: new Date().toISOString(), messageId: messageId || Date.now().toString() });
+        if (history.length > 100) history = history.slice(history.length - 100);
+        try { localStorage.setItem(historyKey, JSON.stringify(history)); } catch (e) { console.error("Error saving Claude All Model history:", e); }
+    }
+
+    function loadClaudeAllModelChatHistory(modelName) {
+        if (!claudeAllModelChatMessagesArea || !chatUID || !modelName) {
+            if(claudeAllModelChatMessagesArea) claudeAllModelChatMessagesArea.innerHTML = "";
+            return;
+        }
+        claudeAllModelChatMessagesArea.innerHTML = "";
+        const historyKey = `${claudeAllModelHistoryKeyPrefix}${chatUID}_${modelName}`;
+        let history = [];
+        try { const stored = localStorage.getItem(historyKey); if (stored) history = JSON.parse(stored); } catch (e) { console.error("Error loading Claude All Model history:", e); }
+
+        if (history.length === 0) {
+            const welcomeMsg = (translations.claude_all_model_welcome_message || "Welcome to Claude ({modelName})! Ask anything or upload a file.").replace('{modelName}', modelName);
+            addClaudeAllModelMessageToChat(welcomeMsg, 'ai');
+        } else {
+            history.forEach(item => addClaudeAllModelMessageToChat(item.message, item.sender, item.imageUrl, false, item.messageId));
+        }
+        if (claudeAllModelChatMessagesArea) claudeAllModelChatMessagesArea.scrollTop = claudeAllModelChatMessagesArea.scrollHeight;
+    }
+
+    async function fetchAndPopulateClaudeModels() {
+        if (!claudeModelSelector) return;
+        const cachedModels = localStorage.getItem('supportedClaudeModelsList');
+        if (cachedModels) {
+            try {
+                supportedClaudeModels = JSON.parse(cachedModels);
+                if (Array.isArray(supportedClaudeModels) && supportedClaudeModels.length > 0) {
+                    populateClaudeModelDropdown();
+                    setInitialClaudeModelSelection();
+                    return;
+                }
+            } catch (e) { console.error("Error parsing cached supportedClaudeModelsList", e); localStorage.removeItem('supportedClaudeModelsList'); }
+        }
+
+        claudeModelSelector.innerHTML = `<option value="" data-translate="claude_model_select_default_option">${translations.claude_model_select_default_option || 'Loading models...'}</option>`;
+        try {
+            const response = await fetch('/api/claude-all-model', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ask: "List available models", model: "claude-3-haiku-20240307", uid: chatUID, roleplay: "System" }) // Use a known default model
+            });
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({ error: `Failed to fetch Claude models list: ${response.statusText}` }));
+                throw new Error(errData.error);
+            }
+            const data = await response.json();
+            if (data && Array.isArray(data.supported_models) && data.supported_models.length > 0) {
+                supportedClaudeModels = data.supported_models;
+                localStorage.setItem('supportedClaudeModelsList', JSON.stringify(supportedClaudeModels));
+                populateClaudeModelDropdown();
+                setInitialClaudeModelSelection();
+            } else {
+                console.warn("No supported Claude models returned from API or list is empty.");
+                claudeModelSelector.innerHTML = `<option value="">${translations.claude_no_models_available || 'No models available'}</option>`;
+            }
+        } catch (error) {
+            console.error('Error in fetchAndPopulateClaudeModels:', error);
+            claudeModelSelector.innerHTML = `<option value="">${translations.claude_models_load_error || 'Error loading models'}</option>`;
+        }
+    }
+
+    function populateClaudeModelDropdown() {
+        if (!claudeModelSelector || !supportedClaudeModels || supportedClaudeModels.length === 0) return;
+        const loadingOptionText = translations.claude_model_select_default_option || 'Loading models...';
+        const currentSelectorValue = claudeModelSelector.value;
+        claudeModelSelector.innerHTML = '';
+        supportedClaudeModels.forEach(model => {
+            const option = document.createElement('option');
+            option.value = model;
+            option.textContent = model; // Display the model ID, can be prettified if needed
+            claudeModelSelector.appendChild(option);
+        });
+        if (supportedClaudeModels.includes(currentSelectorValue)) {
+            claudeModelSelector.value = currentSelectorValue;
+        } else if (supportedClaudeModels.length > 0) {
+            // Default to a common/recommended Claude model or the first one
+            const defaultModel = supportedClaudeModels.find(m => m.includes('claude-3-haiku') || m.includes('claude-3-sonnet') || m.includes('claude-3-opus')) || supportedClaudeModels[0];
+            claudeModelSelector.value = defaultModel;
+        } else {
+            claudeModelSelector.innerHTML = `<option value="">${loadingOptionText}</option>`;
+        }
+        currentSelectedClaudeModel = claudeModelSelector.value;
+        if (currentSelectedClaudeModel) {
+            localStorage.setItem('lastSelectedClaudeAllModel', currentSelectedClaudeModel);
+        }
+    }
+
+    function setInitialClaudeModelSelection() {
+        if (!claudeModelSelector || supportedClaudeModels.length === 0) return;
+        const lastSelected = localStorage.getItem('lastSelectedClaudeAllModel');
+        if (lastSelected && supportedClaudeModels.includes(lastSelected)) {
+            claudeModelSelector.value = lastSelected;
+        } else {
+            const defaultModel = supportedClaudeModels.find(m => m.includes('claude-3-haiku') || m.includes('claude-3-sonnet') || m.includes('claude-3-opus')) || supportedClaudeModels[0];
+            claudeModelSelector.value = defaultModel;
+        }
+        currentSelectedClaudeModel = claudeModelSelector.value;
+        if (currentSelectedClaudeModel) {
+            localStorage.setItem('lastSelectedClaudeAllModel', currentSelectedClaudeModel);
+            loadClaudeAllModelChatHistory(currentSelectedClaudeModel);
+            if(claudeAllModelChatInputField && translations.claude_all_model_placeholder_dynamic) {
+                 claudeAllModelChatInputField.placeholder = translations.claude_all_model_placeholder_dynamic.replace('{modelName}', currentSelectedClaudeModel);
+            } else if (claudeAllModelChatInputField) {
+                 claudeAllModelChatInputField.placeholder = `Ask ${currentSelectedClaudeModel}...`;
+            }
+        }
+    }
+
+    if (claudeModelSelector) {
+        claudeModelSelector.addEventListener('change', () => {
+            currentSelectedClaudeModel = claudeModelSelector.value;
+            if (currentSelectedClaudeModel) {
+                localStorage.setItem('lastSelectedClaudeAllModel', currentSelectedClaudeModel);
+                loadClaudeAllModelChatHistory(currentSelectedClaudeModel);
+                if(claudeAllModelChatInputField) claudeAllModelChatInputField.placeholder = `Ask ${currentSelectedClaudeModel}...`;
+            } else {
+                if(claudeAllModelChatMessagesArea) claudeAllModelChatMessagesArea.innerHTML = "";
+                if(claudeAllModelChatInputField) claudeAllModelChatInputField.placeholder = translations.claude_all_model_placeholder || "Ask Claude (any model)...";
+            }
+        });
+    }
+
+    if (claudeAllModelAttachFileButton && claudeAllModelFileUpload) {
+        claudeAllModelAttachFileButton.addEventListener('click', () => claudeAllModelFileUpload.click());
+        claudeAllModelFileUpload.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                currentClaudeAllModelFile = file;
+                if (claudeAllModelFilePreviewContainer) {
+                    let previewHTML = `<span class="file-preview-name">${escapeHTML(file.name)} (${(file.size / 1024).toFixed(1)} KB)</span>`;
+                    if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            previewHTML += `<img src="${e.target.result}" alt="Preview" class="file-preview-image">`;
+                            claudeAllModelFilePreviewContainer.innerHTML = previewHTML;
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                         claudeAllModelFilePreviewContainer.innerHTML = previewHTML; // Show name for non-images
+                    }
+                }
+            } else {
+                currentClaudeAllModelFile = null;
+                if (claudeAllModelFilePreviewContainer) claudeAllModelFilePreviewContainer.innerHTML = "";
+            }
+        });
+    }
+
+    async function handleClaudeAllModelSendMessage() {
+        if (!claudeAllModelChatInputField || !chatUID || !currentSelectedClaudeModel) {
+            if (!currentSelectedClaudeModel) alert(translations.claude_select_model_alert || "Please select a Claude model first.");
+            return;
+        }
+        const messageText = claudeAllModelChatInputField.value.trim();
+        if (!messageText && !currentClaudeAllModelFile) {
+            alert(translations.claude_type_message_or_attach_file_alert || "Please type a message or attach a file for Claude.");
+            return;
+        }
+
+        let tempPreviewUrl = null;
+        if (currentClaudeAllModelFile && currentClaudeAllModelFile.type.startsWith('image/')) {
+            tempPreviewUrl = URL.createObjectURL(currentClaudeAllModelFile);
+        }
+        const messageId = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        addClaudeAllModelMessageToChat(messageText || (currentClaudeAllModelFile ? `File: ${currentClaudeAllModelFile.name}`: ""), 'user', tempPreviewUrl, false, messageId);
+        saveClaudeAllModelChatHistory(messageText || (currentClaudeAllModelFile ? `File: ${currentClaudeAllModelFile.name}`: ""), 'user', tempPreviewUrl, currentSelectedClaudeModel, messageId);
+
+        trackActivity('claude_all_model_sent', {
+            messageLength: messageText.length, hasFile: !!currentClaudeAllModelFile, model: currentSelectedClaudeModel,
+            fileName: currentClaudeAllModelFile ? currentClaudeAllModelFile.name : null,
+            fileType: currentClaudeAllModelFile ? currentClaudeAllModelFile.type : null
+        });
+
+        const formData = new FormData();
+        formData.append('uid', chatUID);
+        formData.append('model', currentSelectedClaudeModel);
+        if (messageText) formData.append('ask', messageText);
+        if (currentClaudeAllModelFile) formData.append('file', currentClaudeAllModelFile, currentClaudeAllModelFile.name);
+        formData.append('roleplay', CLAUDE_ALL_MODEL_DEFAULT_ROLEPLAY);
+        // max_tokens can be added here if a UI element for it exists: formData.append('max_tokens', value);
+
+        claudeAllModelChatInputField.value = '';
+        claudeAllModelFileUpload.value = null;
+        const oldFile = currentClaudeAllModelFile;
+        currentClaudeAllModelFile = null;
+        if (claudeAllModelFilePreviewContainer) claudeAllModelFilePreviewContainer.innerHTML = "";
+
+        claudeAllModelChatInputField.disabled = true;
+        if (claudeAllModelChatSendButton) claudeAllModelChatSendButton.disabled = true;
+        if (claudeAllModelAttachFileButton) claudeAllModelAttachFileButton.disabled = true;
+        if (claudeModelSelector) claudeModelSelector.disabled = true;
+
+        addClaudeAllModelMessageToChat(null, 'ai', null, true); // Typing indicator
+
+        try {
+            const response = await fetch('/api/claude-all-model', { method: 'POST', body: formData });
+            if (claudeAllModelTypingIndicator) claudeAllModelTypingIndicator.remove();
+            if (tempPreviewUrl && oldFile && oldFile.type.startsWith('image/')) {
+                URL.revokeObjectURL(tempPreviewUrl);
+            }
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: `Server error: ${response.status}` }));
+                throw new Error(errorData.error || `API request failed: ${response.status}`);
+            }
+            const aiResponse = await response.json(); // API returns { user_ask, model_used, answer, supported_models, images_processed }
+
+            if (aiResponse.supported_models && Array.isArray(aiResponse.supported_models) && 
+                JSON.stringify(supportedClaudeModels) !== JSON.stringify(aiResponse.supported_models)) {
+                supportedClaudeModels = aiResponse.supported_models;
+                localStorage.setItem('supportedClaudeModelsList', JSON.stringify(supportedClaudeModels));
+                populateClaudeModelDropdown();
+            }
+
+            if (aiResponse && aiResponse.answer) {
+                const aiMessageId = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                addClaudeAllModelMessageToChat(aiResponse.answer, 'ai', null, false, aiMessageId);
+                saveClaudeAllModelChatHistory(aiResponse.answer, 'ai', null, aiResponse.model_used || currentSelectedClaudeModel, aiMessageId);
+            } else if (aiResponse.error) { // Handle if API returns error in payload
+                 throw new Error(aiResponse.error);
+            }
+            else {
+                throw new Error((translations.invalid_response_from_ai || "Invalid response structure from {aiName} AI.").replace('{aiName}', 'Claude'));
+            }
+        } catch (error) {
+            console.error('Error with Claude All Model:', error);
+            if (claudeAllModelTypingIndicator) claudeAllModelTypingIndicator.remove();
+            const errorMsg = (translations.error_ai_connection || "Error: {error} Could not connect to {aiName}.").replace('{error}', error.message).replace('{aiName}', 'Claude');
+            addClaudeAllModelMessageToChat(errorMsg, 'ai');
+        } finally {
+            claudeAllModelChatInputField.disabled = false;
+            if (claudeAllModelChatSendButton) claudeAllModelChatSendButton.disabled = false;
+            if (claudeAllModelAttachFileButton) claudeAllModelAttachFileButton.disabled = false;
+            if (claudeModelSelector) claudeModelSelector.disabled = false;
+            if (claudeAllModelChatInputField) claudeAllModelChatInputField.focus();
+        }
+    }
+
+    if (claudeAllModelChatSendButton) claudeAllModelChatSendButton.addEventListener('click', handleClaudeAllModelSendMessage);
+    if (claudeAllModelChatInputField) {
+        claudeAllModelChatInputField.addEventListener('keypress', e => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleClaudeAllModelSendMessage();
+            }
+        });
+    }
+    // --- END OF CLAUDE ALL MODEL CHAT LOGIC ---
 
     // --- EMAIL GENERATOR LOGIC ---
     const generateTempEmailButton = document.getElementById('generate-temp-email-button');

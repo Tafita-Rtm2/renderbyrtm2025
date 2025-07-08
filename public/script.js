@@ -77,7 +77,9 @@ document.addEventListener('DOMContentLoaded', () => {
             'blackbox-ai-view': 'Blackbox AI',
             'deepseek-ai-view': 'Deepseek AI',
             'claude-haiku-view': 'Claude Haiku AI',
-            'gemini-all-model-view': 'Gemini All Models'
+            'gemini-all-model-view': 'Gemini All Models',
+            'all-chatgpt-models-view': 'All ChatGPT Models', // Added for completeness
+            'claude-all-model-view': 'Claude All Models' // Added for new view
         };
         return names[viewId] || 'Chat';
     }
@@ -143,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const chatViewIds = [
             'ai-chat-view', 'gemini-chat-view', 'gpt4o-chat-view',
             'blackbox-ai-view', 'deepseek-ai-view', 'claude-haiku-view',
-            'gemini-all-model-view', 'all-chatgpt-models-view', 'claude-all-model-view' // Added new Claude view
+            'gemini-all-model-view', 'all-chatgpt-models-view', 'claude-all-model-view'
         ];
         const isChatView = chatViewIds.includes(viewIdToShow);
 
@@ -3149,8 +3151,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let supportedClaudeModels = []; // Will be populated from API
     let currentSelectedClaudeModel = '';
     const CLAUDE_ALL_MODEL_DEFAULT_ROLEPLAY = "You are a helpful and versatile AI assistant from Anthropic, known as Claude.";
-    // Using a generic SVG for Claude avatar, can be replaced with an <img> if a specific logo is available
-    const claudeOverallAvatarSvg = `<svg viewBox="0 0 24 24" class="icon icon-chat-ai"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1.97 14.97l-3.06-3.06c-.4-.4-.4-1.04 0-1.44s1.04-.4 1.44 0l2.34 2.34 5.37-7.16c.33-.44.96-.53 1.4-.2.44.33.53.96.2 1.4l-6.08 8.1c-.37.49-1.07.57-1.54.19l-.07-.07z"></path></svg>`;
+    // Using a specific SVG for Claude avatar
+    const claudeOverallAvatarSvg = `<svg viewBox="0 0 24 24" class="icon icon-chat-ai claude-avatar-logo"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1.97 14.97l-3.06-3.06c-.4-.4-.4-1.04 0-1.44s1.04-.4 1.44 0l2.34 2.34 5.37-7.16c.33-.44.96-.53 1.4-.2.44.33.53.96.2 1.4l-6.08 8.1c-.37.49-1.07.57-1.54.19l-.07-.07z"></path></svg>`;
 
 
     function addClaudeAllModelMessageToChat(message, sender, imageUrl = null, isTyping = false, messageId = null) {

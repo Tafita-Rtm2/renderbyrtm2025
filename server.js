@@ -19,6 +19,93 @@ const GEMINI_ALL_MODEL_TEMP_UPLOAD_PATH = 'public/uploads/gemini_all_model_temp/
     }
 });
 
+// New Route for All Claude Models (Moved to correct location)
+app.post('/api/claude-all-model', uploadClaudeAllModel.single('file'), async (req, res) => {
+    const { ask, model, uid, roleplay, max_tokens } = req.body;
+    let clientUploadedFileUrl = req.body.img_url; 
+    let tempLocalPath = null;
+    let publicFileUrl = null; 
+
+    if (!ask && !req.file && !clientUploadedFileUrl) return res.status(400).json({ error: '"ask" or a file/img_url is required for Claude.' });
+    if (!uid) { if (req.file) fs.unlinkSync(req.file.path); return res.status(400).json({ error: '"uid" is required.' }); }
+    if (!model) { if (req.file) fs.unlinkSync(req.file.path); return res.status(400).json({ error: '"model" is required.' }); }
+
+    if (req.file) {
+        tempLocalPath = req.file.path;
+        const APP_BASE_URL = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+        publicFileUrl = new URL(`/uploads/claude_all_model_temp/${req.file.filename}`, APP_BASE_URL).toString();
+        console.log(`Claude All Model: File temp saved at ${tempLocalPath}, public URL ${publicFileUrl}`);
+    } else if (clientUploadedFileUrl) {
+        try {
+            const parsedUrl = new URL(clientUploadedFileUrl);
+            if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") throw new Error("Invalid img_url protocol.");
+            publicFileUrl = clientUploadedFileUrl;
+        } catch (e) {
+            return res.status(400).json({ error: `Invalid img_url: ${e.message}` });
+        }
+    }
+
+    let hajiAnthropicApiUrl = `https://haji-mix-api.gleeze.com/api/anthropic?uid=${encodeURIComponent(uid)}&model=${encodeURIComponent(model)}&api_key=${HAJI_MIX_ANTHROPIC_API_KEY}`;
+    
+    if (ask) hajiAnthropicApiUrl += `&ask=${encodeURIComponent(ask)}`;
+    if (publicFileUrl) hajiAnthropicApiUrl += `&img_url=${encodeURIComponent(publicFileUrl)}`;
+    if (roleplay) hajiAnthropicApiUrl += `&roleplay=${encodeURIComponent(roleplay)}`;
+    if (max_tokens) hajiAnthropicApiUrl += `&max_tokens=${encodeURIComponent(max_tokens)}`;
+    hajiAnthropicApiUrl += `&stream=false`;
+
+    try {
+        const apiResponse = await fetch(hajiAnthropicApiUrl);
+        const responseText = await apiResponse.text();
+        if (tempLocalPath) fs.unlink(tempLocalPath, (err) => { if (err) console.error("Error deleting temp file for Claude All Model:", err); });
+
+        if (!apiResponse.ok) {
+            let eJson = { error: `Haji Mix Anthropic API Error: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
+            try {
+                const parsedError = JSON.parse(responseText);
+                if (parsedError.error) eJson.error = parsedError.error;
+                else if (parsedError.message) eJson.error = parsedError.message;
+                if (parsedError.details) eJson.details = parsedError.details;
+            } catch (c) { /* responseText was not JSON */ }
+            console.error("Haji Mix Anthropic API Error:", eJson);
+            return res.status(apiResponse.status).json(eJson);
+        }
+
+        let data;
+        try { data = JSON.parse(responseText); } 
+        catch (e) {
+            console.warn('Haji Mix Anthropic API response was not JSON, but status was OK. Response text:', responseText);
+            if (typeof responseText === 'string' && responseText.trim().length > 0 && !responseText.toLowerCase().includes('error')) {
+                 return res.json({
+                    author: model, response: responseText, model_used: model,
+                    supported_models: [model], user_ask: ask, images_processed: publicFileUrl ? 1 : 0
+                });
+            }
+            return res.status(500).json({ error: 'Failed to parse response from Haji Mix Anthropic API.', details: responseText });
+        }
+        
+        const responsePayload = {
+            user_ask: data.user_ask || ask, model_used: data.model_used || model,
+            author: data.model_used || model, response: data.answer,
+            supported_models: Array.isArray(data.supported_models) ? data.supported_models : [model], // Ensure fallback
+            images_processed: data.images_processed !== undefined ? data.images_processed : (publicFileUrl ? 1 : 0)
+        };
+        
+        if (data.error && !data.answer) {
+             console.warn("Haji Mix Anthropic API returned an error in its payload:", data.error);
+        }
+        if (responsePayload.supported_models.length === 0) { // Should be caught by Array.isArray check + fallback
+            console.warn("Anthropic API: 'supported_models' was empty, ensuring current model is included.");
+            responsePayload.supported_models = [model];
+        }
+        res.json(responsePayload);
+
+    } catch (error) {
+        console.error('Server error (Haji Mix Anthropic API):', error);
+        if (tempLocalPath && fs.existsSync(tempLocalPath)) fs.unlink(tempLocalPath, (err) => { if (err) console.error("Error deleting temp file for Claude All Model on server error:", err); });
+        return res.status(500).json({ error: 'Server error processing Haji Mix Anthropic API request.' });
+    }
+});
+
 // Storage configuration for legacy Gemini Vision and GPT-4o Vision
 const legacyGeminiStorage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -81,6 +168,7 @@ const BLACKBOX_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
 const DEEPSEEK_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
 const CLAUDE_HAIKU_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
 const HAJI_MIX_GEMINI_API_KEY = 'e30864f5c326f6e3d70b032000ef5e2fa610cb5d9bc5759711d33036e303cef4';
+const HAJI_MIX_ANTHROPIC_API_KEY = 'e30864f5c326f6e3d70b032000ef5e2fa610cb5d9bc5759711d33036e303cef4'; // Added for Claude
 
 
 // TMDB API Configuration
@@ -648,6 +736,31 @@ const uploadChatGPTAllModel = multer({
     storage: chatGPTAllModelStorage,
     limits: { fileSize: 20 * 1024 * 1024 } // 20MB limit, same as Gemini All Model
 });
+
+// Multer configuration for Claude All Model (can reuse Gemini's or ChatGPT's if settings are identical)
+// For clarity, let's define one, even if it's a copy, or ensure the existing one is suitable.
+// Reusing 'uploadGeminiAllModel' as the settings (path, size limit) are likely to be similar.
+// If distinct paths/limits are needed, a new multer instance should be created.
+const CLAUDE_ALL_MODEL_TEMP_UPLOAD_PATH = 'public/uploads/claude_all_model_temp/';
+if (!fs.existsSync(CLAUDE_ALL_MODEL_TEMP_UPLOAD_PATH)){
+    fs.mkdirSync(CLAUDE_ALL_MODEL_TEMP_UPLOAD_PATH, { recursive: true });
+}
+app.use('/uploads/claude_all_model_temp', express.static(path.join(__dirname, CLAUDE_ALL_MODEL_TEMP_UPLOAD_PATH)));
+
+const claudeAllModelStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, CLAUDE_ALL_MODEL_TEMP_UPLOAD_PATH);
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, "claudefile-" + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+const uploadClaudeAllModel = multer({
+    storage: claudeAllModelStorage,
+    limits: { fileSize: 20 * 1024 * 1024 } // 20MB limit
+});
+
 
 app.post('/api/all-chatgpt', uploadChatGPTAllModel.single('file'), async (req, res) => {
     const { ask, model, uid, roleplay, max_tokens } = req.body;

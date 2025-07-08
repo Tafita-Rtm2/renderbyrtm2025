@@ -11,11 +11,120 @@ const fs = require('fs'); // For file system operations like deleting files
 const LEGACY_GEMINI_UPLOAD_PATH = 'public/uploads/gemini_temp/';
 // New UPLOAD_PATH for the "Gemini All Model" feature
 const GEMINI_ALL_MODEL_TEMP_UPLOAD_PATH = 'public/uploads/gemini_all_model_temp/';
+// New UPLOAD_PATH for the "Claude All Model" feature
+const CLAUDE_ALL_MODEL_TEMP_UPLOAD_PATH = 'public/uploads/claude_all_model_temp/';
+
 
 // Ensure upload directories exist
-[LEGACY_GEMINI_UPLOAD_PATH, GEMINI_ALL_MODEL_TEMP_UPLOAD_PATH].forEach(dir => {
+[LEGACY_GEMINI_UPLOAD_PATH, GEMINI_ALL_MODEL_TEMP_UPLOAD_PATH, CLAUDE_ALL_MODEL_TEMP_UPLOAD_PATH].forEach(dir => {
     if (!fs.existsSync(dir)){
         fs.mkdirSync(dir, { recursive: true });
+    }
+});
+
+// New Route for Claude All Models
+app.post('/api/claude-all-model', uploadClaudeAllModel.single('file'), async (req, res) => {
+    const { ask, model, uid, roleplay, max_tokens } = req.body;
+    let clientUploadedFileUrl = req.body.img_url; // If client sends a URL directly for Claude
+    let tempLocalPath = null;
+    let publicFileUrl = null;
+
+    // Basic validation
+    if (!ask && !req.file && !clientUploadedFileUrl) {
+        return res.status(400).json({ error: '"ask" or a file/img_url is required for Claude.' });
+    }
+    if (!uid) {
+        if (req.file) fs.unlinkSync(req.file.path); // Clean up uploaded file if UID is missing
+        return res.status(400).json({ error: '"uid" is required.' });
+    }
+    if (!model) {
+        if (req.file) fs.unlinkSync(req.file.path);
+        return res.status(400).json({ error: '"model" is required.' });
+    }
+
+    // Handle file upload
+    if (req.file) {
+        tempLocalPath = req.file.path;
+        const APP_BASE_URL = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+        publicFileUrl = new URL(`/uploads/claude_all_model_temp/${req.file.filename}`, APP_BASE_URL).toString();
+        console.log(`Claude All Model: File temp saved at ${tempLocalPath}, public URL ${publicFileUrl}`);
+    } else if (clientUploadedFileUrl) {
+        try {
+            const parsedUrl = new URL(clientUploadedFileUrl);
+            if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+                throw new Error("Invalid file URL protocol for img_url.");
+            }
+            publicFileUrl = clientUploadedFileUrl; // Use the client-provided URL
+        } catch (e) {
+            return res.status(400).json({ error: `Invalid img_url: ${e.message}` });
+        }
+    }
+
+    // Construct API URL for Haji Mix Claude API
+    let hajiClaudeApiUrl = `https://haji-mix-api.gleeze.com/api/anthropic?uid=${encodeURIComponent(uid)}&model=${encodeURIComponent(model)}&api_key=${HAJI_MIX_CLAUDE_API_KEY}&stream=false`;
+
+    if (ask) hajiClaudeApiUrl += `&ask=${encodeURIComponent(ask)}`;
+    if (publicFileUrl) hajiClaudeApiUrl += `&img_url=${encodeURIComponent(publicFileUrl)}`;
+    if (roleplay) hajiClaudeApiUrl += `&roleplay=${encodeURIComponent(roleplay)}`;
+    if (max_tokens) hajiClaudeApiUrl += `&max_tokens=${encodeURIComponent(max_tokens)}`;
+
+    try {
+        const apiResponse = await fetch(hajiClaudeApiUrl);
+        const responseText = await apiResponse.text();
+
+        // Clean up temporary file if one was created
+        if (tempLocalPath) {
+            fs.unlink(tempLocalPath, (err) => {
+                if (err) console.error("Error deleting temp file for Claude All Model:", err);
+            });
+        }
+
+        if (!apiResponse.ok) {
+            let errorJson = { error: `Haji Mix Claude API Error: ${apiResponse.status} ${apiResponse.statusText}`, details: responseText };
+            try {
+                const parsedError = JSON.parse(responseText);
+                if (parsedError.error) errorJson.error = parsedError.error;
+                else if (parsedError.message && !parsedError.error) errorJson.error = parsedError.message;
+                if (parsedError.details) errorJson.details = parsedError.details;
+            } catch (c) { /* responseText was not JSON */ }
+            console.error("Haji Mix Claude API Error:", errorJson);
+            return res.status(apiResponse.status).json(errorJson);
+        }
+
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (e) {
+            console.warn('Haji Mix Claude API response was not JSON, but status was OK. Response text:', responseText);
+            return res.status(500).json({ error: 'Failed to parse response from Haji Mix Claude API.', details: responseText });
+        }
+
+        // Construct response based on the example provided by the user
+        const responsePayload = {
+            user_ask: data.user_ask || ask, // Fallback to original ask if not in API response
+            model_used: data.model_used || model, // Fallback to original model if not in API response
+            answer: data.answer,
+            supported_models: Array.isArray(data.supported_models) ? data.supported_models : [],
+            images_processed: data.images_processed !== undefined ? data.images_processed : (publicFileUrl ? 1 : 0) // Estimate if not provided
+        };
+
+        if (data.error && !data.answer) {
+             console.warn("Haji Mix Claude API returned an error in its payload:", data.error);
+        }
+        if (responsePayload.supported_models.length === 0) {
+            console.warn("Haji Mix Claude API response did not include 'supported_models' or it was empty.");
+        }
+
+        res.json(responsePayload);
+
+    } catch (error) {
+        console.error('Server error (Haji Mix Claude API):', error);
+        if (tempLocalPath && fs.existsSync(tempLocalPath)) { // Ensure temp file is deleted on error too
+            fs.unlink(tempLocalPath, (err) => {
+                if (err) console.error("Error deleting temp file (Claude All Model) on error:", err);
+            });
+        }
+        return res.status(500).json({ error: 'Server error processing Haji Mix Claude API request.' });
     }
 });
 
@@ -53,6 +162,23 @@ const uploadGeminiAllModel = multer({
     limits: { fileSize: 20 * 1024 * 1024 } // Limit file size to 20MB for this feature
 });
 
+// Storage configuration for the new "Claude All Model" feature
+const claudeAllModelStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, CLAUDE_ALL_MODEL_TEMP_UPLOAD_PATH);
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+// Multer instance for "Claude All Model" uploads
+const uploadClaudeAllModel = multer({
+    storage: claudeAllModelStorage,
+    limits: { fileSize: 20 * 1024 * 1024 } // Limit file size to 20MB for this feature
+});
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -61,6 +187,7 @@ const PORT = process.env.PORT || 3000;
 // Serve static files from the upload directories
 app.use('/uploads/gemini_temp', express.static(path.join(__dirname, LEGACY_GEMINI_UPLOAD_PATH)));
 app.use('/uploads/gemini_all_model_temp', express.static(path.join(__dirname, GEMINI_ALL_MODEL_TEMP_UPLOAD_PATH)));
+app.use('/uploads/claude_all_model_temp', express.static(path.join(__dirname, CLAUDE_ALL_MODEL_TEMP_UPLOAD_PATH)));
 // Serve main public files
 app.use(express.static(path.join(__dirname, 'public')));
 // JSON parsing middleware
@@ -81,7 +208,8 @@ const BLACKBOX_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
 const DEEPSEEK_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
 const CLAUDE_HAIKU_API_KEY = '793fcf57-8820-40ea-b34e-7addd227e2e6';
 const HAJI_MIX_GEMINI_API_KEY = 'e30864f5c326f6e3d70b032000ef5e2fa610cb5d9bc5759711d33036e303cef4';
-
+const HAJI_MIX_CLAUDE_API_KEY = 'e30864f5c326f6e3d70b032000ef5e2fa610cb5d9bc5759711d33036e303cef4'; // As per user instruction
+// CHATGPT_HAJI_MIX_API_KEY is defined later, removing this duplicate.
 
 // TMDB API Configuration
 const TMDB_API_KEY = '973515c7684f56d1472bba67b13d676b';

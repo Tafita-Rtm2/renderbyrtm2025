@@ -77,7 +77,9 @@ document.addEventListener('DOMContentLoaded', () => {
             'blackbox-ai-view': 'Blackbox AI',
             'deepseek-ai-view': 'Deepseek AI',
             'claude-haiku-view': 'Claude Haiku AI',
-            'gemini-all-model-view': 'Gemini All Models'
+            'gemini-all-model-view': 'Gemini All Models',
+            'all-chatgpt-models-view': 'All ChatGPT Models', // Added for completeness
+            'claude-all-model-view': 'Claude All Models' // Added for new view
         };
         return names[viewId] || 'Chat';
     }
@@ -143,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const chatViewIds = [
             'ai-chat-view', 'gemini-chat-view', 'gpt4o-chat-view',
             'blackbox-ai-view', 'deepseek-ai-view', 'claude-haiku-view',
-            'gemini-all-model-view', 'all-chatgpt-models-view', 'claude-all-model-view' // Added new Claude view
+            'gemini-all-model-view', 'all-chatgpt-models-view', 'claude-all-model-view'
         ];
         const isChatView = chatViewIds.includes(viewIdToShow);
 
@@ -3149,8 +3151,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let supportedClaudeModels = []; // Will be populated from API
     let currentSelectedClaudeModel = '';
     const CLAUDE_ALL_MODEL_DEFAULT_ROLEPLAY = "You are a helpful and versatile AI assistant from Anthropic, known as Claude.";
-    // Using a generic SVG for Claude avatar, can be replaced with an <img> if a specific logo is available
-    const claudeOverallAvatarSvg = `<svg viewBox="0 0 24 24" class="icon icon-chat-ai"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1.97 14.97l-3.06-3.06c-.4-.4-.4-1.04 0-1.44s1.04-.4 1.44 0l2.34 2.34 5.37-7.16c.33-.44.96-.53 1.4-.2.44.33.53.96.2 1.4l-6.08 8.1c-.37.49-1.07.57-1.54.19l-.07-.07z"></path></svg>`;
+    // Using a specific SVG for Claude avatar
+    const claudeOverallAvatarSvg = `<svg viewBox="0 0 24 24" class="icon icon-chat-ai claude-avatar-logo"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1.97 14.97l-3.06-3.06c-.4-.4-.4-1.04 0-1.44s1.04-.4 1.44 0l2.34 2.34 5.37-7.16c.33-.44.96-.53 1.4-.2.44.33.53.96.2 1.4l-6.08 8.1c-.37.49-1.07.57-1.54.19l-.07-.07z"></path></svg>`;
 
 
     function addClaudeAllModelMessageToChat(message, sender, imageUrl = null, isTyping = false, messageId = null) {
@@ -3435,7 +3437,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 const errorData = await response.json().catch(() => ({ error: `Server error: ${response.status}` }));
                 throw new Error(errorData.error || `API request failed: ${response.status}`);
             }
-            const aiResponse = await response.json(); // API returns { user_ask, model_used, answer, supported_models, images_processed }
+            const aiResponse = await response.json(); 
+
+            // --- Start of Added Diagnostic Logging ---
+            console.log('Claude All Model - Raw aiResponse from backend:', JSON.stringify(aiResponse, null, 2));
+            console.log('Claude All Model - Checking aiResponse.response:', aiResponse ? aiResponse.response : 'aiResponse is undefined');
+            console.log('Claude All Model - Checking aiResponse.error:', aiResponse ? aiResponse.error : 'aiResponse is undefined');
+            // --- End of Added Diagnostic Logging ---
 
             if (aiResponse.supported_models && Array.isArray(aiResponse.supported_models) && 
                 JSON.stringify(supportedClaudeModels) !== JSON.stringify(aiResponse.supported_models)) {
@@ -3444,17 +3452,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 populateClaudeModelDropdown();
             }
 
-            if (aiResponse && aiResponse.answer) {
+            // Backend sends the main content in the 'response' field of its payload
+            if (aiResponse && aiResponse.response) { 
                 const aiMessageId = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-                addClaudeAllModelMessageToChat(aiResponse.answer, 'ai', null, false, aiMessageId);
-                saveClaudeAllModelChatHistory(aiResponse.answer, 'ai', null, aiResponse.model_used || currentSelectedClaudeModel, aiMessageId);
-            } else if (aiResponse.error) { // Handle if API returns error in payload
+                addClaudeAllModelMessageToChat(aiResponse.response, 'ai', null, false, aiMessageId); // Use aiResponse.response
+                saveClaudeAllModelChatHistory(aiResponse.response, 'ai', null, aiResponse.model_used || currentSelectedClaudeModel, aiMessageId);
+            } else if (aiResponse.error) { 
+                 // If the backend explicitly sent an error field in its JSON response
                  throw new Error(aiResponse.error);
             }
             else {
+                // This case means the backend response was parsed as JSON, but it's not structured as expected
+                // (e.g., missing 'response' and 'error' fields).
+                // The backend's more robust checks for 'data.answer' should make this less likely for Claude.
+                console.warn('Claude All Model: Unexpected payload structure from backend:', aiResponse);
                 throw new Error((translations.invalid_response_from_ai || "Invalid response structure from {aiName} AI.").replace('{aiName}', 'Claude'));
             }
         } catch (error) {
+            // This catch block handles:
+            // 1. Network errors from fetch('/api/claude-all-model').
+            // 2. Cases where response.ok was false (backend returned non-2xx status).
+            // 3. Errors thrown from the 'if/else if/else' block above (e.g., invalid structure, explicit aiResponse.error).
             console.error('Error with Claude All Model:', error);
             if (claudeAllModelTypingIndicator) claudeAllModelTypingIndicator.remove();
             const errorMsg = (translations.error_ai_connection || "Error: {error} Could not connect to {aiName}.").replace('{error}', error.message).replace('{aiName}', 'Claude');
